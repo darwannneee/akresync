@@ -1,0 +1,38 @@
+# Dependencies and builds
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Environment, credentials, runtime
+.env
+.env.*
+!.env.example
+.runtime/
+**/crypto-material/
+*.pem
+*_sk
+
+# Tests (kept local only)
+**/*.test.ts
+**/*.test.js
+**/*.spec.ts
+**/test/
+**/tests/
+**/__tests__/
+
+# Local AI assistant files (kept local only)
+/AGENTS.md
+/CLAUDE.md
+/CLAUDE.local.md
+/.agent-notes/
+/.claude/
+/.agents/
+/.codex/
+/.cursor/
+/docs/superpowers/
+
+# OS
+.DS_Store
+**/.DS_Store
