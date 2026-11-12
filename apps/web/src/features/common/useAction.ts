@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ApiEnvelope } from '@akreditasi/shared';
-import { errorMessage } from '../../api/client';
+import { downloadFile, errorMessage } from '../../api/client';
 import { useToast } from '../../components/Toast';
 
-/** Mutasi dengan toast tiga status (DB / audit / on-chain) dan invalidasi cache pengajuan. */
+/** Mutasi dengan penanda terima (tersimpan / audit / tercatat permanen) dan invalidasi cache pengajuan. */
 export function useAction<V, R = unknown>(
   fn: (v: V) => Promise<ApiEnvelope<R>>,
   opts: { title: string; submissionId?: string; onDone?: (env: ApiEnvelope<R>) => void },
@@ -25,7 +25,6 @@ export function useAction<V, R = unknown>(
   });
 }
 
-import { downloadFile } from '../../api/client';
 export function useDownload() {
   const toast = useToast();
   return (path: string, name: string) => { downloadFile(path, name).catch((e) => toast.error(errorMessage(e))); };

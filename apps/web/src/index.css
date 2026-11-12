@@ -1,13 +1,51 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --navy-950: #0a1a33; --navy-900: #0b1f3a; --navy-700: #1e4d8c; --navy-50: #eef3fa;
+  --surface: #f6f8fb; --line: #e3e8ef; --ink: #0f172a; --muted: #475569; --faint: #64748b;
+  --ok: #15803d; --wait: #b45309; --info: #1d4ed8; --bad: #b91c1c; --chain: #4338ca; --gold: #c9a227;
+}
+
 @layer base {
-  html { @apply bg-surface text-slate-800 antialiased; }
-  body { @apply min-h-screen; }
-  :focus-visible { @apply outline-2 outline-offset-2 outline-navy-700; outline-style: solid; }
+  html { @apply bg-surface text-ink antialiased; font-size: 16px; }
+  body { @apply min-h-screen font-sans text-sm; }
+  h1, h2, h3 { @apply font-display text-navy-900; }
+  :focus-visible { outline: 2px solid var(--navy-700); outline-offset: 2px; border-radius: 4px; }
+  ::selection { background: #c5d4ea; }
 }
 @layer components {
-  .input { @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-700/30 disabled:bg-slate-100; }
-  .label { @apply mb-1 block text-sm font-medium text-slate-700; }
+  .input { @apply min-h-[40px] w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-ink placeholder:text-slate-400 focus:border-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-700/25 disabled:bg-slate-100 disabled:text-slate-500; }
+  .input[aria-invalid='true'] { @apply border-bad ring-1 ring-bad/30; }
+  .label { @apply mb-1 block text-sm font-medium text-ink; }
+  .card { @apply rounded-xl border border-line bg-white shadow-card; }
 }
+
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.dot-pulse { animation: pulse-dot 1.4s ease-in-out infinite; }
+@keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
+.skeleton { background: linear-gradient(90deg, #eef1f6 25%, #f7f9fc 37%, #eef1f6 63%); background-size: 400px 100%; animation: shimmer 1.4s infinite linear; }
+@media (prefers-reduced-motion: reduce) { .dot-pulse, .skeleton { animation: none; } }
+
+/* ---------- Cetak ---------- */
+@media print {
+  @page { size: A4; margin: 14mm; }
+  html, body { background: #fff !important; font-size: 12px; }
+  .no-print, aside[data-shell], header[data-shell], [role='tablist'], .toast-region { display: none !important; }
+  .print-block { display: block !important; }
+  main { padding: 0 !important; }
+  .card { box-shadow: none !important; break-inside: avoid; border-color: #cbd5e1 !important; }
+  details > *:not(summary) { display: block !important; }
+  a { color: inherit !important; text-decoration: none !important; }
+  .print-only { display: block !important; }
+}
+.print-only { display: none; }

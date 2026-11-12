@@ -2,17 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../api/client';
 import type { Assessor, AuditEventView, Institution, Program, SubmissionDetail, SubmissionSummary } from '../../api/types';
 
+export const fetchSubmission = async (id: string): Promise<SubmissionDetail> => {
+  const d = (await api.get<SubmissionDetail & { submission?: SubmissionDetail }>(`/submissions/${id}`)).data;
+  return (d.submission ? { ...d.submission, ...d, submission: undefined } : d) as SubmissionDetail;
+};
+
 export const useSubmissions = () =>
   useQuery({ queryKey: ['submissions'], queryFn: async () => (await api.get<SubmissionSummary[]>('/submissions')).data ?? [] });
 
-export const useSubmission = (id: string) =>
-  useQuery({
-    queryKey: ['submission', id],
-    queryFn: async () => {
-      const d = (await api.get<SubmissionDetail & { submission?: SubmissionDetail }>(`/submissions/${id}`)).data;
-      return (d.submission ? { ...d.submission, ...d, submission: undefined } : d) as SubmissionDetail;
-    },
-  });
+export const useSubmission = (id: string) => useQuery({ queryKey: ['submission', id], queryFn: () => fetchSubmission(id) });
 
 export const useSubmissionAudit = (id: string) =>
   useQuery({ queryKey: ['audit', id], queryFn: async () => (await api.get<AuditEventView[]>(`/submissions/${id}/audit`)).data ?? [] });

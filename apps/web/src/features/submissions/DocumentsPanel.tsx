@@ -1,27 +1,20 @@
+import { Download, FileText } from 'lucide-react';
 import type { DocumentView } from '../../api/types';
-import { Button, EmptyState, Table, Td } from '../../components/ui';
-import { AuditBadge, fmtBytes, fmtDate, short } from '../common/labels';
+import { Badge, Button, CopyableMono, DataTable, EmptyState, ProofBadge, TechnicalDetails } from '../../components/ui';
+import { DOC_TYPE_LABEL, fmtBytes, fmtDateTime } from '../../lib/labels';
 import { useDownload } from '../common/useAction';
 
-const TYPE: Record<string, string> = { LED: 'LED', LKPS: 'LKPS', SUPPORT: 'Pendukung', PAYMENT_PROOF: 'Bukti bayar', AL_MINUTES: 'Berita acara AL', CERTIFICATE: 'Sertifikat' };
-
-export function DocumentsPanel({ docs }: { docs: DocumentView[] }) {
+export function DocumentsPanel({ docs, currentVersion }: { docs: DocumentView[]; currentVersion?: number }) {
   const download = useDownload();
-  if (!docs.length) return <EmptyState title="Belum ada dokumen" />;
+  if (!docs.length) return <EmptyState title="Belum ada dokumen" icon={<FileText size={22} />}>Dokumen yang diunggah UPPS dan petugas akan tampil di sini beserta status pencatatannya.</EmptyState>;
   return (
-    <Table caption="Dokumen pengajuan" head={['Jenis', 'Berkas', 'Set', 'SHA-256', 'CID', 'Audit', 'Diunggah', '']}>
-      {docs.map((d) => (
-        <tr key={d.id}>
-          <Td>{TYPE[d.docType] ?? d.docType}</Td>
-          <Td><div className="max-w-[14rem] truncate" title={d.fileName}>{d.fileName}</div><div className="text-xs text-slate-500">{fmtBytes(d.sizeBytes)}</div></Td>
-          <Td>v{d.setVersion}</Td>
-          <Td><code className="text-xs" title={d.sha256Plain}>{short(d.sha256Plain, 10, 0)}</code></Td>
-          <Td><code className="text-xs" title={d.cid}>{short(d.cid, 8, 4)}</code></Td>
-          <Td><AuditBadge status={d.auditStatus ?? 'saved'} /></Td>
-          <Td>{fmtDate(d.createdAt)}</Td>
-          <Td><Button variant="ghost" className="!min-h-[32px] !px-2" onClick={() => download(`/documents/${d.id}/download`, d.fileName)}>Unduh</Button></Td>
-        </tr>
-      ))}
-    </Table>
+    <DataTable rows={docs} rowKey={(d) => d.id} caption="Dokumen pengajuan"
+      columns={[
+        { key: 'j', header: 'Dokumen', primary: true, cell: (d) => <div className="min-w-0"><div className="font-medium text-ink">{DOC_TYPE_LABEL[d.docType] ?? d.docType}</div><div className="truncate text-sm text-muted" title={d.fileName}>{d.fileName} · {fmtBytes(d.sizeBytes)}</div><div className="text-sm text-muted">Diunggah {fmtDateTime(d.createdAt)}</div></div> },
+        { key: 'v', header: 'Himpunan', cell: (d) => <Badge tone={d.setVersion === currentVersion ? 'info' : 'neutral'}>Versi {d.setVersion}{d.setVersion === currentVersion ? ' (berlaku)' : ''}</Badge> },
+        { key: 's', header: 'Bukti', cell: (d) => <ProofBadge status={d.auditStatus ?? 'saved'} /> },
+        { key: 't', header: 'Rincian teknis', cell: (d) => <TechnicalDetails items={[['Sidik jari SHA-256', <CopyableMono key="s" value={d.sha256Plain} full />], ['CID penyimpanan', <CopyableMono key="c" value={d.cid} full />], ['Nomor transaksi audit', <CopyableMono key="t" value={d.auditTxId} full />]]} /> },
+        { key: 'a', header: '', cell: (d) => <Button variant="secondary" size="sm" icon={<Download size={15} />} onClick={() => download(`/documents/${d.id}/download`, d.fileName)}>Unduh</Button> },
+      ]} />
   );
 }

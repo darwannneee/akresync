@@ -1,77 +1,99 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ROLE_LABEL, type AppRole } from '@akreditasi/shared';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { ArrowRight, CheckCircle2, ClipboardList, Hourglass, Inbox, Plus, Search } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { Badge, Button, EmptyState, FormError, PageHeader, Spinner, Table, Td, cx } from '../components/ui';
-import { useSubmissions } from '../features/common/queries';
-import { AK_LABEL, AL_LABEL, StageBadge, fmtDate } from '../features/common/labels';
-import type { SubmissionSummary } from '../api/types';
+import { Badge, Button, DataTable, EmptyState, FormError, Input, Kpi, PageHeader, Select, Skeleton, Tabs } from '../components/ui';
+import { useTaskQueue, type TaskItem } from '../features/common/useTasks';
+import { StagePill } from '../features/common/StagePill';
 import { errorMessage } from '../api/client';
+import { fmtDateTime, ROLE_NAME } from '../lib/labels';
+import { currentIndex, holderLabel } from '../lib/workflow';
+import type { SubmissionSummary } from '../api/types';
+import type { AppRole } from '@akreditasi/shared';
 
-interface Group { key: string; label: string; filter: (s: SubmissionSummary) => boolean; hint: string }
-const ALL: Group = { key: 'all', label: 'Semua', filter: () => true, hint: 'Seluruh pengajuan yang dapat Anda akses.' };
-const GROUPS: Record<AppRole, Group[]> = {
-  upps: [ALL, { key: 'act', label: 'Perlu tindakan saya', hint: 'Draf, revisi, pembayaran, atau tanggapan.', filter: (s) => ['draft', 'admin_revision', 'invoice_issued', 'al_submitted'].includes(s.stage) || s.akStatus === 'offered' }],
-  sek_adm: [
-    { key: 'ver', label: 'Verifikasi administrasi', hint: 'Pengajuan berstatus diajukan.', filter: (s) => s.stage === 'submitted' },
-    { key: 'sch', label: 'Persetujuan jadwal AL', hint: 'Usulan jadwal menunggu keputusan.', filter: (s) => s.alScheduleStatus === 'proposed' },
-    { key: 'cer', label: 'Penerbitan sertifikat', hint: 'Keputusan sudah ditetapkan.', filter: (s) => s.stage === 'decided' },
-    ALL,
-  ],
-  sek_keu: [
-    { key: 'inv', label: 'Terbitkan tagihan', hint: 'Administrasi terverifikasi.', filter: (s) => s.stage === 'admin_verified' },
-    { key: 'pay', label: 'Verifikasi pembayaran', hint: 'Bukti bayar telah diunggah.', filter: (s) => s.stage === 'payment_proof_uploaded' },
-    ALL,
-  ],
-  kea: [
-    { key: 'off', label: 'Penawaran asesor', hint: 'Pembayaran terverifikasi / penawaran ditolak.', filter: (s) => s.akStatus === 'not_started' && ['payment_verified', 'in_assessment'].includes(s.stage) || s.akStatus === 'offer_rejected' },
-    { key: 'con', label: 'Konsistensi AK', hint: 'Kedua hasil AK telah masuk.', filter: (s) => s.akStatus === 'ak_complete' },
-    { key: 'sch', label: 'Jadwal AL', hint: 'Usulkan atau usulkan ulang jadwal.', filter: (s) => ['payment_verified', 'in_assessment'].includes(s.stage) && ['not_started', 'rejected'].includes(s.alScheduleStatus) },
-    { key: 'fin', label: 'Verifikasi akhir', hint: 'Tanggapan telah selesai.', filter: (s) => s.stage === 'responses_completed' },
-    ALL,
-  ],
-  asesor: [ALL],
-  majelis: [{ key: 'q', label: 'Antrean penetapan', hint: 'Verifikasi akhir selesai.', filter: (s) => s.stage === 'final_verified' }, ALL],
+const TITLE: Record<AppRole, string> = {
+  upps: 'Pengajuan Saya', sek_adm: 'Antrean Administrasi', sek_keu: 'Tagihan dan Pembayaran', kea: 'Antrean Komite Evaluasi dan Akreditasi', asesor: 'Penugasan Saya', majelis: 'Penetapan Peringkat',
 };
+const STAGE_FILTERS = [
+  { v: '', label: 'Semua tahap' }, { v: '0', label: 'Tahap 1. Pengajuan' }, { v: '1', label: 'Tahap 2. Verifikasi kelengkapan' }, { v: '2', label: 'Tahap 3. Tagihan dan pembayaran' },
+  { v: '3', label: 'Tahap 4. Penugasan, AK, dan jadwal AL' }, { v: '4', label: 'Tahap 5. Asesmen Lapangan' }, { v: '5', label: 'Tahap 6. Tanggapan' },
+  { v: '6', label: 'Tahap 7. Verifikasi akhir' }, { v: '7', label: 'Tahap 8. Penetapan' }, { v: '8', label: 'Tahap 9. Penerbitan' }, { v: '9', label: 'Selesai' },
+];
+
+function TaskRow({ t }: { t: TaskItem }) {
+  const s = t.submission;
+  const to = t.action.to?.(s.id) ?? `/pengajuan/${s.id}`;
+  return (
+    <li className="flex flex-wrap items-center gap-4 p-4 sm:p-5">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-navy-50 text-navy-700"><ClipboardList size={22} aria-hidden /></span>
+      <div className="min-w-0 flex-1 basis-64">
+        <p className="font-display text-base font-semibold text-navy-900">{t.action.title}</p>
+        <p className="text-base text-ink">{s.programName ?? 'Program studi'}{s.programLevel ? ` (${s.programLevel})` : ''}</p>
+        <p className="text-sm text-muted">{s.institutionName}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2"><StagePill stage={s.stage} /><span className="text-sm text-faint">Diperbarui {fmtDateTime(s.updatedAt)}</span></div>
+      </div>
+      <Link to={to} className="w-full sm:w-auto"><Button className="w-full" icon={<ArrowRight size={16} />}>{t.action.button}</Button></Link>
+    </li>
+  );
+}
+
+const progress = (s: SubmissionSummary) => { const i = currentIndex(s); return i >= 9 ? 'Selesai' : `Tahap ${i + 1} dari 9`; };
 
 export function DashboardPage() {
   const { user } = useAuth();
-  const q = useSubmissions();
-  const [tab, setTab] = useState(0);
+  const [params] = useSearchParams();
+  const { rows, tasks, counts, loading, query } = useTaskQueue();
+  const [tab, setTab] = useState<'queue' | 'all'>('queue');
+  const [stage, setStage] = useState('');
+  const [text, setText] = useState(params.get('q') ?? '');
+  useEffect(() => { const q = params.get('q'); if (q !== null) { setText(q); setTab('all'); } }, [params]);
+  const filtered = useMemo(() => {
+    const t = text.trim().toLowerCase();
+    return rows.filter((s) => (stage === '' || String(currentIndex(s)) === stage) && (!t || `${s.programName ?? ''} ${s.institutionName ?? ''} ${s.id}`.toLowerCase().includes(t)));
+  }, [rows, stage, text]);
   if (!user) return null;
-  const groups = GROUPS[user.role];
-  const g = groups[Math.min(tab, groups.length - 1)]!;
-  const rows = (q.data ?? []).filter(g.filter);
+  const kpi = loading && !rows.length;
   return (
     <div>
-      <PageHeader title={user.role === 'upps' ? 'Pengajuan Saya' : `Dasbor ${ROLE_LABEL[user.role]}`} subtitle={g.hint}
-        actions={user.role === 'upps' ? <Link to="/upps/baru"><Button>Pengajuan baru</Button></Link> : undefined} />
-      {groups.length > 1 && (
-        <div role="tablist" className="mb-3 flex gap-1 overflow-x-auto">
-          {groups.map((x, i) => {
-            const n = (q.data ?? []).filter(x.filter).length;
-            return <button key={x.key} role="tab" aria-selected={i === tab} onClick={() => setTab(i)}
-              className={cx('whitespace-nowrap rounded-full px-3 py-1.5 text-sm', i === tab ? 'bg-navy-900 text-white' : 'bg-white text-navy-800 ring-1 ring-slate-200 hover:bg-navy-50')}>{x.label} <span className="opacity-70">({n})</span></button>;
-          })}
-        </div>
-      )}
-      {q.isLoading && <Spinner />}
-      {q.isError && <FormError message={errorMessage(q.error)} />}
-      {q.data && !rows.length && <EmptyState title="Tidak ada pengajuan pada daftar ini">{user.role === 'upps' ? 'Buat pengajuan baru untuk memulai.' : 'Antrean kosong.'}</EmptyState>}
-      {rows.length > 0 && (
-        <Table caption="Daftar pengajuan" head={['Program studi', 'Tahap', 'AK', 'Jadwal AL', 'Diperbarui', '']}>
-          {rows.map((s) => (
-            <tr key={s.id}>
-              <Td><div className="font-medium text-navy-900">{s.programName ?? s.id.slice(0, 8)}</div><div className="text-xs text-slate-500">{s.institutionName}</div></Td>
-              <Td><StageBadge stage={s.stage} /></Td>
-              <Td><Badge>{AK_LABEL[s.akStatus]}</Badge></Td>
-              <Td><Badge>{AL_LABEL[s.alScheduleStatus]}</Badge></Td>
-              <Td>{fmtDate(s.updatedAt)}</Td>
-              <Td><Link className="font-medium text-navy-700 underline" to={`/pengajuan/${s.id}`}>Buka</Link></Td>
-            </tr>
-          ))}
-        </Table>
-      )}
+      <PageHeader title={TITLE[user.role]} eyebrow={ROLE_NAME[user.role]}
+        subtitle={counts.action ? `Terdapat ${counts.action} pengajuan yang menunggu tindakan Bapak/Ibu. Mulailah dari daftar tugas di bawah.` : 'Tidak ada tugas yang menunggu Bapak/Ibu saat ini. Perubahan status akan tampil otomatis.'}
+        actions={user.role === 'upps' ? <Link to="/upps/baru"><Button icon={<Plus size={16} />}>Ajukan akreditasi baru</Button></Link> : undefined} />
+      {query.isError && <div className="mb-4"><FormError message={errorMessage(query.error)} /></div>}
+      <div className="mb-6 grid gap-4 md:grid-cols-3">
+        {kpi ? [0, 1, 2].map((i) => <Skeleton key={i} className="h-[104px]" />) : <>
+          <Kpi tone="primary" label="Perlu tindakan Anda" value={counts.action} hint="Menunggu Bapak/Ibu" icon={<Inbox size={22} />} />
+          <Kpi label="Sedang berjalan" value={counts.running} hint="Ditangani pihak lain" icon={<Hourglass size={22} />} />
+          <Kpi tone="success" label="Selesai" value={counts.done} hint="Hasil diterbitkan atau dihentikan" icon={<CheckCircle2 size={22} />} />
+        </>}
+      </div>
+      <Tabs label="Daftar pengajuan" value={tab} onChange={setTab} tabs={[{ id: 'queue', label: 'Antrean tugas Anda', count: tasks.length }, { id: 'all', label: 'Semua pengajuan', count: rows.length }]} />
+      <div className="mt-5" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+        {loading && !rows.length && <div className="space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>}
+        {tab === 'queue' && !loading && (tasks.length ? (
+          <ul className="card divide-y divide-line">{tasks.map((t) => <TaskRow key={`${t.submission.id}-${t.action.key}`} t={t} />)}</ul>
+        ) : (
+          <EmptyState icon={<CheckCircle2 size={22} />} title="Tidak ada tugas saat ini" action={user.role === 'upps' ? <Link to="/upps/baru"><Button>Ajukan akreditasi baru</Button></Link> : undefined}>Seluruh tugas Bapak/Ibu telah selesai. Daftar akan terisi otomatis bila ada pengajuan yang memerlukan tindakan.</EmptyState>
+        ))}
+        {tab === 'all' && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              <label className="relative min-w-[16rem] flex-1"><span className="sr-only">Cari pengajuan</span><Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint" aria-hidden /><Input className="pl-9" placeholder="Cari program studi, institusi, atau nomor" value={text} onChange={(e) => setText(e.target.value)} /></label>
+              <label className="min-w-[14rem]"><span className="sr-only">Saring menurut tahap</span><Select value={stage} onChange={(e) => setStage(e.target.value)}>{STAGE_FILTERS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}</Select></label>
+            </div>
+            {filtered.length ? (
+              <DataTable rows={filtered} rowKey={(s) => s.id} caption="Semua pengajuan"
+                columns={[
+                  { key: 'p', header: 'Program studi', primary: true, cell: (s) => <div><div className="font-medium text-ink">{s.programName ?? s.id.slice(0, 8)}{s.programLevel ? ` (${s.programLevel})` : ''}</div><div className="text-sm text-muted">{s.institutionName}</div></div> },
+                  { key: 't', header: 'Posisi', cell: (s) => <div className="space-y-1"><StagePill stage={s.stage} /><div className="text-sm text-muted">{progress(s)}</div></div> },
+                  { key: 'h', header: 'Sedang ditangani', cell: (s) => <Badge tone="neutral">{holderLabel(s)}</Badge> },
+                  { key: 'u', header: 'Diperbarui', cell: (s) => fmtDateTime(s.updatedAt) },
+                  { key: 'o', header: '', cell: (s) => <Link to={`/pengajuan/${s.id}`}><Button variant="secondary" size="sm" icon={<ArrowRight size={15} />}>Buka</Button></Link> },
+                ]} />
+            ) : <EmptyState icon={<Search size={22} />} title="Tidak ada pengajuan yang sesuai">Ubah kata kunci atau pilih &quot;Semua tahap&quot;.</EmptyState>}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
