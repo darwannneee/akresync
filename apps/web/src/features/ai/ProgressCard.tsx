@@ -25,7 +25,7 @@ export function AiProgressCard({ p }: { p?: AiProgress }) {
           const d = p.documents.find((x) => x.docType === t);
           return (
             <li key={t} className="rounded-lg border border-line px-3 py-2.5">
-              <p className="text-sm font-semibold text-ink">{DOC_TYPE_LABEL[t] ?? t}{d ? <span className="font-normal text-muted"> · {d.fileName}</span> : <span className="font-normal text-muted"> · belum diunggah</span>}</p>
+              <p className="text-sm font-medium text-ink">{DOC_TYPE_LABEL[t] ?? t}{d ? <span className="font-normal text-muted"> · {d.fileName}</span> : <span className="font-normal text-muted"> · belum diunggah</span>}</p>
               {d && (
                 <ul className="mt-1.5 space-y-1">
                   <Step done={d.check?.status === 'verified'} active={false}>Diperiksa jenis dokumennya: {d.check?.status === 'verified' ? 'sesuai' : d.check?.status === 'mismatch' ? 'perlu diperiksa kembali' : 'verifikasi jenis tertunda (akan dicoba ulang otomatis)'}</Step>

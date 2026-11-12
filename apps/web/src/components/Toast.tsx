@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import { CheckCircle2, Info, AlertTriangle, XCircle, X, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Info, AlertTriangle, XCircle, X } from 'lucide-react';
 import type { ApiEnvelope, ChainReceipt } from '@akreditasi/shared';
-import { Button, CopyableMono, DL, Modal, TechnicalDetails, cx } from './ui';
+import { AlertDialog, Button, CopyableMono, InfoTable, TechnicalDetails, cx } from './ui';
 import { fmtDateTime } from '../lib/labels';
 
 type Kind = 'success' | 'info' | 'warn' | 'error';
@@ -18,6 +18,7 @@ let seq = 0;
 
 const ICON = { success: CheckCircle2, info: Info, warn: AlertTriangle, error: XCircle } as const;
 const COLOR = { success: 'text-ok', info: 'text-info', warn: 'text-wait', error: 'text-bad' } as const;
+const BORDER = { success: 'border-l-ok', info: 'border-l-info', warn: 'border-l-wait', error: 'border-l-bad' } as const;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
@@ -46,33 +47,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={api}>
       {children}
-      <div aria-live="polite" className="toast-region pointer-events-none fixed inset-x-0 top-0 z-[70] flex flex-col items-center gap-2 p-3 sm:items-end sm:p-5">
+      <div aria-live="polite" className="toast-region pointer-events-none fixed inset-x-0 top-0 z-[80] flex flex-col items-center gap-2 p-3 sm:items-end sm:p-4">
         {items.map((t) => {
           const Icon = ICON[t.kind];
           return (
-            <div key={t.id} role={t.kind === 'error' ? 'alert' : 'status'} className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border border-line bg-white p-4 shadow-xl">
-              <Icon size={20} className={cx('mt-0.5 shrink-0', COLOR[t.kind])} aria-hidden />
+            <div key={t.id} role={t.kind === 'error' ? 'alert' : 'status'} className={cx('pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded border border-l-4 border-line bg-white px-3 py-2.5 shadow-lg', BORDER[t.kind])}>
+              <Icon size={18} className={cx('mt-0.5 shrink-0', COLOR[t.kind])} aria-hidden />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-ink">{t.title}</p>
+                <p className="text-sm font-medium text-ink">{t.title}</p>
                 {t.lines?.map((l, i) => <p key={i} className="text-sm text-muted">{l}</p>)}
               </div>
-              <button type="button" aria-label="Tutup pemberitahuan" className="rounded p-1 text-faint hover:bg-slate-100" onClick={() => setItems((x) => x.filter((i) => i.id !== t.id))}><X size={16} /></button>
+              <button type="button" aria-label="Tutup pemberitahuan" className="grid h-7 w-7 place-items-center rounded text-faint hover:bg-slate-100" onClick={() => setItems((x) => x.filter((i) => i.id !== t.id))}><X size={16} /></button>
             </div>
           );
         })}
       </div>
-      <Modal open={!!receipt} onClose={() => setReceipt(null)} title="Tanda terima pencatatan" footer={<Button onClick={() => setReceipt(null)}>Selesai</Button>}>
+      <AlertDialog open={!!receipt} onClose={() => setReceipt(null)} kind="success" title={receipt?.title ?? ''} text="Tercatat permanen dan tidak dapat diubah." actions={<Button onClick={() => setReceipt(null)}>Selesai</Button>}>
         {receipt && (
-          <div className="space-y-4">
-            <div className="flex items-start gap-3 rounded-lg border border-chain-line bg-chain-bg p-4">
-              <ShieldCheck size={22} className="mt-0.5 shrink-0 text-chain" aria-hidden />
-              <div>
-                <p className="font-semibold text-ink">{receipt.title}</p>
-                <p className="text-sm text-slate-700">Tercatat permanen dan tidak dapat diubah.</p>
-              </div>
-            </div>
-            <DL cols={2} items={[['Waktu pencatatan', fmtDateTime(receipt.at)], ['Versi catatan', receipt.chain.version]]} />
-            <TechnicalDetails defaultOpen items={[
+          <div className="space-y-3">
+            <InfoTable items={[['Waktu pencatatan', fmtDateTime(receipt.at)], ['Versi catatan', receipt.chain.version]]} />
+            <TechnicalDetails items={[
               ['Nomor transaksi (txId)', <CopyableMono key="t" value={receipt.chain.txId} full />],
               ['Nomor blok', receipt.chain.blockNumber],
               ['Kunci catatan', <CopyableMono key="k" value={receipt.chain.recordKey} full />],
@@ -80,7 +74,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             ]} />
           </div>
         )}
-      </Modal>
+      </AlertDialog>
     </Ctx.Provider>
   );
 }

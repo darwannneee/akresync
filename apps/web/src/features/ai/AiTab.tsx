@@ -50,14 +50,14 @@ export function AiTab({ s, user }: { s: SubmissionDetail; user: User }) {
         <>
           <Card title="Skor AI sementara" description={`Analisis selesai ${fmtDateTime(lastDone.finishedAt)} · himpunan dokumen versi ${lastDone.setVersion ?? '—'}`} actions={<AiStatusBadge status="done" />}>
             {lastDone.totals && <TotalsView totals={lastDone.totals} />}
-            <div className="mt-4 rounded-lg border border-line bg-white p-3"><p className="text-xs font-semibold uppercase tracking-wide text-faint">Ringkasan AI</p><p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed">{res.summary || '—'}</p></div>
+            <div className="mt-4 rounded-lg border border-line bg-white p-3"><p className="text-xs font-medium text-faint">Ringkasan AI</p><p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed">{res.summary || '—'}</p></div>
             <div className="mt-4"><AiTechnical a={detail.data ?? lastDone} /></div>
           </Card>
           <Card title="Saran per butir" description="Kutipan sumber dapat dibuka pada setiap saran.">
             <div className="space-y-3">
               {INST.criteria.filter((c) => c.scored).map((c) => (
                 <details key={c.code} className="rounded-lg border border-line">
-                  <summary className="cursor-pointer px-4 py-3 font-semibold text-ink">Kriteria {c.code.slice(1)}. {c.title}</summary>
+                  <summary className="cursor-pointer px-4 py-3 font-medium text-ink">Kriteria {c.code.slice(1)}. {c.title}</summary>
                   <ul className="space-y-4 border-t border-line p-4">
                     {res.items.filter((i) => i.criterion === c.code).map((it) => {
                       const meta = INST.items.find((x) => x.id === it.butirId);

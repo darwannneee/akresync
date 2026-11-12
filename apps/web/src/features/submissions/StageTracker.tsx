@@ -18,7 +18,7 @@ function SubStepList({ steps }: { steps: SubStep[] }) {
     <ol className="space-y-2">
       {steps.map((x, i) => (
         <li key={x.id} className="flex items-start gap-3 rounded-lg border border-line bg-white p-3">
-          <span className={cx('mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-semibold', RING[x.status].replace(/ring-\S+/g, ''))}>{x.status === 'selesai' ? <Check size={15} aria-hidden /> : i + 1}</span>
+          <span className={cx('mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-medium', RING[x.status].replace(/ring-\S+/g, ''))}>{x.status === 'selesai' ? <Check size={15} aria-hidden /> : i + 1}</span>
           <div className="min-w-0 flex-1">
             <p className={cx('font-medium', x.status === 'terkunci' ? 'text-faint' : 'text-ink')}>{x.label}</p>
             <p className="text-sm text-muted">{x.roleLabel} · {x.storage === 'C' ? 'dicatat permanen' : 'tersimpan dengan jejak audit'}</p>
@@ -36,21 +36,21 @@ function StageDetail({ stage, d, audit }: { stage: MainStage; d: SubmissionDetai
   return (
     <div className="mt-5 rounded-xl border border-line bg-slate-50 p-4 sm:p-5" aria-live="polite">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-lg font-semibold">Tahap {stage.no}. {stage.label}</h3>
+        <h3 className="text-lg font-medium">Tahap {stage.no}. {stage.label}</h3>
         <StatusPill status={stage.status} />
       </div>
       <p className="mt-1 text-sm text-muted">Penanggung jawab: {stage.roleLabel}. {STORAGE_NOTE[stage.storage]}.</p>
       <div className="mt-4">
         {stage.lanes ? (
           <div className="grid gap-4 lg:grid-cols-2">
-            <div><p className="mb-2 flex items-center gap-2 font-semibold text-navy-900"><Badge tone="info">Jalur A</Badge>Penugasan asesor dan Asesmen Kecukupan</p><SubStepList steps={stage.lanes.ak} /></div>
-            <div><p className="mb-2 flex items-center gap-2 font-semibold text-navy-900"><Badge tone="info">Jalur B</Badge>Jadwal Asesmen Lapangan</p><SubStepList steps={stage.lanes.al} /></div>
+            <div><p className="mb-2 flex items-center gap-2 font-medium text-navy-900"><Badge tone="info">Jalur A</Badge>Penugasan asesor dan Asesmen Kecukupan</p><SubStepList steps={stage.lanes.ak} /></div>
+            <div><p className="mb-2 flex items-center gap-2 font-medium text-navy-900"><Badge tone="info">Jalur B</Badge>Jadwal Asesmen Lapangan</p><SubStepList steps={stage.lanes.al} /></div>
             <p className="text-sm text-muted lg:col-span-2">Kedua jalur berjalan bersamaan. Tahap berikutnya dimulai setelah keduanya selesai.</p>
           </div>
         ) : <SubStepList steps={stage.steps} />}
       </div>
       <div className="mt-5">
-        <p className="mb-2 text-sm font-semibold text-navy-900">Bukti tahap ini</p>
+        <p className="mb-2 text-sm font-medium text-navy-900">Bukti tahap ini</p>
         {ev.length === 0 ? <p className="text-sm text-muted">Belum ada catatan pada tahap ini.</p> : (
           <ul className="space-y-2">
             {ev.map((e) => (
@@ -93,8 +93,8 @@ export function StageTracker({ d, audit }: { d: SubmissionDetail; audit: AuditEv
                 <button type="button" onClick={() => setSel(i)} aria-pressed={active} aria-current={i === cur ? 'step' : undefined}
                   className={cx('relative flex w-full flex-col items-center rounded-lg px-1 pb-2 pt-0 text-center transition-colors hover:bg-navy-50', active && 'bg-navy-50 ring-1 ring-navy-200')}>
                   <span className={cx('relative z-10 grid h-11 w-11 place-items-center rounded-full', RING[st.status])}><StatusIcon s={st.status} I={I} /></span>
-                  <span className="mt-2 text-xs font-semibold uppercase tracking-wide text-faint">Tahap {st.no}</span>
-                  <span className={cx('mt-0.5 px-1 text-sm leading-snug', st.status === 'terkunci' ? 'text-faint' : 'font-semibold text-ink')}>{st.short}</span>
+                  <span className="mt-2 text-xs font-medium text-faint">Tahap {st.no}</span>
+                  <span className={cx('mt-0.5 px-1 text-sm leading-snug', st.status === 'terkunci' ? 'text-faint' : 'font-medium text-ink')}>{st.short}</span>
                   {st.lanes ? (
                     <span className="mt-2 flex w-full flex-col gap-1.5">
                       {([['Jalur A', 'Penugasan dan AK', st.lanes.ak], ['Jalur B', 'Jadwal AL', st.lanes.al]] as const).map(([k, l, steps]) => {

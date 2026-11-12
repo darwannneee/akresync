@@ -1,12 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, refreshSession, setAccessToken, setAuthLostHandler } from '../api/client';
+import type { AppRole } from '@akreditasi/shared';
 import type { User } from '../api/types';
 
 interface AuthState {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<User>;
+  signIn: (email: string, password: string, role?: AppRole) => Promise<User>;
   signOut: () => Promise<void>;
 }
 const Ctx = createContext<AuthState | null>(null);
@@ -35,8 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { alive = false; };
   }, []);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const res = await api.post<{ accessToken: string; user?: User }>('/auth/login', { email, password });
+  const signIn = useCallback(async (email: string, password: string, role?: AppRole) => {
+    const res = await api.post<{ accessToken: string; user?: User }>('/auth/login', { email, password, ...(role ? { role } : {}) });
     setAccessToken(res.data.accessToken);
     const u = res.data.user ?? (await api.get<User>('/auth/me')).data;
     setUser(u);

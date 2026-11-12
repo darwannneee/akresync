@@ -31,7 +31,7 @@ export function AiBanner({ children }: { children?: ReactNode }) {
   return (
     <div className="flex items-start gap-3 rounded-lg border border-navy-700/20 bg-navy-50 px-4 py-3">
       <Bot size={20} className="mt-0.5 shrink-0 text-navy-700" aria-hidden />
-      <div className="min-w-0 text-sm"><p className="font-semibold text-navy-900">{AI_TITLE}</p><p className="text-slate-700">{AI_DISCLAIMER}</p>{children}</div>
+      <div className="min-w-0 text-sm"><p className="font-medium text-navy-900">{AI_TITLE}</p><p className="text-slate-700">{AI_DISCLAIMER}</p>{children}</div>
     </div>
   );
 }
@@ -67,11 +67,11 @@ export function TotalsView({ totals }: { totals: AiTotals }) {
   return (
     <div>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
-        <div><div className="text-xs font-semibold uppercase tracking-wide text-faint">Skor AI sementara</div><div className="font-display text-3xl font-bold leading-none tabular-nums text-navy-900">{fmtNumber(totals.total)}</div><div className="mt-1 text-xs text-muted">dari {fmtNumber(totals.max)} · {totals.answered} dari {totals.itemCount} butir mendapat saran</div></div>
+        <div><div className="text-xs font-medium text-faint">Skor AI sementara</div><div className="text-3xl font-medium leading-none tabular-nums text-navy-900">{fmtNumber(totals.total)}</div><div className="mt-1 text-xs text-muted">dari {fmtNumber(totals.max)} · {totals.answered} dari {totals.itemCount} butir mendapat saran</div></div>
       </div>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-xs uppercase tracking-wide text-faint"><th className="py-1 pr-3 font-semibold">Kriteria</th><th className="py-1 pr-3 text-right font-semibold">Skor AI</th><th className="py-1 pr-3 text-right font-semibold">Maksimum</th><th className="py-1 text-right font-semibold">Butir bersaran</th></tr></thead>
+          <thead><tr className="text-left text-xs text-faint"><th className="py-1 pr-3 font-medium">Kriteria</th><th className="py-1 pr-3 text-right font-medium">Skor AI</th><th className="py-1 pr-3 text-right font-medium">Maksimum</th><th className="py-1 text-right font-medium">Butir bersaran</th></tr></thead>
           <tbody className="divide-y divide-line">
             {totals.perCriterion.map((c) => (
               <tr key={c.code}><td className="py-1.5 pr-3">Kriteria {c.code.slice(1)}. {INST.criteria.find((x) => x.code === c.code)?.title}</td><td className="py-1.5 pr-3 text-right tabular-nums font-medium">{fmtNumber(c.subtotal)}</td><td className="py-1.5 pr-3 text-right tabular-nums text-muted">{fmtNumber(c.max)}</td><td className="py-1.5 text-right tabular-nums text-muted">{c.filled} / {c.count}</td></tr>
@@ -117,8 +117,8 @@ export function SuggestionBlock({ item, citations, action, compact }: { item: Ai
   return (
     <div className="rounded-lg border border-navy-700/20 bg-navy-50/60 px-3.5 py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-900"><Bot size={15} aria-hidden />Saran AI:</span>
-        {item.suggestedScore === null ? <Badge tone="warn">Bukti tidak ditemukan, tanpa saran skor</Badge> : <span className="rounded-md bg-navy-700 px-2.5 py-0.5 font-display text-base font-bold text-white tabular-nums">{item.suggestedScore}</span>}
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-navy-900"><Bot size={15} aria-hidden />Saran AI:</span>
+        {item.suggestedScore === null ? <Badge tone="warn">Bukti tidak ditemukan, tanpa saran skor</Badge> : <span className="rounded-md bg-navy-700 px-2.5 py-0.5 text-base font-medium text-white tabular-nums">{item.suggestedScore}</span>}
         <Badge tone={tone}>{CONFIDENCE_LABEL[item.confidence]}</Badge>
         <span className="ml-auto flex items-center gap-2">
           {action}
@@ -142,7 +142,7 @@ export function ComparisonView({ c }: { c: AiComparison }) {
   const diffs = c.items.filter((i) => i.kind === 'different');
   return (
     <div className="rounded-lg border border-line bg-white p-4">
-      <p className="font-semibold text-ink">{c.assessorName ?? 'Asesor'} · {c.phase === 'AK' ? 'Asesmen Kecukupan' : 'Asesmen Lapangan'} · {c.finalStatus === 'submitted' ? 'skor telah diserahkan' : c.finalStatus === 'draft' ? 'skor masih draf' : 'belum ada skor'}</p>
+      <p className="font-medium text-ink">{c.assessorName ?? 'Asesor'} · {c.phase === 'AK' ? 'Asesmen Kecukupan' : 'Asesmen Lapangan'} · {c.finalStatus === 'submitted' ? 'skor telah diserahkan' : c.finalStatus === 'draft' ? 'skor masih draf' : 'belum ada skor'}</p>
       <div className="mt-2 flex flex-wrap gap-2 text-sm">
         <Badge tone="success">{KIND_LABEL.same}: {s.same}</Badge>
         <Badge tone="warn">{KIND_LABEL.different}: {s.different}</Badge>
@@ -174,7 +174,7 @@ export function AiFailedNotice({ a, onRetry, retrying, canRetry }: { a: AiAnalys
   return (
     <Notice tone="danger" title="Analisis AI belum berhasil">
       <p>{a.error ?? 'Layanan AI sedang tidak dapat memproses permintaan.'}</p>
-      {canRetry && onRetry && <button type="button" disabled={retrying} onClick={onRetry} className="mt-2 inline-flex h-9 items-center rounded-lg border border-navy-700 bg-white px-3 text-sm font-semibold text-navy-700 hover:bg-navy-50 disabled:opacity-50">Coba lagi</button>}
+      {canRetry && onRetry && <button type="button" disabled={retrying} onClick={onRetry} className="mt-2 inline-flex h-9 items-center rounded-lg border border-navy-700 bg-white px-3 text-sm font-medium text-navy-700 hover:bg-navy-50 disabled:opacity-50">Coba lagi</button>}
     </Notice>
   );
 }

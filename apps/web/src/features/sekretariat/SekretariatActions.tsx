@@ -1,8 +1,9 @@
+import { useId } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../api/client';
-import { Button, DL, Field, Input, Notice, StepSection } from '../../components/ui';
+import { Button, DL, Field, Input, ModalActions, Notice, StepSection } from '../../components/ui';
 import { ResultNotesForm, useConfirmed } from '../common/forms';
 import { useAction } from '../common/useAction';
 import { MODE_LABEL, RESULT_LABEL, fmtDateRange, fmtRupiah } from '../../lib/labels';
@@ -50,7 +51,7 @@ export function IssueCertificate({ s }: ActionProps) {
   return (
     <div className="space-y-3">
       <Notice tone="info">Sistem akan menyusun sertifikat PDF berdasarkan peringkat dan Surat Keputusan yang telah ditetapkan Majelis.</Notice>
-      <Button loading={issue.isPending} onClick={() => issue.mutate(undefined)}>Terbitkan sertifikat hasil akreditasi</Button>
+      <ModalActions><Button loading={issue.isPending} onClick={() => issue.mutate(undefined)}>Terbitkan Sertifikat</Button></ModalActions>
     </div>
   );
 }
@@ -60,12 +61,13 @@ export function IssueInvoice({ s }: ActionProps) {
   const f = useForm<z.input<typeof invSchema>, unknown, z.output<typeof invSchema>>({ resolver: zodResolver(invSchema) });
   const issue = useAction((v: { amount: number }) => api.post(`/submissions/${s.id}/invoice`, v), { title: 'Tagihan telah diterbitkan', submissionId: s.id, onDone: () => f.reset() });
   const amount = f.watch('amount');
+  const fid = useId();
   return (
-    <form className="max-w-md space-y-4" noValidate onSubmit={f.handleSubmit((v) => issue.mutate(v))}>
+    <form id={fid} className="space-y-4" noValidate onSubmit={f.handleSubmit((v) => issue.mutate(v))}>
       <Field label="Jumlah tagihan (Rupiah)" required error={f.formState.errors.amount?.message} hint={Number(amount) > 0 ? `Terbaca: ${fmtRupiah(Number(amount))}` : 'Tuliskan angka tanpa titik atau koma. Contoh: 15000000'}>
         {(p) => <Input {...p} type="number" inputMode="numeric" min={1} step="1" {...f.register('amount')} />}
       </Field>
-      <Button type="submit" loading={issue.isPending}>Terbitkan tagihan</Button>
+      <ModalActions><Button type="submit" form={fid} loading={issue.isPending}>Terbitkan Tagihan</Button></ModalActions>
     </form>
   );
 }

@@ -3,72 +3,63 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { AlertTriangle, FileLock2, Link2, ScrollText, ArrowLeft, ArrowRight, Compass, Download, HelpCircle, Plus, Trash2 } from 'lucide-react';
-import { ROLE_HOME } from '@akreditasi/shared';
+import { AlertTriangle, ArrowLeft, ArrowRight, Compass, Download, Eye, EyeOff, Lock, Plus, Trash2, UserRound } from 'lucide-react';
+import { APP_ROLES, ROLE_HOME } from '@akreditasi/shared';
 import { useAuth } from '../auth/AuthContext';
 import { api, errorMessage } from '../api/client';
-import { Button, Field, FileInput, FormError, Input, Modal, Notice, Select, StepIndicator } from '../components/ui';
+import { Button, Field, FileInput, FormError, HorizontalForm, Input, Modal, Notice, Select, StepIndicator } from '../components/ui';
 import { Combobox } from '../components/Combobox';
 import { BrandMark } from '../components/Layout';
+import { ROLE_NAME } from '../lib/labels';
 import { useInstitutions, useLevels, useProgramNames } from '../features/common/queries';
 
-const POINTS = [
-  { icon: Link2, title: 'Keputusan tercatat permanen', text: 'Setiap tahap resmi akreditasi dicatat sehingga tidak dapat diubah atau dihapus secara diam-diam.' },
-  { icon: FileLock2, title: 'Dokumen tersimpan terenkripsi', text: 'LED, LKPS, dan berkas pendukung disimpan dalam keadaan terenkripsi dan dapat diperiksa keutuhannya.' },
-  { icon: ScrollText, title: 'Jejak audit yang dapat diperiksa', text: 'Siapa melakukan apa dan kapan terekam jelas, sehingga seluruh proses dapat ditelusuri.' },
-];
+const BG_CLS = 'login-bg min-h-screen px-3 py-8 sm:py-12';
 
-function SplitShell({ title, lead, children, footer, wide }: { title: string; lead: string; children: ReactNode; footer?: ReactNode; wide?: boolean }) {
-  return (
-    <div className="grid min-h-screen lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-      <aside className="relative hidden flex-col justify-between bg-navy-950 p-12 text-white lg:flex">
-        <BrandMark light />
-        <div>
-          <h1 className="max-w-md font-display text-3xl font-bold leading-snug !text-white">Sistem Akreditasi Program Studi</h1>
-          <p className="mt-3 max-w-md text-base text-navy-100">Pengajuan, penilaian, hingga penetapan peringkat dalam satu alur yang transparan dan dapat dipertanggungjawabkan.</p>
-          <ul className="mt-10 space-y-6">
-            {POINTS.map((p) => (
-              <li key={p.title} className="flex max-w-md gap-4">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-white/10 text-accent"><p.icon size={22} aria-hidden /></span>
-                <div><p className="font-semibold text-white">{p.title}</p><p className="text-sm text-navy-100">{p.text}</p></div>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <p className="text-sm text-navy-200">Untuk perwakilan UPPS, Sekretariat, Komite Evaluasi dan Akreditasi, Asesor, dan Majelis Akreditasi.</p>
-      </aside>
-      <main className={`flex justify-center bg-white px-6 py-10 sm:px-12 ${wide ? 'items-start' : 'items-center'}`}>
-        <div className={`w-full ${wide ? 'max-w-2xl' : 'max-w-md'}`}>
-          <div className="mb-8 lg:hidden"><BrandMark /></div>
-          <h2 className="text-2xl font-bold">{title}</h2>
-          <p className="mt-1 text-base text-muted">{lead}</p>
-          <div className="mt-8">{children}</div>
-          {footer && <div className="mt-6 text-center text-sm text-muted">{footer}</div>}
-        </div>
-      </main>
-    </div>
-  );
+function Brand() {
+  return <div className="mb-5 flex justify-center"><BrandMark /></div>;
 }
+const LegalFooter = () => <p className="rounded-b border-t border-line bg-slate-50 px-4 py-3 text-center text-sm text-muted">Hak cipta © 2026 Sistem Akreditasi. | Syarat &amp; Ketentuan | Kebijakan Privasi</p>;
 
-const loginSchema = z.object({ email: z.string().min(1, 'Surel wajib diisi').email('Penulisan surel belum benar. Contoh: nama@kampus.ac.id'), password: z.string().min(1, 'Kata sandi wajib diisi') });
+const loginSchema = z.object({
+  email: z.string().min(1, 'Surel wajib diisi').email('Penulisan surel belum benar. Contoh: nama@kampus.ac.id'),
+  password: z.string().min(1, 'Kata sandi wajib diisi'),
+  role: z.enum(APP_ROLES),
+});
 export function LoginPage() {
   const { user, signIn } = useAuth();
   const nav = useNavigate();
   const [err, setErr] = useState<string | null>(null);
-  const f = useForm<z.infer<typeof loginSchema>>({ resolver: zodResolver(loginSchema) });
+  const [show, setShow] = useState(false);
+  const f = useForm<z.infer<typeof loginSchema>>({ resolver: zodResolver(loginSchema), defaultValues: { email: '', password: '', role: 'upps' } });
   if (user) return <Navigate to={ROLE_HOME[user.role]} replace />;
   return (
-    <SplitShell title="Masuk ke sistem" lead="Gunakan surel dan kata sandi yang terdaftar." footer={<>Perwakilan UPPS yang belum memiliki akun? <Link className="font-semibold text-navy-700 underline" to="/daftar">Daftar akun UPPS</Link></>}>
-      <form className="space-y-5" noValidate onSubmit={f.handleSubmit(async (v) => {
-        setErr(null);
-        try { const u = await signIn(v.email, v.password); nav(ROLE_HOME[u.role], { replace: true }); } catch (e) { setErr(errorMessage(e)); }
-      })}>
-        <FormError message={err} />
-        <Field label="Surel" required error={f.formState.errors.email?.message}>{(p) => <Input {...p} type="email" autoComplete="username" placeholder="nama@kampus.ac.id" {...f.register('email')} />}</Field>
-        <Field label="Kata sandi" required error={f.formState.errors.password?.message}>{(p) => <Input {...p} type="password" autoComplete="current-password" {...f.register('password')} />}</Field>
-        <Button type="submit" className="w-full" size="md" loading={f.formState.isSubmitting}>Masuk</Button>
-      </form>
-    </SplitShell>
+    <div className={BG_CLS}>
+      <div className="mx-auto w-full max-w-[420px]">
+        <Brand />
+        <div className="rounded border border-line bg-white shadow-sm">
+          <form className="space-y-4 p-5" noValidate onSubmit={f.handleSubmit(async (v) => {
+            setErr(null);
+            try { const u = await signIn(v.email, v.password, v.role); nav(ROLE_HOME[u.role], { replace: true }); } catch (e) { setErr(errorMessage(e)); }
+          })}>
+            <FormError message={err} />
+            <Field label="Email" error={f.formState.errors.email?.message}>{(p) => <Input {...p} type="email" autoComplete="username" placeholder="Alamat Email" {...f.register('email')} />}</Field>
+            <Field label="Kata Sandi" error={f.formState.errors.password?.message}>
+              {(p) => (
+                <div className="relative">
+                  <Input {...p} type={show ? 'text' : 'password'} autoComplete="current-password" placeholder="Masukkan Kata Sandi" className="pr-11" {...f.register('password')} />
+                  <button type="button" onClick={() => setShow((x) => !x)} aria-label={show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'} aria-pressed={show} className="absolute right-0 top-0 grid h-full w-10 place-items-center text-slate-500 hover:text-ink">{show ? <Eye size={17} aria-hidden /> : <EyeOff size={17} aria-hidden />}</button>
+                </div>
+              )}
+            </Field>
+            <Field label="Masuk sebagai" error={f.formState.errors.role?.message}>{(p) => <Select {...p} {...f.register('role')}>{APP_ROLES.map((r) => <option key={r} value={r}>{ROLE_NAME[r]}</option>)}</Select>}</Field>
+            <div className="text-right"><span className="text-sm text-slate-400" title="Hubungi Sekretariat" aria-disabled="true">Lupa kata sandi?</span></div>
+            <Button type="submit" className="w-full" loading={f.formState.isSubmitting} icon={<Lock size={15} />}>Masuk</Button>
+            <p className="text-sm">Belum memiliki akun UPPS? <Link className="text-navy-700 hover:underline" to="/daftar">Silakan daftar di sini</Link></p>
+          </form>
+          <LegalFooter />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -132,14 +123,22 @@ function checkFile(kind: FileKey, f: File): string | null {
 function UppsInfoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Modal open={open} onClose={onClose} title="Apa itu UPPS?" footer={<Button onClick={onClose}>Tutup</Button>}>
-      <p className="text-base">Unit Pengelola Program Studi (UPPS) adalah unit di perguruan tinggi, fakultas, atau departemen yang ditunjuk melalui surat keputusan pimpinan perguruan tinggi untuk mengelola program studi dan mempersiapkan proses akreditasi.</p>
+      <p className="text-sm leading-relaxed">Unit Pengelola Program Studi (UPPS) adalah unit di perguruan tinggi, fakultas, atau departemen yang ditunjuk melalui surat keputusan pimpinan perguruan tinggi untuk mengelola program studi dan mempersiapkan proses akreditasi.</p>
+    </Modal>
+  );
+}
+const FLOW = ['Pengajuan oleh UPPS', 'Verifikasi kelengkapan oleh Sekretariat Administrasi', 'Tagihan dan pembayaran', 'Penugasan asesor, Asesmen Kecukupan, dan jadwal Asesmen Lapangan', 'Asesmen Lapangan', 'Tanggapan UPPS dan ketua asesor', 'Verifikasi akhir oleh KEA', 'Penetapan peringkat oleh Majelis Akreditasi', 'Penerbitan sertifikat'];
+function FlowModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Modal open={open} onClose={onClose} title="Alur akreditasi" footer={<Button onClick={onClose}>Tutup</Button>}>
+      <ol className="list-decimal space-y-1.5 pl-5 text-sm">{FLOW.map((x) => <li key={x}>{x}</li>)}</ol>
     </Modal>
   );
 }
 function TermsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Modal open={open} onClose={onClose} title="Ketentuan dan persyaratan registrasi akun UPPS" footer={<Button onClick={onClose}>Saya sudah membaca</Button>}>
-      <ol className="list-decimal space-y-2 pl-5 text-base">
+      <ol className="list-decimal space-y-2 pl-5 text-sm leading-relaxed">
         <li>Registrasi hanya dilakukan oleh perwakilan resmi UPPS yang ditunjuk oleh pimpinan perguruan tinggi.</li>
         <li>Seluruh data dan dokumen yang diunggah harus benar, terbaru, dan dapat dipertanggungjawabkan. Data yang tidak sesuai dapat menyebabkan pendaftaran ditolak.</li>
         <li>Akun baru aktif setelah dokumen registrasi diverifikasi oleh Sekretariat Administrasi LAM Teknik. Hasil verifikasi, termasuk alasan penolakan bila ada, disampaikan saat masuk ke sistem.</li>
@@ -150,15 +149,10 @@ function TermsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
-function FileField({ label, file, error, accept, hint, onPick, optional }: { label: string; file: File | null; error?: string | null; accept: string; hint: string; onPick: (f: File | null) => void; optional?: boolean }) {
-  return (
-    <div>
-      <FileInput label={<>{label}{!optional && <span className="ml-0.5 text-bad" aria-hidden> *</span>}</>} accept={accept} file={file} hint={hint} onChange={onPick} />
-      {file && <button type="button" onClick={() => onPick(null)} className="mt-1 text-sm font-medium text-navy-700 underline">Hapus berkas</button>}
-      {error && <p role="alert" className="mt-1.5 flex items-start gap-1.5 text-sm text-bad"><AlertTriangle size={15} className="mt-1 shrink-0" aria-hidden />{error}</p>}
-    </div>
-  );
+function FileField({ label, file, error, accept, hint, onPick, optional }: { label: string; file: File | null; error?: string | null; accept: string; hint: ReactNode; onPick: (f: File | null) => void; optional?: boolean }) {
+  return <FileInput label={label} required={!optional} accept={accept} file={file} error={error} hint={hint} onChange={onPick} />;
 }
+const TemplateLink = ({ href, children }: { href: string; children: ReactNode }) => <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-navy-700 hover:underline"><Download size={12} aria-hidden />{children}</a>;
 
 export function RegisterPage() {
   const { user } = useAuth();
@@ -170,6 +164,7 @@ export function RegisterPage() {
   const [files, setFiles] = useState<Record<FileKey, File | null>>({ photo: null, sppa: null, spsu: null });
   const [fileErr, setFileErr] = useState<Record<FileKey, string | null>>({ photo: null, sppa: null, spsu: null });
   const [infoOpen, setInfoOpen] = useState(false);
+  const [flowOpen, setFlowOpen] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
   const insts = useInstitutions();
   const levels = useLevels();
@@ -218,115 +213,127 @@ export function RegisterPage() {
     try { await api.upload('/auth/register', form); setDone(true); } catch (x) { setErr(errorMessage(x)); }
   });
 
+  const shell = (children: ReactNode) => (
+    <div className={BG_CLS}>
+      <div className="mx-auto w-full max-w-[720px]">
+        <Brand />
+        <div className="rounded border border-line border-t-[3px] border-t-navy-700 bg-white shadow-sm">{children}</div>
+      </div>
+    </div>
+  );
+
   if (done) {
-    return (
-      <SplitShell wide title="Pendaftaran diterima" lead="Terima kasih. Data dan dokumen registrasi Bapak/Ibu telah kami terima." footer={<Link className="font-semibold text-navy-700 underline" to="/masuk">Kembali ke halaman masuk</Link>}>
-        <div className="space-y-4">
-          <Notice tone="success" title="Pendaftaran diterima">Pendaftaran diterima. Akun Bapak/Ibu akan aktif setelah diverifikasi Sekretariat Administrasi LAM Teknik.</Notice>
-          <p className="text-base text-muted">Bapak/Ibu belum dapat masuk ke sistem sebelum verifikasi selesai. Hasil verifikasi akan terlihat saat Bapak/Ibu mencoba masuk dengan surel dan kata sandi yang telah didaftarkan.</p>
-        </div>
-      </SplitShell>
+    return shell(
+      <div className="space-y-4 p-5 sm:p-6">
+        <h1 className="flex items-center gap-2 text-lg font-medium text-navy-700"><UserRound size={19} aria-hidden />Pendaftaran diterima</h1>
+        <Notice tone="success" title="Pendaftaran diterima">Akun Bapak/Ibu akan aktif setelah diverifikasi Sekretariat Administrasi.</Notice>
+        <p className="text-sm text-muted">Bapak/Ibu belum dapat masuk ke sistem sebelum verifikasi selesai. Hasil verifikasi akan terlihat saat Bapak/Ibu mencoba masuk dengan surel dan kata sandi yang telah didaftarkan.</p>
+        <Link to="/masuk" className="inline-flex min-h-[38px] items-center rounded border border-navy-700 bg-navy-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-navy-800">Kembali ke halaman masuk</Link>
+      </div>,
     );
   }
 
-  return (
-    <SplitShell wide title="Pendaftaran akun UPPS" lead="Akun ini digunakan perwakilan UPPS untuk mengajukan akreditasi. Pendaftaran akan diverifikasi oleh Sekretariat Administrasi." footer={<Link className="font-semibold text-navy-700 underline" to="/masuk">Kembali ke halaman masuk</Link>}>
-      <button type="button" onClick={() => setInfoOpen(true)} className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-navy-700 underline"><HelpCircle size={16} aria-hidden />Apa itu UPPS?</button>
-      <StepIndicator className="mb-6" steps={[
-        { label: 'Profil UPPS', state: step === 1 ? 'current' : 'done' },
-        { label: 'Jenjang dan program studi', state: step === 2 ? 'current' : step > 2 ? 'done' : 'todo' },
-        { label: 'Dokumen registrasi', state: step === 3 ? 'current' : 'todo' },
-      ]} />
-      <form className="space-y-5" noValidate onSubmit={(ev) => { ev.preventDefault(); if (step < 3) void next(); else void submit(); }}>
-        <FormError message={err} />
-        {step === 1 && (
-          <>
-            <Field label="Nama UPPS" required error={e.uppsName?.message} hint="Contoh: Fakultas Teknik Universitas Contoh.">{(p) => <Input {...p} {...f.register('uppsName')} />}</Field>
-            <Field label="Nama Pimpinan Tertinggi UPPS" required error={e.leaderName?.message}>{(p) => <Input {...p} placeholder="Masukkan nama lengkap pimpinan tertinggi beserta gelar akademik" {...f.register('leaderName')} />}</Field>
-            <Field label="Penanggung Jawab Akun" required error={e.picName?.message} hint="Nama petugas yang akan menggunakan akun ini.">{(p) => <Input {...p} autoComplete="name" {...f.register('picName')} />}</Field>
-            <Field label="Surel" required error={e.email?.message}>{(p) => <Input {...p} type="email" autoComplete="email" placeholder="nama@kampus.ac.id" {...f.register('email')} />}</Field>
-            <Field label="Telepon" error={e.phone?.message} hint="Opsional.">{(p) => <Input {...p} type="tel" autoComplete="tel" {...f.register('phone')} />}</Field>
-            <Field label="Institusi" required error={e.institutionId?.message} hint="Institusi yang dicari tidak ditemukan? Hubungi Sekretariat LAM Teknik.">
-              {(p) => <Controller control={f.control} name="institutionId" render={({ field }) => <Combobox id={p.id} items={instItems} value={field.value} onChange={field.onChange} loading={insts.isLoading} placeholder="Ketik untuk mencari institusi" invalid={!!e.institutionId} describedBy={p['aria-describedby']} />} />}
-            </Field>
-            <Field label="Kata Sandi" required error={e.password?.message} hint={`Minimal ${MIN_PASSWORD} karakter.`}>{(p) => <Input {...p} type="password" autoComplete="new-password" {...f.register('password')} />}</Field>
-            <Field label="Konfirmasi Kata Sandi" required error={e.confirmPassword?.message}>{(p) => <Input {...p} type="password" autoComplete="new-password" {...f.register('confirmPassword')} />}</Field>
-          </>
-        )}
-        {step === 2 && (
-          <>
-            <p className="text-base text-muted">Tambahkan jenjang dan program studi yang berada di bawah pengelolaan UPPS ini. Program studi yang Bapak/Ibu daftarkan akan dapat dipilih saat mengajukan akreditasi setelah akun disetujui.</p>
-            {(levels.isError || names.isError) && <Notice tone="danger">Daftar jenjang atau program studi tidak dapat dimuat. Muat ulang halaman.</Notice>}
-            {typeof e.programs?.message === 'string' && <Notice tone="danger">{e.programs.message}</Notice>}
-            {rows.fields.map((row, i) => {
-              const re = e.programs?.[i];
-              return (
-                <fieldset key={row.id} className="space-y-4 rounded-xl border border-line bg-surface p-4">
-                  <legend className="px-1 text-sm font-semibold text-navy-900">Program studi {i + 1}</legend>
-                  <div className="grid gap-4 sm:grid-cols-[12rem_minmax(0,1fr)]">
+  return shell(
+    <HorizontalForm>
+      <div className="p-5 sm:p-6">
+        <h1 className="flex items-center gap-2 text-lg font-medium text-navy-700"><UserRound size={19} aria-hidden />Registrasi UPPS</h1>
+        <p className="mt-3 text-sm">Isilah formulir di bawah ini dengan baik dan benar untuk melakukan registrasi akun Unit Pengelola Program Studi (UPPS). Pendaftaran akan diverifikasi oleh Sekretariat Administrasi.</p>
+        <p className="mt-3 text-sm">Referensi:</p>
+        <ol className="mt-1 space-y-0.5 text-sm">
+          <li>1) <button type="button" onClick={() => setInfoOpen(true)} className="text-navy-700 hover:underline">Apa itu UPPS?</button></li>
+          <li>2) <button type="button" onClick={() => setFlowOpen(true)} className="text-navy-700 hover:underline">Alur akreditasi</button></li>
+        </ol>
+        <hr className="my-4 border-line" />
+        <StepIndicator className="mb-6" steps={[
+          { label: 'Profil UPPS', state: step === 1 ? 'current' : 'done' },
+          { label: 'Jenjang dan Program Studi', state: step === 2 ? 'current' : step > 2 ? 'done' : 'todo' },
+          { label: 'Dokumen Registrasi', state: step === 3 ? 'current' : 'todo' },
+        ]} />
+        <form className="space-y-4" noValidate onSubmit={(ev) => { ev.preventDefault(); if (step < 3) void next(); else void submit(); }}>
+          <FormError message={err} />
+          {step === 1 && (
+            <>
+              <Field label="Nama UPPS" required error={e.uppsName?.message} hint="Contoh: Fakultas Teknik Universitas Contoh.">{(p) => <Input {...p} placeholder="Masukkan nama UPPS" {...f.register('uppsName')} />}</Field>
+              <Field label="Nama Pimpinan Tertinggi UPPS" required error={e.leaderName?.message}>{(p) => <Input {...p} placeholder="Nama lengkap pimpinan tertinggi beserta gelar akademik" {...f.register('leaderName')} />}</Field>
+              <Field label="Penanggung Jawab Akun" required error={e.picName?.message} hint="Nama petugas yang akan menggunakan akun ini.">{(p) => <Input {...p} autoComplete="name" placeholder="Masukkan nama penanggung jawab" {...f.register('picName')} />}</Field>
+              <Field label="Surel" required error={e.email?.message}>{(p) => <Input {...p} type="email" autoComplete="email" placeholder="nama@kampus.ac.id" {...f.register('email')} />}</Field>
+              <Field label="Telepon" error={e.phone?.message} hint="Opsional.">{(p) => <Input {...p} type="tel" autoComplete="tel" {...f.register('phone')} />}</Field>
+              <Field label="Institusi" required error={e.institutionId?.message} hint="Institusi tidak ditemukan? Hubungi Sekretariat.">
+                {(p) => <Controller control={f.control} name="institutionId" render={({ field }) => <Combobox id={p.id} items={instItems} value={field.value} onChange={field.onChange} loading={insts.isLoading} placeholder="Ketik untuk mencari institusi" invalid={!!e.institutionId} describedBy={p['aria-describedby']} />} />}
+              </Field>
+              <Field label="Kata Sandi" required error={e.password?.message} hint={`Minimal ${MIN_PASSWORD} karakter.`}>{(p) => <Input {...p} type="password" autoComplete="new-password" {...f.register('password')} />}</Field>
+              <Field label="Konfirmasi Kata Sandi" required error={e.confirmPassword?.message}>{(p) => <Input {...p} type="password" autoComplete="new-password" {...f.register('confirmPassword')} />}</Field>
+            </>
+          )}
+          {step === 2 && (
+            <>
+              <p className="text-sm text-muted">Tambahkan jenjang dan program studi yang berada di bawah pengelolaan UPPS ini.</p>
+              {(levels.isError || names.isError) && <Notice tone="danger">Daftar jenjang atau program studi tidak dapat dimuat. Muat ulang halaman.</Notice>}
+              {typeof e.programs?.message === 'string' && <Notice tone="danger">{e.programs.message}</Notice>}
+              {rows.fields.map((row, i) => {
+                const re = e.programs?.[i];
+                return (
+                  <fieldset key={row.id} className="space-y-3 rounded border border-line bg-slate-50 p-4">
+                    <legend className="px-1 text-sm font-medium text-navy-900">Program studi {i + 1}</legend>
                     <Field label="Jenjang" required error={re?.levelId?.message}>
                       {(p) => <Select {...p} {...f.register(`programs.${i}.levelId`)}><option value="">{levels.isLoading ? 'Memuat…' : 'Pilih jenjang'}</option>{levels.data?.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}</Select>}
                     </Field>
-                    <Field label="Prodi" required error={re?.programNameId?.message} hint="Prodi yang dicari tidak ditemukan? Hubungi Sekretariat LAM Teknik.">
+                    <Field label="Prodi" required error={re?.programNameId?.message} hint="Prodi tidak ditemukan? Hubungi Sekretariat.">
                       {(p) => <Controller control={f.control} name={`programs.${i}.programNameId`} render={({ field }) => <Combobox id={p.id} items={nameItems} value={field.value} onChange={field.onChange} loading={names.isLoading} placeholder="Ketik untuk mencari program studi" invalid={!!re?.programNameId} describedBy={p['aria-describedby']} />} />}
                     </Field>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Ketua Prodi" error={re?.headName?.message} hint="Opsional.">{(p) => <Input {...p} {...f.register(`programs.${i}.headName`)} />}</Field>
                     <Field label="Letak Prodi" error={re?.location?.message} hint="Alamat atau kota tempat prodi berada. Opsional.">{(p) => <Input {...p} {...f.register(`programs.${i}.location`)} />}</Field>
-                    <Field label="Lintang (opsional)" error={re?.lat?.message} hint="Contoh: -6,914744">{(p) => <Input {...p} inputMode="decimal" {...f.register(`programs.${i}.lat`)} />}</Field>
-                    <Field label="Bujur (opsional)" error={re?.lng?.message} hint="Contoh: 107,609810">{(p) => <Input {...p} inputMode="decimal" {...f.register(`programs.${i}.lng`)} />}</Field>
-                  </div>
-                  {rows.fields.length > 1 && <div className="flex justify-end"><Button variant="ghost" size="sm" onClick={() => rows.remove(i)} icon={<Trash2 size={16} />}>Hapus program studi {i + 1}</Button></div>}
-                </fieldset>
-              );
-            })}
-            <Button variant="secondary" onClick={() => rows.append({ ...EMPTY_ROW })} icon={<Plus size={16} />}>Tambah</Button>
-          </>
-        )}
-        {step === 3 && (
-          <>
-            <p className="text-base text-muted">Unggah dokumen berikut. Surat dibuat mengikuti templat resmi, ditandatangani, lalu dipindai dalam format PDF.</p>
-            <FileField label="Foto Penanggung Jawab" optional accept=".jpg,.jpeg,image/jpeg" file={files.photo} error={fileErr.photo} hint="Opsional. Format JPG/JPEG, maksimal 500 KB." onPick={(x) => pick('photo', x)} />
-            <div>
-              <FileField label="Surat Pengajuan Permohonan Akun" accept=".pdf,application/pdf" file={files.sppa} error={fileErr.sppa} hint="Format PDF, maksimal 1 MB." onPick={(x) => pick('sppa', x)} />
-              <a href={TEMPLATE_SPPA} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-navy-700 underline"><Download size={15} aria-hidden />Unduh templat surat permohonan akun</a>
+                    <Field label="Lintang" error={re?.lat?.message} hint="Opsional. Contoh: -6,914744">{(p) => <Input {...p} inputMode="decimal" {...f.register(`programs.${i}.lat`)} />}</Field>
+                    <Field label="Bujur" error={re?.lng?.message} hint="Opsional. Contoh: 107,609810">{(p) => <Input {...p} inputMode="decimal" {...f.register(`programs.${i}.lng`)} />}</Field>
+                    {rows.fields.length > 1 && <div className="flex justify-end"><Button variant="ghost" size="sm" onClick={() => rows.remove(i)} icon={<Trash2 size={15} />}>Hapus program studi {i + 1}</Button></div>}
+                  </fieldset>
+                );
+              })}
+              <Button variant="secondary" onClick={() => rows.append({ ...EMPTY_ROW })} icon={<Plus size={15} />}>Tambah</Button>
+            </>
+          )}
+          {step === 3 && (
+            <>
+              <p className="text-sm text-muted">Surat dibuat mengikuti templat resmi, ditandatangani, lalu dipindai dalam format PDF.</p>
+              <FileField label="Foto Penanggung Jawab" optional accept=".jpg,.jpeg,image/jpeg" file={files.photo} error={fileErr.photo} hint="Opsional. Format JPG/JPEG, maksimal 500 KB." onPick={(x) => pick('photo', x)} />
+              <FileField label="Surat Pengajuan Permohonan Akun" accept=".pdf,application/pdf" file={files.sppa} error={fileErr.sppa} hint={<>Format PDF, maksimal 1 MB. <TemplateLink href={TEMPLATE_SPPA}>Unduh templat</TemplateLink></>} onPick={(x) => pick('sppa', x)} />
+              <FileField label="Surat Pernyataan sebagai UPPS oleh Pimpinan Perguruan Tinggi" accept=".pdf,application/pdf" file={files.spsu} error={fileErr.spsu} hint={<>Format PDF, maksimal 1 MB. <TemplateLink href={TEMPLATE_SPSU}>Unduh templat</TemplateLink></>} onPick={(x) => pick('spsu', x)} />
+              <div>
+                <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+                  <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-navy-700" aria-invalid={e.terms ? true : undefined} {...f.register('terms')} />
+                  <span>Dengan melakukan registrasi akun UPPS, saya menyatakan telah membaca dan menerima <button type="button" onClick={() => setTermsOpen(true)} className="text-navy-700 hover:underline">ketentuan dan persyaratan yang berlaku</button>.</span>
+                </label>
+                {e.terms?.message && <p role="alert" className="mt-1.5 flex items-start gap-1.5 text-sm text-bad"><AlertTriangle size={14} className="mt-1 shrink-0" aria-hidden />{e.terms.message}</p>}
+              </div>
+            </>
+          )}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+            <Link to="/masuk" className="inline-flex min-h-[38px] items-center gap-1.5 rounded border border-slate-300 bg-white px-4 py-1.5 text-sm font-medium text-ink hover:bg-slate-50"><ArrowLeft size={15} aria-hidden />Kembali ke Beranda</Link>
+            <div className="flex flex-wrap gap-2">
+              {step > 1 && <Button variant="secondary" onClick={() => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2) : s))}>Sebelumnya</Button>}
+              {step < 3
+                ? <Button onClick={() => void next()} icon={<ArrowRight size={15} />}>Selanjutnya</Button>
+                : <Button type="submit" loading={f.formState.isSubmitting}>Daftar sebagai UPPS</Button>}
             </div>
-            <div>
-              <FileField label="Surat Pernyataan sebagai UPPS oleh Pimpinan Perguruan Tinggi" accept=".pdf,application/pdf" file={files.spsu} error={fileErr.spsu} hint="Format PDF, maksimal 1 MB." onPick={(x) => pick('spsu', x)} />
-              <a href={TEMPLATE_SPSU} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-navy-700 underline"><Download size={15} aria-hidden />Unduh templat surat pernyataan sebagai UPPS</a>
-            </div>
-            <div>
-              <label className="flex cursor-pointer items-start gap-3 text-base">
-                <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-navy-700" aria-invalid={e.terms ? true : undefined} {...f.register('terms')} />
-                <span>Dengan melakukan registrasi akun UPPS, saya menyatakan telah membaca dan menerima <button type="button" onClick={() => setTermsOpen(true)} className="font-semibold text-navy-700 underline">ketentuan dan persyaratan yang berlaku</button>.</span>
-              </label>
-              {e.terms?.message && <p role="alert" className="mt-1.5 flex items-start gap-1.5 text-sm text-bad"><AlertTriangle size={15} className="mt-1 shrink-0" aria-hidden />{e.terms.message}</p>}
-            </div>
-          </>
-        )}
-        <div className="flex flex-wrap justify-between gap-3 border-t border-line pt-5">
-          {step > 1 ? <Button variant="secondary" onClick={() => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2) : s))} icon={<ArrowLeft size={16} />}>Sebelumnya</Button> : <span />}
-          {step < 3
-            ? <Button onClick={() => void next()} icon={<ArrowRight size={16} />}>Selanjutnya</Button>
-            : <Button type="submit" loading={f.formState.isSubmitting}>Daftar sebagai UPPS</Button>}
-        </div>
-      </form>
+          </div>
+        </form>
+      </div>
       <UppsInfoModal open={infoOpen} onClose={() => setInfoOpen(false)} />
+      <FlowModal open={flowOpen} onClose={() => setFlowOpen(false)} />
       <TermsModal open={termsOpen} onClose={() => setTermsOpen(false)} />
-    </SplitShell>
+    </HorizontalForm>,
   );
 }
 
 export function NotFoundPage() {
   return (
-    <div className="grid min-h-screen place-items-center bg-surface px-6 text-center">
-      <div className="max-w-md">
-        <span className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-full bg-navy-50 text-navy-700"><Compass size={28} aria-hidden /></span>
-        <p className="font-display text-sm font-semibold tracking-widest text-faint">KODE 404</p>
-        <h1 className="mt-1 text-2xl font-bold">Halaman tidak ditemukan</h1>
-        <p className="mt-2 text-base text-muted">Alamat yang Bapak/Ibu tuju tidak tersedia atau sudah dipindahkan. Silakan kembali ke beranda dan lanjutkan dari menu.</p>
-        <Link to="/" className="mt-6 inline-flex min-h-[40px] items-center rounded-lg bg-navy-700 px-5 py-2 text-sm font-medium text-white hover:bg-navy-800">Kembali ke beranda</Link>
+    <div className={`${BG_CLS} grid place-items-center text-center`}>
+      <div className="w-full max-w-md rounded border border-line bg-white px-6 py-8 shadow-sm">
+        <Compass size={36} className="mx-auto text-slate-400" aria-hidden />
+        <p className="mt-3 text-sm text-faint">Kode 404</p>
+        <h1 className="mt-1 text-xl font-medium">Halaman tidak ditemukan</h1>
+        <p className="mt-2 text-sm text-muted">Alamat yang Bapak/Ibu tuju tidak tersedia atau sudah dipindahkan. Silakan kembali ke beranda dan lanjutkan dari menu.</p>
+        <Link to="/" className="mt-5 inline-flex min-h-[38px] items-center rounded border border-navy-700 bg-navy-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-navy-800">Kembali ke beranda</Link>
       </div>
     </div>
   );

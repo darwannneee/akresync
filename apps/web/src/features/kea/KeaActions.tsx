@@ -1,9 +1,10 @@
+import { useId } from 'react';
 import { useForm } from 'react-hook-form';
 import { MAX_TOTAL_SCORE } from '@akreditasi/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../api/client';
-import { Badge, Button, DataTable, DL, Field, Input, Notice, Select, StepSection } from '../../components/ui';
+import { Badge, Button, DataTable, DL, Field, Input, ModalActions, Notice, Select, StepSection } from '../../components/ui';
 import { NotesForm, RadioCards, ResultNotesForm, useConfirmed } from '../common/forms';
 import { useAction } from '../common/useAction';
 import { useAssessors } from '../common/queries';
@@ -28,8 +29,9 @@ export function OfferForm({ s, reoffer }: ActionProps & { reoffer?: boolean }) {
     summary: (v) => [['Program studi', s.programName], ['Asesor pertama', name(v.assessor1Id)], ['Asesor kedua', name(v.assessor2Id)], ['Ketua asesor', name(v.leadAssessorId)]],
   });
   const pair = [a1, a2].filter(Boolean).filter((x, i, arr) => arr.indexOf(x) === i);
+  const fid = useId();
   return (
-    <form className="space-y-6" noValidate onSubmit={f.handleSubmit((v) => confirm.ask(v))}>
+    <form id={fid} className="space-y-6" noValidate onSubmit={f.handleSubmit((v) => confirm.ask(v))}>
       <StepSection n={1} title="Pilih asesor pertama" done={!!a1}>
         <Field label="Asesor pertama" required error={e.assessor1Id?.message}>{(p) => <Select {...p} {...f.register('assessor1Id')}><option value="">{assessors.isLoading ? 'Memuat daftar asesor…' : 'Pilih asesor'}</option>{opts}</Select>}</Field>
       </StepSection>
@@ -41,7 +43,7 @@ export function OfferForm({ s, reoffer }: ActionProps & { reoffer?: boolean }) {
         {e.leadAssessorId?.message && <p role="alert" className="mt-1 text-sm text-bad">{e.leadAssessorId.message}</p>}
       </StepSection>
       <StepSection n={4} title="Tinjau dan kirim penawaran" hint="Penugasan berlaku setelah kedua asesor dan UPPS menerima.">
-        <Button type="submit" loading={m.isPending}>{reoffer ? 'Kirim penawaran ulang' : 'Kirim penawaran'}</Button>
+        <ModalActions><Button type="submit" form={fid} loading={m.isPending}>{reoffer ? 'Kirim Penawaran Ulang' : 'Kirim Penawaran'}</Button></ModalActions>
       </StepSection>
       {confirm.dialog}
     </form>
@@ -90,16 +92,17 @@ export function ScheduleForm({ s }: ActionProps) {
   const m = useAction((v: z.infer<typeof schedSchema>) => api.post(`/submissions/${s.id}/al-schedules`, v), { title: 'Usulan jadwal telah dikirim', submissionId: s.id });
   const e = f.formState.errors;
   const rejected = (s.alSchedules ?? []).filter((x) => x.status === 'rejected').slice(-1)[0];
+  const fid = useId();
   return (
-    <form className="space-y-4" noValidate onSubmit={f.handleSubmit((v) => m.mutate(v))}>
+    <form id={fid} className="space-y-4" noValidate onSubmit={f.handleSubmit((v) => m.mutate(v))}>
       {rejected && <Notice tone="warn" title="Usulan sebelumnya ditolak">{rejected.notes ?? 'Perbaiki usulan sesuai catatan Sekretariat.'} (Pelaksanaan semula {fmtDate(rejected.startDate)}, {rejected.location}.)</Notice>}
-      <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
+      <div className="space-y-4">
         <Field label="Tanggal mulai" required error={e.startDate?.message}>{(p) => <Input {...p} type="date" {...f.register('startDate')} />}</Field>
         <Field label="Tanggal selesai" required error={e.endDate?.message}>{(p) => <Input {...p} type="date" {...f.register('endDate')} />}</Field>
         <Field label="Lokasi" required error={e.location?.message}>{(p) => <Input {...p} {...f.register('location')} />}</Field>
         <Field label="Moda pelaksanaan">{(p) => <Select {...p} {...f.register('mode')}>{(['luring', 'daring', 'hibrida'] as const).map((k) => <option key={k} value={k}>{MODE_LABEL[k]}</option>)}</Select>}</Field>
       </div>
-      <Button type="submit" loading={m.isPending}>Kirim usulan jadwal</Button>
+      <ModalActions><Button type="submit" form={fid} loading={m.isPending}>Kirim Usulan Jadwal</Button></ModalActions>
     </form>
   );
 }

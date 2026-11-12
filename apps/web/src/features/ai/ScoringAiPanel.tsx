@@ -48,7 +48,7 @@ export function ScoringAiPanel({ submissionId, phase, ai, locked }: { submission
           <>
             <p className="text-xs text-muted">Analisis selesai {fmtDateTime(done.finishedAt)} · himpunan dokumen versi {done.setVersion ?? '—'}{ai.latest && ai.latest.id !== done.id && active ? ' · analisis yang lebih baru sedang diproses' : ''}</p>
             {done.totals && <TotalsView totals={done.totals} />}
-            <div className="rounded-lg border border-line bg-white p-3"><p className="text-xs font-semibold uppercase tracking-wide text-faint">Ringkasan AI</p><p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed">{done.result.summary || '—'}</p></div>
+            <div className="rounded-lg border border-line bg-white p-3"><p className="text-xs font-medium text-faint">Ringkasan AI</p><p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed">{done.result.summary || '—'}</p></div>
             <p className="text-sm text-muted">Saran per butir tampil di bawah setiap butir pada kriteria di bawah ini. Tombol “Pakai saran” hanya mengisi draf; Bapak/Ibu tetap menyerahkan hasil sendiri.</p>
             <AiTechnical a={done} />
           </>

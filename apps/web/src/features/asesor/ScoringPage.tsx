@@ -2,10 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Check, CircleDot, Save } from 'lucide-react';
+import { ROLE_HOME } from '@akreditasi/shared';
 import { api, errorMessage } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { useToast } from '../../components/Toast';
-import { Badge, Button, Card, ConfirmDialog, FormError, Notice, PageSkeleton, ProgressBar, StepIndicator, cx } from '../../components/ui';
+import { Badge, Button, Card, ConfirmDialog, FormError, Notice, PageHeader, PageSkeleton, ProgressBar, StepIndicator, cx } from '../../components/ui';
 import { useSubmission } from '../common/queries';
 import { useAction } from '../common/useAction';
 import { ASSESS_STATUS_LABEL, PHASE_LABEL, fmtNumber } from '../../lib/labels';
@@ -90,21 +91,22 @@ export function ScoringPage() {
 
   return (
     <div>
-      <Link to={`/pengajuan/${id}`} className="mb-3 inline-flex items-center gap-1 text-sm text-navy-700 hover:underline"><ArrowLeft size={15} aria-hidden />Kembali ke pengajuan</Link>
-      <div className="sticky top-16 z-10 -mx-4 mb-6 border-b border-line bg-white/95 px-4 py-3 shadow-sm backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <PageHeader title={`Penilaian ${phase}`} crumbs={[{ label: 'Penugasan', to: ROLE_HOME.asesor }, { label: q.data.programName ?? `Pengajuan ${id.slice(0, 8)}`, to: `/pengajuan/${id}` }, { label: `Penilaian ${PHASE_LABEL[phase]}` }]}
+        actions={<Link to={`/pengajuan/${id}`}><Button variant="secondary" icon={<ArrowLeft size={15} />}>Kembali ke Pengajuan</Button></Link>} />
+      <div className="card sticky top-[68px] z-10 mb-4 px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold">Penilaian {PHASE_LABEL[phase]} ({phase})</h1>
+            <p className="font-medium">Penilaian {PHASE_LABEL[phase]} ({phase})</p>
             <p className="truncate text-sm text-muted">{q.data.programName}{q.data.programLevel ? ` (${q.data.programLevel})` : ''} · {q.data.institutionName}</p>
           </div>
           <div className="flex flex-wrap items-center gap-5">
-            <div aria-live="polite"><div className="text-xs font-semibold uppercase tracking-wide text-faint">Skor total (0 sampai {fmtNumber(MAX_TOTAL_SCORE)})</div><div className="font-display text-3xl font-bold leading-none text-navy-900 tabular-nums">{fmtNumber(total)}</div><div className="mt-1 text-xs text-muted" title={INST.rankNote}>Peringkat sementara: {rank ? rankLabel(rank) : 'belum ditetapkan pedoman'}</div></div>
+            <div aria-live="polite"><div className="text-xs text-faint">Skor total (0 sampai {fmtNumber(MAX_TOTAL_SCORE)})</div><div className="text-2xl font-medium leading-none text-ink tabular-nums">{fmtNumber(total)}</div><div className="mt-1 text-xs text-muted" title={INST.rankNote}>Peringkat sementara: {rank ? rankLabel(rank) : 'belum ditetapkan pedoman'}</div></div>
             <div className="min-w-[10rem]"><div className="mb-1 text-sm text-muted">Terisi {filled} dari {count} butir</div><ProgressBar value={filled} max={count} label="Kelengkapan pengisian" /></div>
             {!locked && <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" icon={<Save size={16} />} disabled={filled === 0} loading={saveDraft.isPending} onClick={() => saveDraft.mutate()}>Simpan draf</Button>
-              <Button disabled={!complete} onClick={() => setConfirm(true)}>Serahkan hasil</Button>
+              <Button variant="secondary" icon={<Save size={15} />} disabled={filled === 0} loading={saveDraft.isPending} onClick={() => saveDraft.mutate()}>Simpan Draf</Button>
+              <Button disabled={!complete} onClick={() => setConfirm(true)}>Serahkan Hasil</Button>
             </div>}
-            {locked && <Badge tone="success" icon={<Check size={13} />}>{ASSESS_STATUS_LABEL.submitted}</Badge>}
+            {locked && <Badge tone="success" icon={<Check size={12} />}>{ASSESS_STATUS_LABEL.submitted}</Badge>}
           </div>
         </div>
         {!locked && <p className="mt-2 text-sm text-muted">{status}. {!complete && 'Lengkapi seluruh butir untuk dapat menyerahkan hasil.'}</p>}
@@ -117,8 +119,8 @@ export function ScoringPage() {
       <div className="mb-6"><ScoringAiPanel submissionId={id} phase={phase} ai={ai} locked={locked} /></div>
 
       <div className="grid items-start gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-        <nav aria-label="Kriteria penilaian" className="card overflow-hidden lg:sticky lg:top-44">
-          <p className="border-b border-line px-4 py-3 font-display font-semibold">Kriteria penilaian</p>
+        <nav aria-label="Kriteria penilaian" className="card overflow-hidden">
+          <p className="border-b border-line px-4 py-2.5 text-[15px] font-medium">Kriteria Penilaian</p>
           <ul className="divide-y divide-line">
             {CRITERIA.map((c) => {
               const sm = criterionSummary(scores, c.code); const f = sm.filled; const done = f === sm.count;
@@ -126,8 +128,8 @@ export function ScoringPage() {
                 <li key={c.code}>
                   <button type="button" onClick={() => setActive(c.code)} aria-current={c.code === active ? 'true' : undefined}
                     className={cx('flex w-full items-start gap-3 px-4 py-3 text-left transition-colors', c.code === active ? 'bg-navy-50 shadow-[inset_3px_0_0_0_#1E4D8C]' : 'hover:bg-slate-50')}>
-                    <span className={cx('mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold', done ? 'bg-ok text-white' : f > 0 ? 'bg-navy-700 text-white' : 'bg-slate-200 text-muted')}>{done ? <Check size={14} aria-hidden /> : c.code.slice(1)}</span>
-                    <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-ink">Kriteria {c.code.slice(1)}. {c.title}</span><span className="mt-1.5 block"><ProgressBar value={f} max={sm.count} label={`${c.code} terisi`} /></span><span className="mt-1 block text-xs text-muted">{f} dari {sm.count} butir · skor {fmtNumber(sm.subtotal)} dari {fmtNumber(sm.max)}</span></span>
+                    <span className={cx('mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-medium', done ? 'bg-ok text-white' : f > 0 ? 'bg-navy-700 text-white' : 'bg-slate-200 text-muted')}>{done ? <Check size={14} aria-hidden /> : c.code.slice(1)}</span>
+                    <span className="min-w-0 flex-1"><span className="block text-sm font-medium text-ink">Kriteria {c.code.slice(1)}. {c.title}</span><span className="mt-1.5 block"><ProgressBar value={f} max={sm.count} label={`${c.code} terisi`} /></span><span className="mt-1 block text-xs text-muted">{f} dari {sm.count} butir · skor {fmtNumber(sm.subtotal)} dari {fmtNumber(sm.max)}</span></span>
                   </button>
                 </li>
               );
@@ -145,10 +147,10 @@ export function ScoringPage() {
               return (
                 <li key={it.id} className="py-5">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="text-base font-semibold text-ink">Butir {lbl}. {it.element}</p>
+                    <p className="font-medium text-ink">Butir {lbl}. {it.element}</p>
                     <span className="text-sm text-muted">Bobot {fmtNumber(it.weight)}{typeof v === 'number' ? ` · skor butir ${fmtNumber(v * it.weight)}` : ''}</span>
                   </div>
-                  <p className="mt-1.5 text-[15px] leading-relaxed text-ink">{it.indicator}</p>
+                  <p className="mt-1.5 leading-relaxed text-ink">{it.indicator}</p>
                   <p className="mt-1.5 text-sm text-muted">Dasar penilaian: {it.dataSource}.</p>
                   {it.quantitative && <p className="mt-1 text-sm text-muted">Butir kuantitatif: nilai acuan diambil dari LKPS. {it.formula ? `${it.formula}.` : 'Pedoman tidak mencantumkan rumus perhitungan.'}</p>}
                   <div role="radiogroup" aria-label={`Tingkat skor butir ${lbl}`} className={cx('mt-3', it.descriptors ? 'space-y-2' : 'flex flex-wrap gap-2')}>
@@ -157,8 +159,8 @@ export function ScoringPage() {
                       const on = v === n;
                       return (
                         <button key={n} type="button" role="radio" aria-checked={on} disabled={locked} onClick={() => pick(it.criterion, it.id, n)}
-                          className={cx('rounded-lg border text-left text-sm transition-colors disabled:opacity-60', it.descriptors ? 'flex w-full items-start gap-3 px-3 py-2.5' : 'grid h-10 min-w-[2.75rem] place-items-center px-3 font-semibold', on ? 'border-navy-700 bg-navy-700 text-white' : 'border-slate-300 bg-white text-ink hover:border-navy-700 hover:bg-navy-50')}>
-                          <span className="font-semibold">{n}</span>{d && <span className="font-normal">{d.label}</span>}
+                          className={cx('rounded-lg border text-left text-sm transition-colors disabled:opacity-60', it.descriptors ? 'flex w-full items-start gap-3 px-3 py-2.5' : 'grid h-9 min-w-[2.75rem] place-items-center px-3 font-medium', on ? 'border-navy-700 bg-navy-700 text-white' : 'border-slate-300 bg-white text-ink hover:border-navy-700 hover:bg-navy-50')}>
+                          <span className="font-medium">{n}</span>{d && <span className="font-normal">{d.label}</span>}
                         </button>
                       );
                     })}
@@ -170,8 +172,8 @@ export function ScoringPage() {
             })}
           </ul>
           <div className="mt-4 flex justify-between gap-2 border-t border-line pt-4">
-            <Button variant="secondary" disabled={idx === 0} onClick={() => setActive(CRITERIA[idx - 1]!.code)}>Kriteria sebelumnya</Button>
-            <Button variant="secondary" disabled={idx === CRITERIA.length - 1} onClick={() => setActive(CRITERIA[idx + 1]!.code)}>Kriteria berikutnya</Button>
+            <Button variant="secondary" disabled={idx === 0} onClick={() => setActive(CRITERIA[idx - 1]!.code)}>Kriteria Sebelumnya</Button>
+            <Button variant="secondary" disabled={idx === CRITERIA.length - 1} onClick={() => setActive(CRITERIA[idx + 1]!.code)}>Kriteria Berikutnya</Button>
           </div>
         </Card>
       </div>

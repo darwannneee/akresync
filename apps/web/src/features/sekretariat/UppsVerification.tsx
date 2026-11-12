@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CheckCircle2, Download, Eye, UserCheck, XCircle } from 'lucide-react';
+import { CheckCircle2, Download, Eye, XCircle } from 'lucide-react';
 import { api, downloadFile, errorMessage, fetchBlob } from '../../api/client';
-import { Badge, Button, Card, ConfirmDialog, DataTable, DL, EmptyState, Field, FormError, Modal, Notice, PageHeader, Skeleton, Tabs, Textarea, type Tone } from '../../components/ui';
+import { Badge, Button, Card, ConfirmDialog, DataTable, Field, FormError, InfoTable, Modal, Notice, PageHeader, Skeleton, Tabs, Textarea, type Tone } from '../../components/ui';
 import { useToast } from '../../components/Toast';
 import { fmtDateTime } from '../../lib/labels';
 import { REG_STATUS_LABEL, useUppsRegistration, useUppsRegistrations, type RegFile, type RegStatus, type RegSummary } from './uppsRegistrations';
@@ -15,7 +15,6 @@ const kb = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(2).re
 type Filter = 'pending_verification' | 'approved' | 'rejected' | 'all';
 
 export function UppsVerificationList() {
-  const nav = useNavigate();
   const q = useUppsRegistrations();
   const [tab, setTab] = useState<Filter>('pending_verification');
   const all = q.data ?? [];
@@ -23,27 +22,31 @@ export function UppsVerificationList() {
   const rows = tab === 'all' ? all : all.filter((r) => r.status === tab);
   return (
     <div>
-      <PageHeader eyebrow="Sekretariat Administrasi" title="Verifikasi Akun UPPS"
-        subtitle="Periksa data dan dokumen pendaftaran perwakilan UPPS. Akun baru dapat digunakan setelah Bapak/Ibu menyetujui pendaftaran." />
+      <PageHeader title="Verifikasi Akun UPPS" crumbs={[{ label: 'Akun UPPS' }, { label: 'Verifikasi Akun UPPS' }]} />
       {q.isError && <div className="mb-4"><FormError message={errorMessage(q.error)} /></div>}
-      <Tabs label="Status pendaftaran" value={tab} onChange={setTab} tabs={[
-        { id: 'pending_verification', label: 'Menunggu verifikasi', count: count('pending_verification') },
-        { id: 'approved', label: 'Disetujui', count: count('approved') },
-        { id: 'rejected', label: 'Ditolak', count: count('rejected') },
-        { id: 'all', label: 'Semua', count: all.length },
-      ]} />
-      <div className="mt-5" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        {q.isLoading ? <div className="space-y-3"><Skeleton className="h-16" /><Skeleton className="h-16" /></div>
-          : rows.length === 0 ? <EmptyState icon={<UserCheck size={22} />} title={tab === 'pending_verification' ? 'Tidak ada pendaftaran yang menunggu' : 'Belum ada data'}>Pendaftaran UPPS yang masuk akan tampil di sini.</EmptyState>
-          : <DataTable<RegSummary> rows={rows} rowKey={(r) => r.id} caption="Pendaftaran akun UPPS" onRowClick={(r) => nav(`/sekretariat/administrasi/akun-upps/${r.id}`)}
-              columns={[
-                { key: 'u', header: 'UPPS', primary: true, cell: (r) => <div><div className="font-medium text-ink">{r.uppsName}</div><div className="text-sm text-muted">{r.institutionName}</div></div> },
-                { key: 'p', header: 'Penanggung jawab', cell: (r) => <div><div>{r.picName}</div><div className="text-sm text-muted">{r.email}</div></div> },
-                { key: 'n', header: 'Prodi', align: 'right', cell: (r) => r.programCount },
-                { key: 's', header: 'Status', cell: (r) => <RegStatusBadge status={r.status} /> },
-                { key: 'd', header: 'Didaftarkan', cell: (r) => fmtDateTime(r.createdAt) },
-                { key: 'a', header: '', cell: (r) => <Link to={`/sekretariat/administrasi/akun-upps/${r.id}`} onClick={(e) => e.stopPropagation()}><Button size="sm" variant={r.status === 'pending_verification' ? 'primary' : 'secondary'}>{r.status === 'pending_verification' ? 'Periksa pendaftaran' : 'Lihat rincian'}</Button></Link> },
-              ]} />}
+      <div className="card">
+        <div className="px-3 pt-2">
+          <Tabs label="Status pendaftaran" value={tab} onChange={setTab} tabs={[
+            { id: 'pending_verification', label: 'Menunggu verifikasi', count: count('pending_verification') },
+            { id: 'approved', label: 'Disetujui', count: count('approved') },
+            { id: 'rejected', label: 'Ditolak', count: count('rejected') },
+            { id: 'all', label: 'Semua', count: all.length },
+          ]} />
+        </div>
+        <div className="p-4 sm:p-5" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+          {q.isLoading ? <div className="space-y-3"><Skeleton className="h-10" /><Skeleton className="h-10" /></div>
+            : <DataTable<RegSummary> toolbar rows={rows} rowKey={(r) => r.id} caption="Pendaftaran akun UPPS"
+                search={(r) => `${r.uppsName} ${r.institutionName} ${r.picName} ${r.email}`}
+                emptyText={tab === 'pending_verification' ? 'Tidak ada pendaftaran yang menunggu verifikasi.' : 'Belum ada data.'}
+                columns={[
+                  { key: 'u', header: 'UPPS', primary: true, cell: (r) => <div><div className="font-medium text-ink">{r.uppsName}</div><div className="text-muted">{r.institutionName}</div></div> },
+                  { key: 'p', header: 'Penanggung jawab', cell: (r) => <div><div>{r.picName}</div><div className="text-muted">{r.email}</div></div> },
+                  { key: 'n', header: 'Prodi', align: 'right', cell: (r) => r.programCount },
+                  { key: 's', header: 'Status', cell: (r) => <RegStatusBadge status={r.status} /> },
+                  { key: 'd', header: 'Didaftarkan', cell: (r) => <span className="whitespace-nowrap">{fmtDateTime(r.createdAt)}</span> },
+                  { key: 'a', header: 'Aksi', cell: (r) => <Link to={`/sekretariat/administrasi/akun-upps/${r.id}`}><Button size="sm" variant={r.status === 'pending_verification' ? 'primary' : 'secondary'}>{r.status === 'pending_verification' ? 'Proses' : 'Detail'}</Button></Link> },
+                ]} />}
+        </div>
       </div>
     </div>
   );
@@ -100,41 +103,38 @@ export function UppsVerificationDetail() {
   const r = q.data;
   const pending = r.status === 'pending_verification';
   return (
-    <div className="space-y-6">
-      <Link to="/sekretariat/administrasi/akun-upps" className="inline-flex items-center gap-1.5 text-sm font-medium text-navy-700 hover:underline"><ArrowLeft size={16} aria-hidden />Kembali ke daftar pendaftaran</Link>
-      <PageHeader eyebrow="Verifikasi Akun UPPS" title={r.uppsName} subtitle={r.institutionName} actions={<RegStatusBadge status={r.status} />} />
-      {!pending && (
-        <Notice tone={r.status === 'approved' ? 'success' : 'danger'} title={r.status === 'approved' ? 'Pendaftaran telah disetujui' : 'Pendaftaran telah ditolak'}>
-          {r.reviewedByName ? `Oleh ${r.reviewedByName}` : ''}{r.reviewedAt ? `, ${fmtDateTime(r.reviewedAt)}` : ''}.{r.reviewNote ? ` Catatan: ${r.reviewNote}` : ''}
-        </Notice>
-      )}
-      <Card title="Profil UPPS">
-        <div className="flex flex-wrap gap-6">
-          {r.hasPhoto && <PhotoPreview regId={r.id} />}
-          <div className="min-w-0 flex-1 basis-80">
-            <DL items={[['Nama UPPS', r.uppsName], ['Institusi', r.institutionName], ['Pimpinan tertinggi UPPS', r.leaderName], ['Penanggung jawab akun', r.picName], ['Surel', r.email], ['Telepon', r.phone], ['Didaftarkan', fmtDateTime(r.createdAt)]]} />
-          </div>
-        </div>
-      </Card>
-      <Card title="Jenjang dan program studi" description="Program studi ini akan dibuat pada institusi tersebut saat pendaftaran disetujui.">
-        <DataTable rows={r.programs} rowKey={(p) => p.id} caption="Program studi terdaftar" columns={[
-          { key: 'l', header: 'Jenjang', cell: (p) => p.levelLabel },
-          { key: 'n', header: 'Program studi', primary: true, cell: (p) => <span className="font-medium text-ink">{p.programName}</span> },
-          { key: 'h', header: 'Ketua prodi', cell: (p) => p.headName ?? '—' },
-          { key: 'c', header: 'Letak prodi', cell: (p) => <div>{p.location ?? '—'}{p.lat != null && p.lng != null && <div className="text-xs text-faint">{p.lat}, {p.lng}</div>}</div> },
-        ]} />
-      </Card>
-      <Card title="Dokumen registrasi" description="Periksa kesesuaian isi dokumen dengan data pendaftaran. Keutuhan berkas diverifikasi otomatis saat dibuka.">
-        <ul className="divide-y divide-line">{r.files.map((f) => <FileRow key={f.kind} regId={r.id} f={f} />)}</ul>
-      </Card>
-      {pending && (
-        <Card title="Keputusan verifikasi" description="Bila disetujui, identitas jaringan akun dibuat dan program studi didaftarkan. Bila ditolak, catatan Bapak/Ibu akan dibaca pendaftar.">
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={() => setApproveOpen(true)} icon={<CheckCircle2 size={16} />}>Setujui pendaftaran</Button>
-            <Button variant="danger" onClick={() => { setNote(''); setNoteErr(null); setRejectOpen(true); }} icon={<XCircle size={16} />}>Tolak pendaftaran</Button>
+    <div>
+      <PageHeader title="Detail Pendaftaran" crumbs={[{ label: 'Akun UPPS' }, { label: 'Verifikasi Akun UPPS', to: '/sekretariat/administrasi/akun-upps' }, { label: r.uppsName }]}
+        actions={pending ? <>
+          <Button onClick={() => setApproveOpen(true)} icon={<CheckCircle2 size={15} />}>Setujui Pendaftaran</Button>
+          <Button variant="danger" onClick={() => { setNote(''); setNoteErr(null); setRejectOpen(true); }} icon={<XCircle size={15} />}>Tolak Pendaftaran</Button>
+        </> : undefined} />
+      <div className="space-y-4">
+        {!pending && (
+          <Notice tone={r.status === 'approved' ? 'success' : 'danger'} title={r.status === 'approved' ? 'Pendaftaran telah disetujui' : 'Pendaftaran telah ditolak'}>
+            {r.reviewedByName ? `Oleh ${r.reviewedByName}` : ''}{r.reviewedAt ? `, ${fmtDateTime(r.reviewedAt)}` : ''}.{r.reviewNote ? ` Catatan: ${r.reviewNote}` : ''}
+          </Notice>
+        )}
+        <Card title="Profil UPPS" actions={<RegStatusBadge status={r.status} />}>
+          <div className="flex flex-wrap gap-5">
+            {r.hasPhoto && <PhotoPreview regId={r.id} />}
+            <div className="min-w-0 flex-1 basis-80">
+              <InfoTable items={[['Nama UPPS', r.uppsName], ['Institusi', r.institutionName], ['Pimpinan tertinggi UPPS', r.leaderName], ['Penanggung jawab akun', r.picName], ['Surel', r.email], ['Telepon', r.phone], ['Didaftarkan', fmtDateTime(r.createdAt)]]} />
+            </div>
           </div>
         </Card>
-      )}
+        <Card title="Jenjang dan Program Studi">
+          <DataTable rows={r.programs} rowKey={(p) => p.id} caption="Program studi terdaftar" columns={[
+            { key: 'l', header: 'Jenjang', cell: (p) => p.levelLabel },
+            { key: 'n', header: 'Program studi', primary: true, cell: (p) => <span className="font-medium text-ink">{p.programName}</span> },
+            { key: 'h', header: 'Ketua prodi', cell: (p) => p.headName ?? '—' },
+            { key: 'c', header: 'Letak prodi', cell: (p) => <div>{p.location ?? '—'}{p.lat != null && p.lng != null && <div className="text-xs text-faint">{p.lat}, {p.lng}</div>}</div> },
+          ]} />
+        </Card>
+        <Card title="Dokumen Registrasi" description="Periksa kesesuaian isi dokumen dengan data pendaftaran.">
+          <ul className="divide-y divide-line">{r.files.map((f) => <FileRow key={f.kind} regId={r.id} f={f} />)}</ul>
+        </Card>
+      </div>
       <ConfirmDialog open={approveOpen} title="Setujui pendaftaran akun UPPS?" permanent={false} confirmLabel="Ya, setujui pendaftaran" pending={decide.isPending}
         items={[['UPPS', r.uppsName], ['Institusi', r.institutionName], ['Penanggung jawab', `${r.picName} (${r.email})`], ['Jumlah program studi', r.programs.length]]}
         onCancel={() => setApproveOpen(false)} onConfirm={() => decide.mutate({ result: 'approved' })}>

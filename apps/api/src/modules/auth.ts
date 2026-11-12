@@ -1,7 +1,7 @@
 import type { CookieOptions, Request, Response, Router } from 'express';
 import type { RequestHandler } from 'express';
 import { z } from 'zod';
-import { API_ROUTES } from '@akreditasi/shared';
+import { API_ROUTES, APP_ROLES } from '@akreditasi/shared';
 import { hashRefreshToken, newRefreshToken, signAccessToken } from '../auth/tokens.js';
 import { loadActiveUser, toAuthUser, verifyPassword } from '../auth/users.js';
 import type { AppContext } from '../context.js';
@@ -11,7 +11,7 @@ import { envelope, mount, parse } from '../lib/http.js';
 
 const COOKIE = 'refresh_token';
 
-const loginSchema = z.object({ email: z.string().email(), password: z.string().min(1) });
+const loginSchema = z.object({ email: z.string().email(), password: z.string().min(1), role: z.enum(APP_ROLES).optional() });
 
 export function authRoutes(ctx: AppContext, router: Router, auth: RequestHandler) {
   const cookieOpts = (): CookieOptions => ({
@@ -47,7 +47,8 @@ export function authRoutes(ctx: AppContext, router: Router, auth: RequestHandler
     const row = await q1(ctx.pool, 'SELECT id, role, email, full_name, institution_id, password_hash, is_active, status FROM users WHERE email = $1', [b.email.trim().toLowerCase()]);
     // Selalu jalankan perbandingan agar waktu respons tidak membedakan email terdaftar.
     const ok = await verifyPassword(b.password, row?.password_hash ?? '$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinv');
-    if (!row || !ok) throw unauthorized('Email atau kata sandi salah');
+    // Peran yang dipilih pada formulir harus sama dengan peran akun; pesannya sama dengan kata sandi salah agar tidak membocorkan.
+    if (!row || !ok || (b.role && row.role !== b.role)) throw unauthorized('Email atau kata sandi salah');
     // Pesan khusus hanya setelah kata sandi benar (tidak membocorkan status akun kepada pihak lain).
     if (row.status === 'pending_verification') throw new AppError(403, 'ACCOUNT_PENDING', 'Akun sedang menunggu verifikasi Sekretariat Administrasi.');
     if (row.status === 'rejected') {

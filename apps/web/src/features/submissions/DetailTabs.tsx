@@ -27,7 +27,7 @@ export function DecisionSummary({ s }: { s: SubmissionDetail }) {
   if (!p && !s.certificate) return null;
   return (
     <Card title="Keputusan akreditasi" actions={<Badge tone="chain" icon={<Link2 size={13} />}>Tercatat permanen</Badge>}>
-      {p && <DL items={[['Peringkat', <b key="r" className="font-display text-xl text-navy-900">{rankLabel(p.rank)}</b>], ['Nomor Surat Keputusan', p.decreeNumber], ['Skor total', fmtNumber(p.totalScore)], ['Masa berlaku', p.validFrom ? fmtDateRange(p.validFrom, p.validUntil ?? undefined) : 'Tidak ada']]} />}
+      {p && <DL items={[['Peringkat', <b key="r" className="text-xl text-navy-900">{rankLabel(p.rank)}</b>], ['Nomor Surat Keputusan', p.decreeNumber], ['Skor total', fmtNumber(p.totalScore)], ['Masa berlaku', p.validFrom ? fmtDateRange(p.validFrom, p.validUntil ?? undefined) : 'Tidak ada']]} />}
       <div className="mt-4">
         {s.certificate
           ? <Button icon={<Download size={16} />} onClick={() => download(`/certificates/${s.certificate!.id}/download`, `sertifikat-${s.certificate!.certificateNo}.pdf`)}>Unduh sertifikat ({s.certificate.certificateNo})</Button>
@@ -68,7 +68,7 @@ export function AssignmentsTab({ s }: { s: SubmissionDetail }) {
   return (
     <div className="space-y-6">
       {offers.length > 0 && (
-        <section><h3 className="mb-3 text-lg font-semibold">Penawaran pasangan asesor</h3>
+        <section><h3 className="mb-3 text-lg font-medium">Penawaran pasangan asesor</h3>
           <DataTable rows={offers} rowKey={(o) => o.id} caption="Penawaran asesor" columns={[
             { key: 'n', header: 'Penawaran', primary: true, cell: (o) => `Ke-${o.offerNo}` },
             { key: 'a', header: 'Asesor', cell: (o) => `${o.assessor1Name ?? o.assessor1Id}; ${o.assessor2Name ?? o.assessor2Id}` },
@@ -79,7 +79,7 @@ export function AssignmentsTab({ s }: { s: SubmissionDetail }) {
         </section>
       )}
       {assessments.length > 0 && (
-        <section><h3 className="mb-3 text-lg font-semibold">Hasil penilaian</h3>
+        <section><h3 className="mb-3 text-lg font-medium">Hasil penilaian</h3>
           <DataTable rows={assessments} rowKey={(a) => a.id} caption="Hasil penilaian" columns={[
             { key: 'a', header: 'Asesor', primary: true, cell: (a) => a.assessorName ?? a.assessorId },
             { key: 'p', header: 'Jenis', cell: (a) => PHASE_LABEL[a.phase] },
@@ -89,7 +89,7 @@ export function AssignmentsTab({ s }: { s: SubmissionDetail }) {
         </section>
       )}
       {responses.length > 0 && (
-        <section><h3 className="mb-3 text-lg font-semibold">Tanggapan atas hasil asesmen</h3>
+        <section><h3 className="mb-3 text-lg font-medium">Tanggapan atas hasil asesmen</h3>
           <ul className="space-y-3">{responses.map((r) => <li key={r.id} className="rounded-lg border border-line bg-white p-4"><p className="text-sm text-muted">{r.responderRole === 'upps' ? 'UPPS' : 'Ketua asesor'} · {RESPONSE_LABEL[r.responseType]} · {fmtDateTime(r.createdAt)}</p><p className="mt-1 text-base">{r.body}</p></li>)}</ul>
         </section>
       )}
@@ -126,7 +126,7 @@ export function ActivityTimeline({ s, audit }: { s: SubmissionDetail; audit: Aud
         <li key={it.key} className="mb-5 ml-6">
           <span className={`absolute -left-[13px] grid h-6 w-6 place-items-center rounded-full ring-4 ring-white ${it.kind === 'chain' ? 'bg-chain text-white' : 'bg-slate-300 text-slate-700'}`}>{it.kind === 'chain' ? <Link2 size={13} aria-hidden /> : <ScrollText size={13} aria-hidden />}</span>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <p className="text-base font-semibold text-ink">{it.title}</p>
+            <p className="text-base font-medium text-ink">{it.title}</p>
             {it.kind === 'chain' ? <Badge tone="chain" icon={<Link2 size={13} aria-hidden />}>Tercatat permanen{it.block ? ` · blok ${it.block}` : ''}</Badge> : <ProofBadge status={it.status ?? 'saved'} />}
           </div>
           <p className="text-sm text-muted">{it.role} · {fmtDateTime(it.when)}</p>

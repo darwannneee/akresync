@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Button, ConfirmDialog, Field, FileInput, Textarea, cx } from '../../components/ui';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { Button, ConfirmDialog, Field, FileInput, ModalActions, Textarea, cx, useFormLayout } from '../../components/ui';
 
 /** Pola konfirmasi: formulir memvalidasi, lalu dialog meringkas data yang akan dicatat sebelum dikirim. */
 export function useConfirmed<V>(o: { run: (v: V) => void; pending: boolean; title: string; confirmLabel: string; summary: (v: V) => [string, ReactNode][]; permanent?: boolean }) {
@@ -15,18 +15,20 @@ export function useConfirmed<V>(o: { run: (v: V) => void; pending: boolean; titl
 
 export interface ChoiceOption { value: string; label: string; hint?: string }
 export function RadioCards({ name, options, value, onChange, legend }: { name: string; options: ChoiceOption[]; value: string; onChange: (v: string) => void; legend: string }) {
+  const horizontal = useFormLayout() === 'horizontal';
+  const lid = useId();
   return (
-    <fieldset>
-      <legend className="label">{legend}</legend>
-      <div className="grid gap-2 sm:grid-cols-2">
+    <div role="radiogroup" aria-labelledby={lid} className={cx(horizontal && 'grid gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,30%)_minmax(0,1fr)]')}>
+      <span id={lid} className={cx('text-sm font-medium text-ink', horizontal ? 'sm:pt-2' : 'label')}>{legend}</span>
+      <div className="space-y-1.5">
         {options.map((o) => (
-          <label key={o.value} className={cx('flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors focus-within:ring-2 focus-within:ring-navy-700/40', value === o.value ? 'border-navy-700 bg-navy-50' : 'border-slate-300 bg-white hover:bg-slate-50')}>
-            <input type="radio" name={name} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} className="mt-1 h-4 w-4 accent-navy-700" />
-            <span><span className="block font-medium text-ink">{o.label}</span>{o.hint && <span className="block text-sm text-muted">{o.hint}</span>}</span>
+          <label key={o.value} className={cx('flex min-h-[36px] cursor-pointer items-start gap-2.5 rounded border px-3 py-2 text-sm transition-colors focus-within:ring-2 focus-within:ring-navy-700/30', value === o.value ? 'border-navy-700 bg-navy-50' : 'border-slate-300 bg-white hover:bg-slate-50')}>
+            <input type="radio" name={name} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} className="mt-0.5 h-4 w-4 accent-navy-700" />
+            <span><span className="block font-medium text-ink">{o.label}</span>{o.hint && <span className="block text-xs text-muted">{o.hint}</span>}</span>
           </label>
         ))}
       </div>
-    </fieldset>
+    </div>
   );
 }
 
@@ -37,9 +39,10 @@ export function ResultNotesForm({ options, submitLabel, notesRequiredFor, notesL
   const [result, setResult] = useState(options[0]?.value ?? '');
   const [notes, setNotes] = useState('');
   const [err, setErr] = useState<string | null>(null);
+  const fid = useId();
   const need = notesRequiredFor?.includes(result);
   return (
-    <form className="space-y-4" noValidate onSubmit={(e) => {
+    <form id={fid} className="space-y-4" noValidate onSubmit={(e) => {
       e.preventDefault();
       if (need && notes.trim().length < 3) { setErr('Catatan wajib diisi untuk keputusan ini. Jelaskan alasan atau bagian yang perlu diperbaiki.'); return; }
       setErr(null);
@@ -48,7 +51,7 @@ export function ResultNotesForm({ options, submitLabel, notesRequiredFor, notesL
       {children}
       <RadioCards name="result" legend={legend} options={options} value={result} onChange={(v) => { setResult(v); setErr(null); }} />
       <Field label={notesLabel} required={need} hint={notesHint ?? (need ? undefined : 'Opsional.')} error={err ?? undefined}>{(p) => <Textarea {...p} value={notes} onChange={(e) => setNotes(e.target.value)} />}</Field>
-      <Button type="submit" loading={pending}>{submitLabel}</Button>
+      <ModalActions><Button type="submit" form={fid} loading={pending}>{submitLabel}</Button></ModalActions>
     </form>
   );
 }
@@ -58,14 +61,15 @@ export function NotesForm({ label = 'Catatan', hint, submitLabel, required, onSu
 }) {
   const [notes, setNotes] = useState('');
   const [err, setErr] = useState<string | null>(null);
+  const fid = useId();
   return (
-    <form className="space-y-4" noValidate onSubmit={(e) => {
+    <form id={fid} className="space-y-4" noValidate onSubmit={(e) => {
       e.preventDefault();
       if (required && notes.trim().length < 3) { setErr('Kolom ini wajib diisi. Tuliskan uraian singkat.'); return; }
       setErr(null); onSubmit(notes.trim());
     }}>
       <Field label={label} required={required} hint={hint ?? (required ? undefined : 'Opsional.')} error={err ?? undefined}>{(p) => <Textarea {...p} placeholder={placeholder} value={notes} onChange={(e) => setNotes(e.target.value)} />}</Field>
-      <Button type="submit" variant={variant} loading={pending}>{submitLabel}</Button>
+      <ModalActions><Button type="submit" form={fid} variant={variant} loading={pending}>{submitLabel}</Button></ModalActions>
     </form>
   );
 }
@@ -78,7 +82,7 @@ export function SingleUpload({ label, submitLabel, onSubmit, pending, hint, disa
   return (
     <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (file) { onSubmit(file); setFile(null); } }}>
       <FileInput label={label} hint={hint} file={file} disabled={disabled} onChange={setFile} accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.png,.jpg,.jpeg" />
-      <Button type="submit" disabled={!file || disabled} loading={pending}>{submitLabel}</Button>
+      <div className="sm:pl-[calc(30%+1rem)]"><Button type="submit" size="sm" disabled={!file || disabled} loading={pending}>{submitLabel}</Button></div>
     </form>
   );
 }

@@ -5,7 +5,7 @@ import { INDIVIDUAL_RECORD_TYPES, NON_CORRECTABLE_RECORD_TYPES } from '@akredita
 import { z } from 'zod';
 import { api, errorMessage } from '../../api/client';
 import type { FormalRecordView, RecordHistoryItem, User } from '../../api/types';
-import { Badge, Button, CopyableMono, DataTable, Drawer, EmptyState, Field, FormError, Input, Modal, Notice, ProofBadge, Spinner, TechnicalDetails, Textarea } from '../../components/ui';
+import { Badge, Button, CopyableMono, DataTable, EmptyState, Field, FormError, Input, Modal, Notice, ProofBadge, Spinner, TechnicalDetails, Textarea } from '../../components/ui';
 import { PAYLOAD_FIELD_LABEL, RANK_LABEL, RECORD_LABEL, RESULT_LABEL, fmtDateTime, roleName } from '../../lib/labels';
 import { recordTime } from '../../lib/workflow';
 import { useConfirmed } from '../common/forms';
@@ -47,17 +47,17 @@ export function RecordsTable({ submissionId, records, user }: { submissionId: st
             </div>
           ) },
         ]} />
-      <HistoryDrawer record={hist} onClose={() => setHist(null)} />
+      <HistoryModal record={hist} onClose={() => setHist(null)} />
       {corr && <CorrectionModal record={corr} submissionId={submissionId} onClose={() => setCorr(null)} />}
     </>
   );
 }
 
-function HistoryDrawer({ record, onClose }: { record: FormalRecordView | null; onClose: () => void }) {
+function HistoryModal({ record, onClose }: { record: FormalRecordView | null; onClose: () => void }) {
   const q = useQuery({ queryKey: ['history', record?.id], enabled: !!record, queryFn: async () => (await api.get<RecordHistoryItem[]>(`/formal-records/${record!.id}/history`)).data ?? [] });
   const rows = useMemo(() => [...(q.data ?? [])].sort((a, b) => (a.value?.version ?? 0) - (b.value?.version ?? 0)), [q.data]);
   return (
-    <Drawer open={!!record} onClose={onClose} title={`Riwayat versi: ${record ? RECORD_LABEL[record.recordType] ?? record.recordType : ''}`}>
+    <Modal open={!!record} onClose={onClose} wide footer={<Button onClick={onClose}>Tutup</Button>} title={`Riwayat versi: ${record ? RECORD_LABEL[record.recordType] ?? record.recordType : ''}`}>
       <p className="mb-4 text-sm text-muted">Setiap koreksi menambah versi baru. Versi sebelumnya tetap tersimpan dan tidak dapat dihapus.</p>
       {q.isLoading && <Spinner />}
       {q.isError && <FormError message={errorMessage(q.error)} />}
@@ -67,7 +67,7 @@ function HistoryDrawer({ record, onClose }: { record: FormalRecordView | null; o
           const cur = h.value?.payload ?? {};
           const changed = prev ? Object.keys({ ...prev, ...cur }).filter((k) => JSON.stringify(prev[k]) !== JSON.stringify(cur[k])) : [];
           return (
-            <li key={h.txId} className="rounded-xl border border-line p-4">
+            <li key={h.txId} className="rounded border border-line p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Badge tone={h.value?.version === 1 ? 'info' : 'gold'}>{h.value?.version === 1 ? 'Versi asli' : `Versi ${h.value?.version ?? '?'}`}</Badge>
                 <span className="text-sm text-muted">{fmtDateTime(h.timestamp)}</span>
@@ -84,7 +84,7 @@ function HistoryDrawer({ record, onClose }: { record: FormalRecordView | null; o
           );
         })}
       </ol>
-    </Drawer>
+    </Modal>
   );
 }
 
@@ -139,12 +139,12 @@ function CorrectionModal({ record, submissionId, onClose }: { record: FormalReco
       <div className="space-y-5">
         <Notice tone="chain" title="Koreksi menambah versi baru">Catatan asli tetap tersimpan dan dapat dilihat pada Riwayat versi. Sebutkan alasan dan rujukan bukti yang dapat diperiksa.</Notice>
         <FormError message={formErr} />
-        <fieldset className="grid gap-4 sm:grid-cols-2">
-          <legend className="mb-2 text-base font-semibold">1. Ubah isi catatan</legend>
+        <fieldset className="space-y-3">
+          <legend className="mb-2 text-[15px] font-medium">1. Ubah isi catatan</legend>
           {Object.entries(record.payload ?? {}).map(([k, orig]) => {
             const complex = orig !== null && typeof orig === 'object';
             return (
-              <div key={k} className={complex ? 'sm:col-span-2' : ''}>
+              <div key={k}>
                 <Field label={fieldLabel(k)} error={errs[k]} hint={LOCKED.has(k) ? 'Tidak dapat diubah.' : undefined}>
                   {(p) => typeof orig === 'boolean'
                     ? <input {...p} type="checkbox" checked={Boolean(vals[k])} onChange={(e) => setVals({ ...vals, [k]: e.target.checked })} className="h-5 w-5" />
@@ -157,7 +157,7 @@ function CorrectionModal({ record, submissionId, onClose }: { record: FormalReco
           })}
         </fieldset>
         <div className="space-y-4">
-          <h3 className="text-base font-semibold">2. Alasan dan bukti</h3>
+          <h3 className="text-[15px] font-medium">2. Alasan dan bukti</h3>
           <Field label="Alasan koreksi" required error={errs.reason}>{(p) => <Textarea {...p} value={reason} onChange={(e) => setReason(e.target.value)} />}</Field>
           <Field label="Rujukan bukti" required error={errs.evidenceRef} hint="Misalnya nomor surat, tautan, atau nama dokumen pendukung.">{(p) => <Input {...p} value={evidenceRef} onChange={(e) => setEvidenceRef(e.target.value)} />}</Field>
           <Field label="Versi catatan yang dikoreksi" error={errs.expectedVersion} hint="Terisi otomatis. Ubah hanya bila diminta administrator.">{(p) => <Input {...p} type="number" min={1} value={expectedVersion} onChange={(e) => setExpectedVersion(Number(e.target.value))} />}</Field>

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../api/client';
-import { Button, DL, Field, Notice, StepSection, Textarea } from '../../components/ui';
+import { Button, DL, Field, ModalActions, Notice, StepSection, Textarea } from '../../components/ui';
 import { RadioCards, SingleUpload, useConfirmed } from '../common/forms';
 import { useAction } from '../common/useAction';
 import { DOC_TYPE_LABEL, PAYMENT_STATUS_LABEL, fmtBytes, fmtRupiah } from '../../lib/labels';
@@ -43,7 +43,7 @@ export function ComposeSubmission({ s }: ActionProps) {
       <AiProgressCard p={s.aiProgress} />
       {slot(3, 'SUPPORT', 'Berkas lain yang menunjang, misalnya surat tugas atau bukti kerja sama.', true)}
       <StepSection n={4} title={rev ? 'Tinjau dan kirim perbaikan' : 'Tinjau dan kirim pengajuan resmi'} hint={hasMain ? 'Dokumen utama sudah lengkap. Periksa sekali lagi sebelum mengirim.' : 'Tombol kirim aktif setelah LED dan LKPS terunggah.'}>
-        <Button disabled={!hasMain} loading={submit.isPending} onClick={() => confirm.ask(null)}>{rev ? 'Kirim perbaikan dokumen' : 'Kirim pengajuan resmi'}</Button>
+        <ModalActions><Button disabled={!hasMain} loading={submit.isPending} onClick={() => confirm.ask(null)}>{rev ? 'Kirim Perbaikan Dokumen' : 'Kirim Pengajuan Resmi'}</Button></ModalActions>
       </StepSection>
       {confirm.dialog}
     </div>
@@ -73,15 +73,16 @@ export function OfferResponseForm({ offerId, submissionId, title, who }: { offer
   const f = useForm<z.infer<typeof respSchema>>({ resolver: zodResolver(respSchema), defaultValues: { response: 'ACCEPT', reason: '' } });
   const m = useAction((v: z.infer<typeof respSchema>) => api.post(`/offers/${offerId}/responses`, v), { title, submissionId });
   const v = f.watch('response');
+  const fid = useId();
   const confirm = useConfirmed<z.infer<typeof respSchema>>({
     run: (x) => m.mutate(x), pending: m.isPending, title: 'Kirim tanggapan penugasan?', confirmLabel: 'Ya, kirim tanggapan',
     summary: (x) => [['Tanggapan', x.response === 'ACCEPT' ? 'Menerima penugasan' : 'Menolak penugasan'], ...(x.reason ? [['Alasan', x.reason] as [string, string]] : []), ['Penanggap', who]],
   });
   return (
-    <form className="space-y-4" noValidate onSubmit={f.handleSubmit((x) => confirm.ask(x))}>
+    <form id={fid} className="space-y-4" noValidate onSubmit={f.handleSubmit((x) => confirm.ask(x))}>
       <RadioCards name="response" legend="Tanggapan Bapak/Ibu" value={v} onChange={(x) => f.setValue('response', x as 'ACCEPT' | 'REJECT')} options={[{ value: 'ACCEPT', label: 'Menerima penugasan', hint: 'Penugasan berlaku bila semua pihak menerima.' }, { value: 'REJECT', label: 'Menolak penugasan', hint: 'KEA akan meninjau dan menawarkan pasangan lain.' }]} />
       <Field label="Alasan" required={v === 'REJECT'} hint={v === 'REJECT' ? 'Wajib diisi bila menolak.' : 'Opsional.'} error={f.formState.errors.reason?.message}>{(p) => <Textarea {...p} {...f.register('reason')} />}</Field>
-      <Button type="submit" loading={m.isPending}>Kirim tanggapan</Button>
+      <ModalActions><Button type="submit" form={fid} loading={m.isPending}>Kirim Tanggapan</Button></ModalActions>
       {confirm.dialog}
     </form>
   );
@@ -103,9 +104,10 @@ export function UppsResponse({ s }: ActionProps) {
   const [type, setType] = useState<'accept' | 'objection'>('accept');
   const [body, setBody] = useState('');
   const [err, setErr] = useState<string | null>(null);
+  const fid = useId();
   const al = (s.assessments ?? []).filter((a) => a.phase === 'AL');
   return (
-    <form className="space-y-4" noValidate onSubmit={(e) => {
+    <form id={fid} className="space-y-4" noValidate onSubmit={(e) => {
       e.preventDefault();
       if (type === 'objection' && body.trim().length < 5) { setErr('Uraikan keberatan Bapak/Ibu (minimal 5 huruf) agar dapat ditanggapi ketua asesor.'); return; }
       setErr(null); m.mutate({ type, body: body.trim() || 'Menerima hasil asesmen.' });
@@ -113,7 +115,7 @@ export function UppsResponse({ s }: ActionProps) {
       {al.length > 0 && <DL items={al.map((a) => [a.assessorName ?? 'Ketua asesor', `Skor Asesmen Lapangan: ${a.totalScore ?? '—'}`] as [string, string])} />}
       <RadioCards name="type" legend="Sikap UPPS atas hasil asesmen" value={type} onChange={(v) => { setType(v as 'accept' | 'objection'); setErr(null); }} options={[{ value: 'accept', label: 'Menerima hasil', hint: 'Proses dilanjutkan ke verifikasi akhir.' }, { value: 'objection', label: 'Mengajukan keberatan', hint: 'Ketua asesor akan menanggapi keberatan.' }]} />
       <Field label={type === 'objection' ? 'Uraian keberatan' : 'Catatan'} required={type === 'objection'} hint={type === 'objection' ? 'Sebutkan butir atau temuan yang dikeberatkan beserta alasannya.' : 'Opsional.'} error={err ?? undefined}>{(p) => <Textarea {...p} value={body} onChange={(e) => setBody(e.target.value)} />}</Field>
-      <Button type="submit" loading={m.isPending}>Sampaikan tanggapan</Button>
+      <ModalActions><Button type="submit" form={fid} loading={m.isPending}>Sampaikan Tanggapan</Button></ModalActions>
     </form>
   );
 }

@@ -75,7 +75,7 @@ export function MetricsCard({ submissionId }: { submissionId: string }) {
   return (
     <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {entries.map(([k, v]) => (
-        <div key={k} className="rounded-lg bg-navy-50 p-4"><dt className="text-sm text-muted">{METRIC_LABEL[k] ?? k}</dt><dd className="font-display text-xl font-bold text-navy-900">{v === null ? '—' : String(v)}</dd></div>
+        <div key={k} className="rounded-lg bg-navy-50 p-4"><dt className="text-sm text-muted">{METRIC_LABEL[k] ?? k}</dt><dd className="text-xl font-medium text-navy-900">{v === null ? '—' : String(v)}</dd></div>
       ))}
     </dl>
   );

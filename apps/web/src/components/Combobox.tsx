@@ -54,7 +54,7 @@ export function Combobox({ id, items, value, onChange, placeholder, loading, dis
           {shown.map((i, n) => (
             <li key={i.value} id={`${listId}-${n}`} role="option" aria-selected={i.value === value}
               onMouseDown={(e) => { e.preventDefault(); pick(i); }} onMouseEnter={() => setActive(n)}
-              className={cx('cursor-pointer px-3 py-2 text-sm', n === active ? 'bg-navy-50 text-navy-900' : 'text-ink', i.value === value && 'font-semibold')}>
+              className={cx('cursor-pointer px-3 py-2 text-sm', n === active ? 'bg-navy-50 text-navy-900' : 'text-ink', i.value === value && 'font-medium')}>
               {i.label}
             </li>
           ))}
