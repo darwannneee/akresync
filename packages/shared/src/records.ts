@@ -161,4 +161,5 @@ export const CHAIN_FUNCTIONS = {
   GetSubmissionRecords: 'GetSubmissionRecords',
   GetStage: 'GetStage',
   GetAuditEvents: 'GetAuditEvents',
+  GetRecordByRequest: 'GetRecordByRequest',
 } as const;
