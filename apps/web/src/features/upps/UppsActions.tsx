@@ -7,6 +7,7 @@ import { Button, DL, Field, Notice, StepSection, Textarea } from '../../componen
 import { RadioCards, SingleUpload, useConfirmed } from '../common/forms';
 import { useAction } from '../common/useAction';
 import { DOC_TYPE_LABEL, PAYMENT_STATUS_LABEL, fmtBytes, fmtRupiah } from '../../lib/labels';
+import { AiProgressCard } from '../ai/ProgressCard';
 import type { ActionProps } from '../submissions/types';
 
 /** Penyusunan pengajuan: LED, LKPS, pendukung, lalu kirim. Juga dipakai untuk perbaikan dokumen. */
@@ -30,7 +31,7 @@ export function ComposeSubmission({ s }: ActionProps) {
     return (
       <StepSection n={n} title={`${DOC_TYPE_LABEL[type]}${optional ? ' (opsional)' : ''}`} done={list.length > 0 && !optional} hint={hint}>
         {list.length > 0 && <div className="mb-3"><Notice tone="success">{list.map((d) => `${d.fileName} (${fmtBytes(d.sizeBytes)})`).join('; ')} sudah terunggah.{!optional && ' Unggah berkas baru bila ingin menggantinya.'}</Notice></div>}
-        <SingleUpload label={list.length ? 'Ganti atau tambah berkas' : 'Pilih berkas'} submitLabel={`Unggah ${type === 'SUPPORT' ? 'dokumen pendukung' : type}`} pending={upload.isPending && upload.variables?.docType === type} onSubmit={(file) => upload.mutate({ file, docType: type })} />
+        <SingleUpload label={list.length ? 'Ganti atau tambah berkas' : 'Pilih berkas'} hint={type === 'SUPPORT' ? undefined : 'Jenis berkas diperiksa otomatis oleh AI saat diunggah (beberapa detik). Berkas yang bukan jenis ini akan ditolak. Bila layanan AI sibuk, berkas tetap diterima dan diperiksa ulang kemudian.'} submitLabel={`Unggah ${type === 'SUPPORT' ? 'dokumen pendukung' : type}`} pending={upload.isPending && upload.variables?.docType === type} onSubmit={(file) => upload.mutate({ file, docType: type })} />
       </StepSection>
     );
   };
@@ -39,6 +40,7 @@ export function ComposeSubmission({ s }: ActionProps) {
       {rev && <Notice tone="warn" title="Sekretariat meminta perbaikan">Lihat catatan pada tab Catatan resmi, unggah dokumen yang diperbaiki (LED dan LKPS wajib ada pada versi baru), kemudian kirim ulang.</Notice>}
       {slot(1, 'LED', 'Dokumen utama berisi evaluasi diri program studi.')}
       {slot(2, 'LKPS', 'Dokumen utama berisi data kinerja program studi.')}
+      <AiProgressCard p={s.aiProgress} />
       {slot(3, 'SUPPORT', 'Berkas lain yang menunjang, misalnya surat tugas atau bukti kerja sama.', true)}
       <StepSection n={4} title={rev ? 'Tinjau dan kirim perbaikan' : 'Tinjau dan kirim pengajuan resmi'} hint={hasMain ? 'Dokumen utama sudah lengkap. Periksa sekali lagi sebelum mengirim.' : 'Tombol kirim aktif setelah LED dan LKPS terunggah.'}>
         <Button disabled={!hasMain} loading={submit.isPending} onClick={() => confirm.ask(null)}>{rev ? 'Kirim perbaikan dokumen' : 'Kirim pengajuan resmi'}</Button>

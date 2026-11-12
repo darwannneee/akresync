@@ -6,7 +6,7 @@ import { loadSubmissionForUser } from '../auth/rbac.js';
 import type { AppContext } from '../context.js';
 import { q, q1, withTransaction, type Queryable } from '../db/pool.js';
 import { recordAuditEvent, auditReceipt } from '../db/outbox.js';
-import { badRequest, conflict, forbidden, notFound } from '../errors.js';
+import { AppError, badRequest, conflict, forbidden, notFound } from '../errors.js';
 import { assertFlow, stateOf } from '../flow.js';
 import { envelope, mount, mountWith, parse, requestIdFrom, uuidParam } from '../lib/http.js';
 import { executeChainAction, findReplay } from './chainAction.js';
@@ -54,7 +54,7 @@ export async function buildDetail(ctx: AppContext, user: AuthUser, id: string) {
   const sub = await loadSubmissionForUser(ctx.pool, user, id);
   const full = (await q1(ctx.pool, `${SUB_SELECT} WHERE s.id = $1`, [id]))!;
   const [documents, payments, offers, schedules, responses, formal, audit, cert, assessments] = await Promise.all([
-    q(ctx.pool, `SELECT id, submission_id, set_version, doc_type, file_name, mime_type, size_bytes, sha256_plain, cid, uploaded_by, created_at FROM document_versions WHERE submission_id=$1 ORDER BY created_at`, [id]),
+    q(ctx.pool, `SELECT id, submission_id, set_version, doc_type, file_name, mime_type, size_bytes, sha256_plain, cid, uploaded_by, created_at, index_status, index_error, doc_check FROM document_versions WHERE submission_id=$1 ORDER BY created_at`, [id]),
     q(ctx.pool, `SELECT id, version, invoice_no, amount, status, issued_at, proof_document_id, proof_uploaded_at, verified_at, notes FROM payments WHERE submission_id=$1 ORDER BY issued_at`, [id]),
     q(ctx.pool, `SELECT o.*, a1.full_name AS assessor1_name, a2.full_name AS assessor2_name, l.full_name AS lead_assessor_name
       FROM assessor_offers o JOIN users a1 ON a1.id=o.assessor1_id JOIN users a2 ON a2.id=o.assessor2_id JOIN users l ON l.id=o.lead_assessor_id
@@ -86,7 +86,7 @@ export async function buildDetail(ctx: AppContext, user: AuthUser, id: string) {
   for (const a of audit as any[]) if (a.aggregate_type === 'document_version') auditByDocument.set(a.aggregate_id, a);
   const docWithAudit = (d: any) => {
     const a = auditByDocument.get(d.id);
-    return { ...docDto(d), auditStatus: a?.status ?? null, auditTxId: a?.tx_id ?? null };
+    return { ...docDto(d), auditStatus: a?.status ?? null, auditTxId: a?.tx_id ?? null, indexStatus: d.index_status ?? null, indexError: d.index_error ?? null, docCheck: d.doc_check ?? null };
   };
   // Tabel on-chain hanya memuat catatan yang tidak gagal; percobaan ditolak chain dilaporkan terpisah.
   const onChain = formal.filter((f: any) => f.status !== 'failed');
@@ -111,6 +111,8 @@ export async function buildDetail(ctx: AppContext, user: AuthUser, id: string) {
     }),
     audit: audit.map((a: any) => ({ ...camel(a), version: Number(a.version), blockNumber: asNumber(a.block_number), actorRole: undefined })),
     certificate: cert ? camel(cert) : null,
+    aiProgress: await ctx.ai.progress(ctx.pool, id),
+    aiScore: user.role === 'sek_keu' ? null : ((await ctx.ai.scoreSummaries(ctx.pool, [id])).get(id) ?? null),
     _owner: sub.upps_user_id,
   };
 }
@@ -143,7 +145,8 @@ export function submissionRoutes(ctx: AppContext, router: Router, auth: RequestH
       where.push(`s.stage = $${params.length}`);
     }
     const rows = await q(ctx.pool, `${SUB_SELECT} ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY s.updated_at DESC LIMIT 500`, params);
-    res.json(envelope(rows.map(submissionDto)));
+    const scores = user.role === 'sek_keu' ? new Map() : await ctx.ai.scoreSummaries(ctx.pool, rows.map((r) => r.id));
+    res.json(envelope(rows.map((r) => ({ ...submissionDto(r), aiScore: scores.get(r.id) ?? null }))));
   });
 
   mount(router, auth, API_ROUTES.getSubmission, async (req, res) => {
@@ -160,6 +163,15 @@ export function submissionRoutes(ctx: AppContext, router: Router, auth: RequestH
     const file = requireFile(req.file);
     const pre = await loadSubmissionForUser(ctx.pool, user, id);
     assertFlow('upload_document', stateOf(pre));
+    // Verifikasi jenis LED/LKPS oleh model sebelum apa pun disimpan; galat layanan tidak memblokir (ditandai tertunda).
+    let docCheck: unknown = null;
+    if (docType === 'LED' || docType === 'LKPS') {
+      const v = await ctx.ai.verifyUpload(docType, file);
+      if (v.reject) {
+        throw new AppError(400, 'DOCUMENT_TYPE_MISMATCH', `${v.reject.message}${v.reject.reason ? ` Alasan: ${v.reject.reason}` : ''}`, { docType, detectedType: v.reject.detectedType, reason: v.reject.reason });
+      }
+      docCheck = v.check;
+    }
     const blob = await encryptAndStore(ctx, file.buffer, file.originalname);
     const result = await withTransaction(async (c) => {
       const sub = await loadSubmissionForUser(c, user, id, { forUpdate: true });
@@ -179,7 +191,7 @@ export function submissionRoutes(ctx: AppContext, router: Router, auth: RequestH
         setVersion = newVersion;
         await c.query('UPDATE submissions SET document_set_version=$2, updated_at=now() WHERE id=$1', [id, setVersion]);
       }
-      const doc = await insertDocumentRow(c, { submissionId: id, setVersion, docType, fileName: file.originalname, mimeType: file.mimetype, blob, uploadedBy: user.id });
+      const doc = await insertDocumentRow(c, { submissionId: id, setVersion, docType, fileName: file.originalname, mimeType: file.mimetype, blob, uploadedBy: user.id, docCheck });
       const eventId = await recordAuditEvent(c, {
         aggregateType: 'document_version',
         aggregateId: doc.id,
@@ -191,7 +203,8 @@ export function submissionRoutes(ctx: AppContext, router: Router, auth: RequestH
       });
       return { doc, eventId };
     }, ctx.pool);
-    res.status(201).json(envelope(docDto(result.doc), { audit: auditReceipt([result.eventId]) }));
+    ctx.ai.kick();
+    res.status(201).json(envelope({ ...docDto(result.doc), docCheck }, { audit: auditReceipt([result.eventId]) }));
   });
 
   mount(router, auth, API_ROUTES.downloadDocument, async (req, res) => {

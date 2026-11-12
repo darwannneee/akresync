@@ -95,6 +95,11 @@ export const API_ROUTES = {
   verifyAudit: { method: 'GET', path: '/audit/:eventId/verify', roles: ALL, storage: 'O', description: 'Hitung ulang hash snapshot vs ledger' },
   submissionMetrics: { method: 'GET', path: '/metrics/submissions/:id', roles: ['kea', 'majelis', 'sek_adm'], storage: 'O', description: 'Jumlah tx on-chain, ukuran payload, jeda audit' },
   eventStream: { method: 'GET', path: '/events/stream', roles: ALL, storage: 'O', description: 'SSE audit_status & record_committed' },
+  // Modul AI pendukung keputusan (O/A)
+  requestAiAnalysis: { method: 'POST', path: '/submissions/:id/ai-analyses', roles: ['asesor', 'kea'], storage: 'A', description: 'Analisis ulang AI manual {phase}; 202 + id (analisis awal berjalan otomatis saat LED+LKPS lengkap)' },
+  listAiAnalyses: { method: 'GET', path: '/submissions/:id/ai-analyses', roles: ['upps', 'asesor', 'kea', 'majelis', 'sek_adm'], storage: 'O', description: 'Riwayat analisis AI + perbandingan dengan skor akhir' },
+  getAiAnalysis: { method: 'GET', path: '/ai-analyses/:analysisId', roles: ['upps', 'asesor', 'kea', 'majelis', 'sek_adm'], storage: 'O', description: 'Detail analisis AI termasuk kutipan sumber' },
+  reindexDocuments: { method: 'POST', path: '/submissions/:id/reindex', roles: ['kea', 'sek_adm'], storage: 'O', description: 'Indeks ulang dokumen LED/LKPS set terbaru' },
   health: { method: 'GET', path: '/health', roles: 'public', storage: 'O', description: 'Status DB, Fabric, IPFS, Kafka' },
 } as const satisfies Record<string, RouteSpec>;
 

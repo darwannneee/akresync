@@ -55,20 +55,20 @@ export async function encryptAndStore(ctx: AppContext, data: Buffer, name: strin
 
 export async function insertDocumentRow(
   db: Queryable,
-  p: { submissionId: string; setVersion: number; docType: DocumentType; fileName: string; mimeType: string; blob: StoredBlob; uploadedBy: string },
+  p: { submissionId: string; setVersion: number; docType: DocumentType; fileName: string; mimeType: string; blob: StoredBlob; uploadedBy: string; docCheck?: unknown },
 ): Promise<Record<string, any>> {
   const rows = await q(
     db,
     `INSERT INTO document_versions (submission_id, set_version, doc_type, file_name, mime_type, size_bytes, sha256_plain, cid,
-        wrapped_dek, dek_iv, dek_tag, file_iv, file_tag, uploaded_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+        wrapped_dek, dek_iv, dek_tag, file_iv, file_tag, uploaded_by, doc_check, checked_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb, CASE WHEN $15::jsonb IS NULL THEN NULL ELSE now() END)
      RETURNING id, submission_id, set_version, doc_type, file_name, mime_type, size_bytes, sha256_plain, cid, uploaded_by, created_at`,
-    [p.submissionId, p.setVersion, p.docType, sanitizeFileName(p.fileName), p.mimeType, p.blob.sizeBytes, p.blob.sha256, p.blob.cid, p.blob.wrappedDek, p.blob.dekIv, p.blob.dekTag, p.blob.fileIv, p.blob.fileTag, p.uploadedBy],
+    [p.submissionId, p.setVersion, p.docType, sanitizeFileName(p.fileName), p.mimeType, p.blob.sizeBytes, p.blob.sha256, p.blob.cid, p.blob.wrappedDek, p.blob.dekIv, p.blob.dekTag, p.blob.fileIv, p.blob.fileTag, p.uploadedBy, p.docCheck ? JSON.stringify(p.docCheck) : null],
   );
   return rows[0]!;
 }
 
-export async function fetchAndDecrypt(ctx: AppContext, doc: any): Promise<Buffer> {
+export async function fetchAndDecrypt(ctx: Pick<AppContext, 'ipfs' | 'config'>, doc: any): Promise<Buffer> {
   const ciphertext = await ctx.ipfs.cat(doc.cid);
   let plain: Buffer;
   try {

@@ -15,6 +15,7 @@ import { DocumentsPanel } from '../features/submissions/DocumentsPanel';
 import { RecordsTable } from '../features/submissions/Records';
 import { AuditTable } from '../features/submissions/AuditTable';
 import { ActivityTimeline, AssignmentsTab, ScheduleTab, SummaryTab } from '../features/submissions/DetailTabs';
+import { AiTab } from '../features/ai/AiTab';
 import { RightPanel } from '../features/submissions/RightPanel';
 import type { DetailTab } from '../features/submissions/types';
 
@@ -37,6 +38,7 @@ export function SubmissionDetailPage() {
     { id: 'jadwal', label: 'Jadwal AL', count: s.alSchedules?.length },
     { id: 'catatan', label: 'Catatan resmi', count: s.records?.length },
     { id: 'audit', label: 'Jejak audit', count: audit.length },
+    ...(user.role !== 'sek_keu' && s.aiProgress?.enabled ? [{ id: 'ai' as const, label: 'Analisis AI' }] : []),
     { id: 'aktivitas', label: 'Aktivitas' },
   ];
   const panel = (t: DetailTab, node: React.ReactNode) => <div role="tabpanel" id={`panel-${t}`} aria-labelledby={`tab-${t}`} className={t === tab ? 'block' : 'hidden print-block'}>{node}</div>;
@@ -72,6 +74,7 @@ export function SubmissionDetailPage() {
             {panel('jadwal', <ScheduleTab s={s} />)}
             {panel('catatan', <RecordsTable submissionId={id} records={s.records ?? []} user={user} />)}
             {panel('audit', auditQ.isLoading ? <EmptyState title="Memuat jejak audit…" /> : <AuditTable events={audit} />)}
+            {s.aiProgress?.enabled && user.role !== 'sek_keu' && panel('ai', <AiTab s={s} user={user} />)}
             {panel('aktivitas', <ActivityTimeline s={s} audit={audit} />)}
           </div>
           <RightPanel s={s} audit={audit} />

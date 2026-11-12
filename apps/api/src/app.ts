@@ -8,6 +8,7 @@ import { loadActiveUser } from './auth/users.js';
 import type { AppContext } from './context.js';
 import { errorHandler, notFoundHandler } from './lib/http.js';
 import { logger } from './logger.js';
+import { aiRoutes } from './modules/ai.js';
 import { assessmentRoutes } from './modules/assessments.js';
 import { assignmentRoutes } from './modules/assignments.js';
 import { auditRoutes } from './modules/audit.js';
@@ -44,6 +45,7 @@ export function createApp(ctx: AppContext): Express {
   responseRoutes(ctx, router, auth);
   finalizationRoutes(ctx, router, auth);
   recordRoutes(ctx, router, auth);
+  aiRoutes(ctx, router, auth);
   auditRoutes(ctx, router, auth);
   systemRoutes(ctx, router, auth, authSse);
   app.use(API_PREFIX, router);

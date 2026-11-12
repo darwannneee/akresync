@@ -6,7 +6,7 @@ import { Badge, Button, DataTable, EmptyState, FormError, Input, Kpi, PageHeader
 import { useTaskQueue, type TaskItem } from '../features/common/useTasks';
 import { StagePill } from '../features/common/StagePill';
 import { errorMessage } from '../api/client';
-import { fmtDateTime, ROLE_NAME } from '../lib/labels';
+import { fmtDateTime, fmtNumber, ROLE_NAME } from '../lib/labels';
 import { currentIndex, holderLabel } from '../lib/workflow';
 import type { SubmissionSummary } from '../api/types';
 import type { AppRole } from '@akreditasi/shared';
@@ -86,6 +86,7 @@ export function DashboardPage() {
                   { key: 'p', header: 'Program studi', primary: true, cell: (s) => <div><div className="font-medium text-ink">{s.programName ?? s.id.slice(0, 8)}{s.programLevel ? ` (${s.programLevel})` : ''}</div><div className="text-sm text-muted">{s.institutionName}</div></div> },
                   { key: 't', header: 'Posisi', cell: (s) => <div className="space-y-1"><StagePill stage={s.stage} /><div className="text-sm text-muted">{progress(s)}</div></div> },
                   { key: 'h', header: 'Sedang ditangani', cell: (s) => <Badge tone="neutral">{holderLabel(s)}</Badge> },
+                  ...(filtered.some((x) => x.aiScore) ? [{ key: 'ai', header: 'Skor AI sementara', align: 'right' as const, cell: (x: SubmissionSummary) => x.aiScore ? <div title="Hasil analisis AI (pendukung, bukan nilai resmi)"><b className="tabular-nums">{fmtNumber(x.aiScore.totals.total)}</b><div className="text-xs text-muted">pendukung, bukan nilai resmi</div></div> : <span className="text-faint">—</span> }] : []),
                   { key: 'u', header: 'Diperbarui', cell: (s) => fmtDateTime(s.updatedAt) },
                   { key: 'o', header: '', cell: (s) => <Link to={`/pengajuan/${s.id}`}><Button variant="secondary" size="sm" icon={<ArrowRight size={15} />}>Buka</Button></Link> },
                 ]} />

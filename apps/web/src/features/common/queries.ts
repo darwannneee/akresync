@@ -10,7 +10,16 @@ export const fetchSubmission = async (id: string): Promise<SubmissionDetail> => 
 export const useSubmissions = () =>
   useQuery({ queryKey: ['submissions'], queryFn: async () => (await api.get<SubmissionSummary[]>('/submissions')).data ?? [] });
 
-export const useSubmission = (id: string) => useQuery({ queryKey: ['submission', id], queryFn: () => fetchSubmission(id) });
+/** Memuat ulang berkala selama proses AI otomatis (periksa, indeks, analisis) belum selesai. */
+export const useSubmission = (id: string) =>
+  useQuery({
+    queryKey: ['submission', id],
+    queryFn: () => fetchSubmission(id),
+    refetchInterval: (q) => {
+      const p = q.state.data?.aiProgress;
+      return p?.enabled && ['checking', 'indexing', 'analyzing'].includes(p.phase) ? 5000 : false;
+    },
+  });
 
 export const useSubmissionAudit = (id: string) =>
   useQuery({ queryKey: ['audit', id], queryFn: async () => (await api.get<AuditEventView[]>(`/submissions/${id}/audit`)).data ?? [] });

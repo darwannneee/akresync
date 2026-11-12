@@ -15,10 +15,12 @@
   "dependencies": {
     "@akreditasi/shared": "workspace:*",
     "@grpc/grpc-js": "^1.12.2",
+    "@huggingface/transformers": "3.8.1",
     "@hyperledger/fabric-gateway": "^1.7.1",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "exceljs": "^4.4.0",
     "express": "^4.21.2",
     "fabric-ca-client": "^2.2.20",
     "fabric-common": "^2.2.20",
@@ -28,6 +30,7 @@
     "pdfkit": "^0.15.2",
     "pg": "^8.13.1",
     "pino": "^9.5.0",
+    "unpdf": "^2.1.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

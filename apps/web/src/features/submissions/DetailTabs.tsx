@@ -9,6 +9,8 @@ import {
 import { recordTime } from '../../lib/workflow';
 import { useDownload } from '../common/useAction';
 import { MetricsCard } from './AuditTable';
+import { AiProgressCard } from '../ai/ProgressCard';
+import { AiBanner, TotalsView } from '../ai/parts';
 
 
 /** Ubah pesan galat chaincode menjadi kalimat untuk pengguna akademik (tanpa kode teknis). */
@@ -40,6 +42,8 @@ export function SummaryTab({ s, showMetrics }: { s: SubmissionDetail; showMetric
   return (
     <div className="space-y-5">
       <DecisionSummary s={s} />
+      {s.aiScore && <Card title="Skor AI sementara" description="Hasil analisis AI (pendukung, bukan nilai resmi)"><AiBanner /><div className="mt-4"><TotalsView totals={s.aiScore.totals} /></div></Card>}
+      {s.aiProgress && s.aiProgress.phase !== 'done' && <AiProgressCard p={s.aiProgress} />}
       {pay && (
         <Card title="Tagihan">
           <DL items={[['Nomor tagihan', pay.invoiceNo], ['Jumlah', fmtRupiah(pay.amount)], ['Status', <Badge key="b" tone={pay.status === 'verified' ? 'success' : pay.status === 'rejected' ? 'danger' : 'info'}>{PAYMENT_STATUS_LABEL[pay.status] ?? pay.status}</Badge>], ['Diterbitkan', fmtDateTime(pay.issuedAt)], ['Catatan', pay.notes]]} />

@@ -1,4 +1,5 @@
 import type {
+  AiProgress, AiScoreSummary, DocCheck, IndexStatus,
   AkStatus, AlScheduleStatus, AppRole, AuditEventKind, AuditStatus, DocumentType, RecordType, SubmissionStage,
 } from '@akreditasi/shared';
 
@@ -29,6 +30,7 @@ export interface SubmissionSummary {
   chainStage?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  aiScore?: AiScoreSummary | null;
 }
 
 export interface DocumentView {
@@ -43,6 +45,9 @@ export interface DocumentView {
   createdAt?: string;
   auditStatus?: AuditStatus | null;
   auditTxId?: string | null;
+  indexStatus?: IndexStatus | null;
+  indexError?: string | null;
+  docCheck?: DocCheck | null;
 }
 
 export interface PaymentView {
@@ -154,6 +159,7 @@ export interface SubmissionDetail extends SubmissionSummary {
   records?: FormalRecordView[];
   rejectedAttempts?: { id: string; recordType: RecordType; version: number; error?: string | null; createdAt?: string }[];
   audit?: AuditEventView[];
+  aiProgress?: AiProgress;
 }
 
 export interface RecordHistoryItem {

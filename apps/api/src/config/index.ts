@@ -39,6 +39,31 @@ const schema = z.object({
   RECONCILER_PENDING_AFTER_MS: z.coerce.number().int().positive().default(60000),
   SEED_ACCOUNTS_FILE: z.string().default('../../.runtime/seed-accounts.json'),
   MIGRATIONS_DIR: z.string().default('../../db/migrations'),
+  // Modul AI pendukung keputusan
+  GEMINI_API_KEY: z.string().optional().transform((v) => v?.trim() || undefined),
+  GEMINI_MODEL: z.string().min(1).default('gemini-3.6-flash'),
+  GEMINI_FALLBACK_MODELS: z
+    .string()
+    .default('')
+    .transform((v) => v.split(',').map((s) => s.trim()).filter(Boolean)),
+  GEMINI_EMBED_MODEL: z.string().min(1).default('gemini-embedding-001'),
+  AI_EMBED_DIM: z.coerce.number().int().min(64).max(2000).default(768),
+  GEMINI_THINKING_LEVEL: z.enum(['LOW', 'MEDIUM', 'HIGH']).default('MEDIUM'),
+  EMBEDDING_PROVIDER: z.enum(['local', 'gemini']).default('local'),
+  EMBEDDING_MODEL: z.string().min(1).default('Xenova/multilingual-e5-base'),
+  EMBEDDING_CACHE_DIR: z.string().default('../../.runtime/models'),
+  AI_EMBED_BATCH: z.coerce.number().int().min(1).max(64).default(16),
+  AI_EMBED_RPM: z.coerce.number().positive().default(80),
+  AI_MAX_CONTEXT_TOKENS: z.coerce.number().int().positive().default(120000),
+  AI_RPM: z.coerce.number().positive().default(4),
+  AI_RETRY_DELAYS_MS: z
+    .string()
+    .default('10000,30000,60000,120000,240000')
+    .transform((v) => v.split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n) && n >= 0)),
+  AI_JOB_MAX_ATTEMPTS: z.coerce.number().int().positive().default(4),
+  AI_AUTO_ANALYSIS: z.string().optional().transform((v) => v !== 'false' && v !== '0'),
+  AI_AUTO_MAX_PER_DAY: z.coerce.number().int().positive().default(12),
+  AI_JOBS_ENABLED: z.string().optional().transform((v) => v !== 'false' && v !== '0'),
 });
 
 export type Config = z.infer<typeof schema>;

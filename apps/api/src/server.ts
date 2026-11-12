@@ -1,4 +1,7 @@
 import { getConfig } from './config/index.js';
+import { AiService } from './ai/service.js';
+import { createEmbedder, createProvider } from './ai/factory.js';
+import { LocalEmbedder } from './ai/embedder.js';
 import { createApp } from './app.js';
 import { closePool, getPool } from './db/pool.js';
 import { FabricChainClient } from './fabric/gateway.js';
@@ -12,17 +15,24 @@ import type { AppContext } from './context.js';
 const config = getConfig();
 const pool = getPool();
 const chain = new FabricChainClient();
+const ipfs = createIpfsClient();
+const generation = createProvider(config);
+const embedder = createEmbedder(config, generation);
+const ai = new AiService({ pool, config, ipfs, provider: generation, embedder });
+if (embedder instanceof LocalEmbedder) void embedder.warmup().then(() => logger.info({ model: embedder.id }, 'model embedding lokal siap')).catch((err) => logger.error({ err }, 'model embedding lokal gagal dimuat'));
 const hub = createSseHub(pool, config.DATABASE_URL);
 const ctx: AppContext = {
   config,
   pool,
   chain,
-  ipfs: createIpfsClient(),
+  ipfs,
+  ai,
   hub,
   checkKafka: async () => (await Promise.all(config.KAFKA_BROKERS.split(',').map((b) => tcpReachable(b.trim())))).some(Boolean),
 };
 
 await hub.start();
+await ai.start();
 const stopReconciler = startReconciler(ctx);
 const server = createApp(ctx).listen(config.PORT, () => logger.info({ port: config.PORT }, 'API berjalan'));
 
@@ -32,6 +42,7 @@ async function shutdown(signal: string) {
   shuttingDown = true;
   logger.info({ signal }, 'mematikan server');
   stopReconciler();
+  ai.stop();
   await hub.stop();
   server.close();
   chain.close();

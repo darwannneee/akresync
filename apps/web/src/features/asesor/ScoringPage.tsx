@@ -11,6 +11,8 @@ import { useAction } from '../common/useAction';
 import { ASSESS_STATUS_LABEL, PHASE_LABEL, fmtNumber } from '../../lib/labels';
 import { INSTRUMENT_DOKTOR_2025 as INST, MAX_TOTAL_SCORE, computeTotal, criterionSummary, provisionalRank, type CriterionCode, type InstrumentItem, type InstrumentScores } from '@akreditasi/shared';
 import { rankLabel } from '../../lib/labels';
+import { SuggestionBlock } from '../ai/parts';
+import { ScoringAiPanel, useAiForScoring } from '../ai/ScoringAiPanel';
 
 const CRITERIA = INST.criteria.filter((c) => c.scored);
 const SCORED = INST.items.filter((i) => CRITERIA.some((c) => c.code === i.criterion));
@@ -34,6 +36,7 @@ export function ScoringPage() {
   const [confirm, setConfirm] = useState(false);
   const latest = useRef(scores);
   latest.current = scores;
+  const ai = useAiForScoring(id);
   const mine = q.data?.assessments?.find((a) => a.phase === phase && a.assessorId === user?.id);
 
   useEffect(() => {
@@ -111,6 +114,8 @@ export function ScoringPage() {
       {locked && <div className="mb-5"><Notice tone="success" title="Penilaian telah diserahkan">Hasil tercatat permanen. Bila perlu memperbaiki, gunakan koreksi pada tab Catatan resmi di halaman pengajuan.</Notice></div>}
       {q.data.akStatus === 'consistency_returned' && phase === 'AK' && !locked && <div className="mb-5"><Notice tone="warn" title="Dikembalikan oleh KEA">Mohon periksa kembali nilai Bapak/Ibu sesuai catatan KEA.</Notice></div>}
 
+      <div className="mb-6"><ScoringAiPanel submissionId={id} phase={phase} ai={ai} locked={locked} /></div>
+
       <div className="grid items-start gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
         <nav aria-label="Kriteria penilaian" className="card overflow-hidden lg:sticky lg:top-44">
           <p className="border-b border-line px-4 py-3 font-display font-semibold">Kriteria penilaian</p>
@@ -158,6 +163,7 @@ export function ScoringPage() {
                       );
                     })}
                   </div>
+                  {(() => { const sg = ai.suggestion(it.id); return sg ? <div className="mt-3"><SuggestionBlock item={sg} citations={ai.detail?.citations} compact action={sg.suggestedScore !== null && !locked ? <Button size="sm" variant="secondary" onClick={() => pick(it.criterion, it.id, sg.suggestedScore!)}>Pakai saran</Button> : undefined} /></div> : null; })()}
                   {!it.descriptors && <p className="mt-2 text-xs text-faint">Pedoman tidak memuat uraian per tingkat skor; Bapak/Ibu menilai berdasarkan uraian indikator dan data LED serta LKPS.</p>}
                 </li>
               );
