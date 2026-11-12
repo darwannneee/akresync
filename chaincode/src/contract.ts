@@ -421,7 +421,7 @@ export class FormalRecordContract extends Contract {
     const entry: AuditLedgerEntry = { ...event, docType: 'auditEvent', txId: ctx.stub.getTxID(), recordedAt: txTimestampIso(ctx.stub) };
     await putJson(ctx.stub, key, entry);
     if (event.submissionId !== null) {
-      await ctx.stub.putState(auditIdxKey(ctx.stub, event.submissionId, event.kind, event.eventId), Buffer.alloc(0));
+      await ctx.stub.putState(auditIdxKey(ctx.stub, event.submissionId, event.kind, event.eventId), Buffer.from('1', 'utf8'));
     }
     ctx.stub.setEvent(
       'AuditRecorded',

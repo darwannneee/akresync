@@ -3,6 +3,14 @@ import type { AggregateType, AppRole, AuditEvent, AuditEventKind, AuditReceipt, 
 import { hashSnapshot } from '@akreditasi/shared/node';
 import type { Queryable } from './pool.js';
 
+function stripNulls(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(stripNulls);
+  if (v && typeof v === 'object') {
+    return Object.fromEntries(Object.entries(v as Record<string, unknown>).filter(([, x]) => x !== null).map(([k, x]) => [k, stripNulls(x)]));
+  }
+  return v;
+}
+
 export interface RecordAuditInput {
   aggregateType: AggregateType;
   aggregateId: string;
@@ -19,7 +27,9 @@ export interface RecordAuditInput {
  */
 export async function recordAuditEvent(client: Queryable, input: RecordAuditInput): Promise<string> {
   const eventId = randomUUID();
-  const snapshot = JSON.parse(JSON.stringify(input.snapshot)) as Record<string, unknown>;
+  // Debezium Outbox Event Router membuang field bernilai null saat meng-expand payload jsonb; buang di sumber
+  // agar payloadSha256 sama di outbox, Kafka, worker, dan verifikator.
+  const snapshot = stripNulls(JSON.parse(JSON.stringify(input.snapshot))) as Record<string, unknown>;
   const event: AuditEvent = {
     eventId,
     aggregateType: input.aggregateType,

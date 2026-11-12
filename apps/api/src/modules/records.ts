@@ -8,6 +8,14 @@ import { badRequest, conflict, notFound } from '../errors.js';
 import { envelope, mount, parse, requestIdFrom, uuidParam } from '../lib/http.js';
 import { executeChainAction, findReplay } from './chainAction.js';
 
+/** Payload dari proyeksi DB memakai pengganti NUL pada kunci catatan; kembalikan ke bentuk chain sebelum dikirim. */
+function denormalizeKeys(v: unknown): unknown {
+  if (typeof v === 'string') return fromDbKey(v);
+  if (Array.isArray(v)) return v.map(denormalizeKeys);
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, denormalizeKeys(x)]));
+  return v;
+}
+
 export function recordRoutes(ctx: AppContext, router: Router, auth: RequestHandler) {
   mount(router, auth, API_ROUTES.correctRecord, async (req, res) => {
     const user = req.user!;
@@ -32,7 +40,7 @@ export function recordRoutes(ctx: AppContext, router: Router, auth: RequestHandl
     if (b.expectedVersion !== latest?.v) throw conflict(`Versi catatan sudah berubah (sekarang v${latest?.v}); muat ulang sebelum mengoreksi`, { currentVersion: latest?.v });
     const r = await executeChainAction(ctx, {
       userId: user.id, submissionId: row.submission_id, recordType: row.record_type as RecordType, fn: CHAIN_FUNCTIONS.CorrectRecord, requestId,
-      args: [requestId, fromDbKey(row.record_key), JSON.stringify(b.payload), b.reason, b.evidenceRef, String(b.expectedVersion)],
+      args: [requestId, fromDbKey(row.record_key), JSON.stringify(denormalizeKeys(b.payload)), b.reason, b.evidenceRef, String(b.expectedVersion)],
       payload: b.payload, offChain: { reason: b.reason, evidenceRef: b.evidenceRef },
     });
     res.json(envelope({ recordId: row.id, recordKey: r.chain.recordKey, version: r.chain.version }, { chain: r.chain }));

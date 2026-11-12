@@ -69,7 +69,7 @@ export async function buildDetail(ctx: AppContext, user: AuthUser, id: string) {
     ),
     q(
       ctx.pool,
-      `SELECT o.id AS event_id, o.type AS kind, o.aggregatetype, o.aggregateid, o.created_at, o.payload->'event'->>'version' AS version,
+      `SELECT o.id AS event_id, o.type AS kind, o.aggregatetype AS aggregate_type, o.aggregateid AS aggregate_id, o.created_at, o.payload->'event'->>'version' AS version,
               o.payload->'event'->>'actorUid' AS actor_uid, o.payload->'event'->>'payloadSha256' AS payload_sha256,
               a.status, a.attempts, a.tx_id, a.block_number, a.last_error, a.committed_at
        FROM outbox o JOIN audit_status a ON a.event_id = o.id WHERE o.submission_id=$1 ORDER BY o.created_at`,
@@ -81,7 +81,7 @@ export async function buildDetail(ctx: AppContext, user: AuthUser, id: string) {
       : q(ctx.pool, `SELECT a.id, a.offer_id, a.assessor_id, u.full_name AS assessor_name, a.phase, a.version, a.status, a.scores, a.total_score, a.score_summary_sha256, a.minutes_document_id, a.chain_record_key, a.submitted_at FROM assessments a JOIN users u ON u.id=a.assessor_id WHERE a.submission_id=$1 ${user.role === 'asesor' ? 'AND a.assessor_id = $2' : ''}`, user.role === 'asesor' ? [id, user.id] : [id]),
   ]);
   const hideOffchain = (r: any) => (user.role === 'upps' || user.role === 'asesor' ? { ...r, off_chain: undefined } : r);
-  const auditByEvent = new Map(audit.map((a: any) => [a.aggregateid, a]));
+  const auditByEvent = new Map(audit.map((a: any) => [a.aggregateId, a]));
   void auditByEvent;
   return {
     ...submissionDto(full),
