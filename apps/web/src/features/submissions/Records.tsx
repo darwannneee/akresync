@@ -8,7 +8,8 @@ import { Badge, Button, Drawer, EmptyState, Field, FormError, Input, Modal, Spin
 import { RECORD_LABEL, fmtDate, short } from '../common/labels';
 import { useAction } from '../common/useAction';
 
-export function canCorrect(r: FormalRecordView, user: User): boolean {
+export function canCorrect(r: FormalRecordView, user: User, records: FormalRecordView[] = [r]): boolean {
+  if (records.some((o) => o.recordKey === r.recordKey && o.version > r.version)) return false;
   if (NON_CORRECTABLE_RECORD_TYPES.includes(r.recordType)) return false;
   if (r.actorRole !== user.role) return false;
   if (INDIVIDUAL_RECORD_TYPES.includes(r.recordType)) return (r.actorUid ?? r.actorUserId) === user.id;
@@ -34,7 +35,7 @@ export function RecordsTable({ submissionId, records, user }: { submissionId: st
             <Td>
               <div className="flex gap-1">
                 <Button variant="ghost" className="!min-h-[32px] !px-2" onClick={() => setHist(r)}>Riwayat</Button>
-                {canCorrect(r, user) && <Button variant="secondary" className="!min-h-[32px] !px-2" onClick={() => setCorr(r)}>Koreksi</Button>}
+                {canCorrect(r, user, records) && <Button variant="secondary" className="!min-h-[32px] !px-2" onClick={() => setCorr(r)}>Koreksi</Button>}
               </div>
             </Td>
           </tr>

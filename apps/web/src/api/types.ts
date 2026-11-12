@@ -152,6 +152,7 @@ export interface SubmissionDetail extends SubmissionSummary {
   responses?: ResponseView[];
   certificate?: CertificateView | null;
   records?: FormalRecordView[];
+  rejectedAttempts?: { id: string; recordType: RecordType; version: number; error?: string | null; createdAt?: string }[];
   audit?: AuditEventView[];
 }
 

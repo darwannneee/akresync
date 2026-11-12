@@ -22,6 +22,7 @@ export function recordRoutes(ctx: AppContext, router: Router, auth: RequestHandl
     const row = await q1(ctx.pool, `SELECT * FROM formal_records WHERE id=$1 AND status='committed'`, [uuidParam(req.params.recordId)]);
     if (!row) throw notFound('Catatan formal tidak ditemukan');
     await loadSubmissionForUser(ctx.pool, user, row.submission_id);
+    if ((NON_CORRECTABLE_RECORD_TYPES as readonly string[]).includes(row.record_type)) throw badRequest('Catatan jenis ini tidak dapat dikoreksi; lakukan revisi melalui pengajuan ulang');
     const b = parse(
       z.object({
         payload: z.record(z.unknown()),
@@ -34,8 +35,6 @@ export function recordRoutes(ctx: AppContext, router: Router, auth: RequestHandl
     const requestId = requestIdFrom(req);
     const replay = await findReplay(ctx, requestId, user.id, row.submission_id);
     if (replay) return void res.json(envelope({ recordId: row.id, replayed: true }, { chain: replay.chain }));
-    if ((NON_CORRECTABLE_RECORD_TYPES as readonly string[]).includes(row.record_type)) throw conflict('Catatan jenis ini tidak dapat dikoreksi; lakukan revisi melalui pengajuan ulang');
-    if (row.record_type === 'ASSESSOR_OFFER') throw conflict('Penawaran asesor tidak dapat dikoreksi');
     const latest = await q1<{ v: number }>(ctx.pool, `SELECT max(version) AS v FROM formal_records WHERE record_key=$1 AND status='committed'`, [row.record_key]);
     if (b.expectedVersion !== latest?.v) throw conflict(`Versi catatan sudah berubah (sekarang v${latest?.v}); muat ulang sebelum mengoreksi`, { currentVersion: latest?.v });
     const r = await executeChainAction(ctx, {
@@ -62,5 +61,4 @@ export function recordRoutes(ctx: AppContext, router: Router, auth: RequestHandl
       res.json(envelope(versions.map((v) => ({ txId: v.tx_id, timestamp: v.committed_at, isDelete: false, value: { version: v.version, payload: v.payload, correction: v.off_chain?.reason ? { reason: v.off_chain.reason, evidenceRef: v.off_chain.evidenceRef ?? '' } : null } }))));
     }
   });
-  void badRequest;
 }

@@ -81,17 +81,26 @@ export async function buildDetail(ctx: AppContext, user: AuthUser, id: string) {
       : q(ctx.pool, `SELECT a.id, a.offer_id, a.assessor_id, u.full_name AS assessor_name, a.phase, a.version, a.status, a.scores, a.total_score, a.score_summary_sha256, a.minutes_document_id, a.chain_record_key, a.submitted_at FROM assessments a JOIN users u ON u.id=a.assessor_id WHERE a.submission_id=$1 ${user.role === 'asesor' ? 'AND a.assessor_id = $2' : ''}`, user.role === 'asesor' ? [id, user.id] : [id]),
   ]);
   const hideOffchain = (r: any) => (user.role === 'upps' || user.role === 'asesor' ? { ...r, off_chain: undefined } : r);
-  const auditByEvent = new Map(audit.map((a: any) => [a.aggregateId, a]));
-  void auditByEvent;
+  // Status audit per dokumen: event DocumentVersionSaved terbaru dengan aggregate_id = id versi dokumen.
+  const auditByDocument = new Map<string, any>();
+  for (const a of audit as any[]) if (a.aggregate_type === 'document_version') auditByDocument.set(a.aggregate_id, a);
+  const docWithAudit = (d: any) => {
+    const a = auditByDocument.get(d.id);
+    return { ...docDto(d), auditStatus: a?.status ?? null, auditTxId: a?.tx_id ?? null };
+  };
+  // Tabel on-chain hanya memuat catatan yang tidak gagal; percobaan ditolak chain dilaporkan terpisah.
+  const onChain = formal.filter((f: any) => f.status !== 'failed');
+  const rejectedAttempts = formal.filter((f: any) => f.status === 'failed');
   return {
     ...submissionDto(full),
-    documents: documents.map(docDto),
+    documents: documents.map(docWithAudit),
     payments: payments.map((p) => ({ ...camel(p), amount: Number(p.amount) })),
     offers: offers.map((o) => ({ ...camel(o), rejectionReason: null })),
     alSchedules: schedules.map(camel),
     responses: responses.map(camel),
     assessments: assessments.map((a: any) => ({ ...camel(a), totalScore: asNumber(a.total_score) })),
-    records: formal.map((f: any) => {
+    rejectedAttempts: rejectedAttempts.map((f: any) => ({ id: f.id, recordType: f.record_type, version: f.version, error: f.error, createdAt: f.created_at })),
+    records: onChain.map((f: any) => {
       const oc = f.off_chain as Record<string, any> | null;
       return {
         ...camel(hideOffchain(f)),

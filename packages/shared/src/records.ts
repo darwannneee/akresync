@@ -15,7 +15,7 @@ export type RecordType = (typeof RECORD_TYPES)[number];
 /** Catatan yang melekat ke individu: koreksi wajib oleh uid yang sama. */
 export const INDIVIDUAL_RECORD_TYPES: readonly RecordType[] = ['ASSIGNMENT_RESPONSE', 'ASSESSMENT_RESULT'];
 /** Catatan yang tidak bisa dikoreksi lewat CorrectRecord. */
-export const NON_CORRECTABLE_RECORD_TYPES: readonly RecordType[] = ['SUBMISSION'];
+export const NON_CORRECTABLE_RECORD_TYPES: readonly RecordType[] = ['SUBMISSION', 'ASSESSOR_OFFER'];
 
 export const DOCUMENT_TYPES = ['LED', 'LKPS', 'SUPPORT', 'PAYMENT_PROOF', 'AL_MINUTES', 'CERTIFICATE'] as const;
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
