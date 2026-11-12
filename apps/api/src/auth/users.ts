@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import type { AppRole } from '@akreditasi/shared';
 import type { Pool } from 'pg';
-import { q1, withTransaction } from '../db/pool.js';
+import { q1, withTransaction, type Queryable } from '../db/pool.js';
 import { conflict } from '../errors.js';
 import { enrollForAppRole, storeIdentity } from '../fabric/identity.js';
 import type { AuthUser } from './types.js';
@@ -15,6 +15,20 @@ export const toAuthUser = (r: any): AuthUser => ({ id: r.id, role: r.role, email
 export async function loadActiveUser(pool: Pick<Pool, 'query'>, id: string): Promise<AuthUser | undefined> {
   const r = await q1(pool, 'SELECT id, role, email, full_name, institution_id FROM users WHERE id = $1 AND is_active', [id]);
   return r ? toAuthUser(r) : undefined;
+}
+
+/** Sisipkan baris pengguna. status != 'active' → akun nonaktif (menunggu verifikasi / ditolak). */
+export async function insertUserRow(
+  db: Queryable,
+  u: { id: string; email: string; passwordHash: string; fullName: string; role: AppRole; institutionId?: string | null; status?: 'active' | 'pending_verification' | 'rejected' },
+) {
+  const status = u.status ?? 'active';
+  return q1(
+    db,
+    `INSERT INTO users (id, email, password_hash, full_name, role, institution_id, is_active, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+     RETURNING id, role, email, full_name, institution_id`,
+    [u.id, u.email, u.passwordHash, u.fullName, u.role, u.institutionId ?? null, status === 'active', status],
+  );
 }
 
 export interface NewUser {
@@ -36,12 +50,7 @@ export async function createUser(pool: Pool, u: NewUser, opts: { enroll?: boolea
   const identity = opts.enroll === false ? null : await enrollForAppRole(id, u.role);
   const passwordHash = await hashPassword(u.password);
   return withTransaction(async (c) => {
-    const row = await q1(
-      c,
-      `INSERT INTO users (id, email, password_hash, full_name, role, institution_id) VALUES ($1,$2,$3,$4,$5,$6)
-       RETURNING id, role, email, full_name, institution_id`,
-      [id, email, passwordHash, u.fullName, u.role, u.institutionId ?? null],
-    );
+    const row = await insertUserRow(c, { id, email, passwordHash, fullName: u.fullName, role: u.role, institutionId: u.institutionId });
     if (identity) await storeIdentity(c, id, identity);
     return toAuthUser(row);
   }, pool);

@@ -30,3 +30,10 @@ export const usePrograms = (institutionId: string) =>
   useQuery({ queryKey: ['programs', institutionId], enabled: !!institutionId, queryFn: async () => (await api.get<Program[]>(`/institutions/${institutionId}/programs`)).data ?? [] });
 export const useAssessors = () =>
   useQuery({ queryKey: ['assessors'], queryFn: async () => (await api.get<Assessor[]>('/assessors')).data ?? [] });
+
+export interface LevelRef { id: number; code: string; label: string }
+export interface ProgramNameRef { id: number; name: string }
+export const useLevels = () =>
+  useQuery({ queryKey: ['ref-levels'], staleTime: Infinity, queryFn: async () => (await api.get<LevelRef[]>('/ref/levels')).data ?? [] });
+export const useProgramNames = () =>
+  useQuery({ queryKey: ['ref-program-names'], staleTime: Infinity, queryFn: async () => (await api.get<ProgramNameRef[]>('/ref/program-names')).data ?? [] });

@@ -135,3 +135,10 @@ export async function downloadFile(path: string, fallbackName: string): Promise<
 
 export const errorMessage = (e: unknown): string =>
   e instanceof ApiRequestError ? e.message : e instanceof Error ? e.message : 'Terjadi kesalahan tak terduga.';
+
+/** Ambil berkas terautentikasi sebagai Blob (untuk pratinjau di tab baru atau gambar). */
+export async function fetchBlob(path: string): Promise<Blob> {
+  const res = await raw('GET', path, {}, false);
+  if (!res.ok) return fail(res);
+  return res.blob();
+}

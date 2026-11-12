@@ -250,7 +250,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
 Input.displayName = 'Input'; Textarea.displayName = 'Textarea'; Select.displayName = 'Select';
 
 /* ---------- FileInput ---------- */
-export function FileInput({ label, accept, onChange, file, hint, disabled }: { label: string; accept?: string; file: File | null; onChange: (f: File | null) => void; hint?: string; disabled?: boolean }) {
+export function FileInput({ label, accept, onChange, file, hint, disabled }: { label: ReactNode; accept?: string; file: File | null; onChange: (f: File | null) => void; hint?: string; disabled?: boolean }) {
   const id = useId();
   const [over, setOver] = useState(false);
   return (

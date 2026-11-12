@@ -1,0 +1,6412 @@
+{
+"institusi": [
+[
+"1",
+"Akademi Angkatan Laut Surabaya"
+],
+[
+"2",
+"Akademi Angkatan Udara (AAU)"
+],
+[
+"3",
+"Akademi Industri Tekstil Bandung"
+],
+[
+"4",
+"Akademi Komunitas Olat Maras"
+],
+[
+"5",
+"Akademi Maritim Djadajat"
+],
+[
+"6",
+"Akademi Maritim Indonesia AIPI"
+],
+[
+"7",
+"Akademi Maritim Nusantara Cilacap"
+],
+[
+"8",
+"Akademi Maritim Pembangunan Jakarta"
+],
+[
+"9",
+"Akademi Maritim Sapta Samudra"
+],
+[
+"10",
+"Akademi Maritim Suaka Bahari"
+],
+[
+"11",
+"Akademi Metrologi dan Instrumentasi"
+],
+[
+"12",
+"Akademi Militer Magelang"
+],
+[
+"13",
+"Akademi Minyak dan Gas Balongan"
+],
+[
+"14",
+"Akademi Perkeretaapian Indonesia Madiun"
+],
+[
+"15",
+"Akademi Teknik Adikarya"
+],
+[
+"16",
+"Akademi Teknik Biak"
+],
+[
+"17",
+"Akademi Teknik dan Keselamatan Penerbangan Makassar"
+],
+[
+"18",
+"Akademi Teknik dan Keselamatan Penerbangan Medan"
+],
+[
+"19",
+"Akademi Teknik dan Keselamatan Penerbangan Surabaya"
+],
+[
+"20",
+"Akademi Teknik Deli Serdang"
+],
+[
+"22",
+"Akademi Teknik Elektromedik Andakara Jakarta"
+],
+[
+"23",
+"Akademi Teknik Elektromedik Kupula Aceh"
+],
+[
+"24",
+"Akademi Teknik Elektromedik Muhammadiyah Makassar"
+],
+[
+"25",
+"Akademi Teknik Indonesia Cut Meutia"
+],
+[
+"26",
+"Akademi Teknik Kupang"
+],
+[
+"27",
+"Akademi Teknik Mesin Industri Surakarta"
+],
+[
+"28",
+"Akademi Teknik Perkapalan Veteran"
+],
+[
+"29",
+"Akademi Teknik Telekomunikasi Sandhy Putra Jakarta"
+],
+[
+"30",
+"Akademi Teknik Tirta Wiyata"
+],
+[
+"31",
+"Akademi Teknik Wacana Manunggal Semarang"
+],
+[
+"32",
+"Akademi Teknologi Adi Unggul Bhirawa (AUB)"
+],
+[
+"33",
+"Akademi Teknologi Bogor"
+],
+[
+"34",
+"Akademi Teknologi Industri Dewantara Palopo"
+],
+[
+"35",
+"Akademi Teknologi Industri Immanuel"
+],
+[
+"36",
+"Akademi Teknologi Warga Surakarta"
+],
+[
+"37",
+"Akademik Teknik Biak"
+],
+[
+"38",
+"Institut Ilmu Kesehatan Medika Persada Bali"
+],
+[
+"39",
+"Institut Maritim Prasetiya Mandiri"
+],
+[
+"40",
+"Institut Pertanian Bogor"
+],
+[
+"41",
+"Institut Sains dan Teknologi AKPRIND"
+],
+[
+"42",
+"Institut Sains Dan Teknologi Al-Kamal"
+],
+[
+"43",
+"Institut Sains Dan Teknologi Annuqayah"
+],
+[
+"44",
+"Institut Sains Dan Teknologi Nasional"
+],
+[
+"45",
+"Institut Sains dan Teknologi Pradita"
+],
+[
+"46",
+"Institut Sains dan Teknologi TD Pardede"
+],
+[
+"47",
+"Institut Sains dan Teknologi Terpadu Surabaya"
+],
+[
+"48",
+"Institut Teknologi Adhi Tama Surabaya"
+],
+[
+"49",
+"Institut Teknologi Bandung"
+],
+[
+"50",
+"Institut Teknologi Batam"
+],
+[
+"51",
+"Institut Teknologi Budi Utomo"
+],
+[
+"52",
+"Institut Teknologi dan Bisnis Indonesia"
+],
+[
+"53",
+"Institut Teknologi dan Bisnis Swadharma"
+],
+[
+"54",
+"Institut Teknologi dan Kesehatan Jakarta"
+],
+[
+"55",
+"Institut Teknologi Del"
+],
+[
+"56",
+"Institut Teknologi Dirgantara Adisutjipto"
+],
+[
+"57",
+"Institut Teknologi Garut"
+],
+[
+"58",
+"Institut Teknologi Harapan Bangsa"
+],
+[
+"59",
+"Institut Teknologi Indonesia"
+],
+[
+"60",
+"Institut Teknologi Kalimantan"
+],
+[
+"61",
+"Institut Teknologi Medan"
+],
+[
+"62",
+"Institut Teknologi Minaesa"
+],
+[
+"63",
+"Institut Teknologi Nasional Bandung"
+],
+[
+"64",
+"Institut Teknologi Nasional Malang"
+],
+[
+"65",
+"Institut Teknologi Nasional Yogyakarta"
+],
+[
+"66",
+"Institut Teknologi Padang"
+],
+[
+"67",
+"Institut Teknologi Perusahaan Listrik Negara"
+],
+[
+"68",
+"Institut Teknologi Sains Bandung"
+],
+[
+"69",
+"Institut Teknologi Sepuluh Nopember"
+],
+[
+"70",
+"Institut Teknologi Sumatera"
+],
+[
+"71",
+"Institut Teknologi Telkom Jakarta"
+],
+[
+"72",
+"Institut Teknologi Telkom Purwokerto"
+],
+[
+"73",
+"Institut Teknologi Telkom Surabaya"
+],
+[
+"74",
+"Institut Teknologi Yogyakarta"
+],
+[
+"75",
+"Institut Transportasi dan Logistik Trisakti"
+],
+[
+"76",
+"Politeknik 17 Agustus 1945 Surabaya"
+],
+[
+"77",
+"Politeknik Aceh"
+],
+[
+"78",
+"Politeknik Aceh Selatan"
+],
+[
+"79",
+"Politeknik Ahli Usaha Perikanan"
+],
+[
+"80",
+"Politeknik Akamigas Palembang"
+],
+[
+"81",
+"Politeknik Amamapare"
+],
+[
+"82",
+"Politeknik Angkatan Darat"
+],
+[
+"83",
+"Politeknik Angkatan Laut"
+],
+[
+"84",
+"Politeknik Astra"
+],
+[
+"85",
+"Politeknik ATI Makassar"
+],
+[
+"86",
+"Politeknik ATI Padang"
+],
+[
+"87",
+"Politeknik ATMI"
+],
+[
+"88",
+"Politeknik Baja Tegal"
+],
+[
+"89",
+"Politeknik Batulicin"
+],
+[
+"90",
+"Politeknik Bosowa"
+],
+[
+"91",
+"Politeknik Caltex"
+],
+[
+"92",
+"Politeknik Dharma Patria"
+],
+[
+"93",
+"Politeknik Elektronika Negeri Surabaya"
+],
+[
+"94",
+"Politeknik Energi dan Mineral Akamigas"
+],
+[
+"95",
+"Politeknik Enjinering Indorama"
+],
+[
+"96",
+"Politeknik Gajah Sakti"
+],
+[
+"97",
+"Politeknik Gajah Tunggal"
+],
+[
+"98",
+"Politeknik Gunakarya Indonesia Bekasi"
+],
+[
+"99",
+"Politeknik Halmahera"
+],
+[
+"100",
+"Politeknik Harapan Bersama"
+],
+[
+"101",
+"Politeknik Hasnur"
+],
+[
+"102",
+"Politeknik Ilmu Pelayaran Makassar"
+],
+[
+"103",
+"Politeknik Ilmu Pelayaran Semarang"
+],
+[
+"104",
+"Politeknik Indonusa Surakarta"
+],
+[
+"105",
+"Politeknik Industri ATMI"
+],
+[
+"106",
+"Politeknik Industri Furnitur dan Pengolahan Kayu"
+],
+[
+"107",
+"Politeknik Industri Logam Morowali"
+],
+[
+"108",
+"Politeknik Jambi"
+],
+[
+"109",
+"Politeknik Katolik Mangunwijaya"
+],
+[
+"110",
+"Politeknik Saint Paul Sorong"
+],
+[
+"111",
+"Politeknik Kelautan dan Perikanan Bone"
+],
+[
+"112",
+"Politeknik Kelautan dan Perikanan Dumai"
+],
+[
+"113",
+"Politeknik Kelautan dan Perikanan Karawang"
+],
+[
+"114",
+"Politeknik Kelautan dan Perikanan Pangandaran"
+],
+[
+"115",
+"Politeknik Kesehatan Kementrian Kesehatan Jakarta II"
+],
+[
+"116",
+"Politeknik Kesehatan Kementrian Kesehatan Surabaya"
+],
+[
+"117",
+"Politeknik Kesehatan Siteba"
+],
+[
+"118",
+"Politeknik Keselamatan Transportasi Jalan"
+],
+[
+"119",
+"Politeknik Kota Malang"
+],
+[
+"120",
+"Politeknik Kotabaru"
+],
+[
+"121",
+"Politeknik Krakatau"
+],
+[
+"122",
+"Politeknik Manufaktur Bandung"
+],
+[
+"123",
+"Politeknik Manufaktur Negeri Bangka Belitung"
+],
+[
+"124",
+"Politeknik Maritim AMI Makassar"
+],
+[
+"125",
+"Politeknik Maritim Negeri Indonesia"
+],
+[
+"126",
+"Politeknik Mekatronika Sanata Dharma"
+],
+[
+"127",
+"Politeknik Meta Industri Cikarang"
+],
+[
+"128",
+"Politeknik Muara Teweh"
+],
+[
+"129",
+"Politeknik Muhammadiyah Magelang"
+],
+[
+"130",
+"Politeknik Muhammadiyah Pekalongan"
+],
+[
+"131",
+"Politeknik Nasional"
+],
+[
+"132",
+"Politeknik Negeri Ambon"
+],
+[
+"133",
+"Politeknik Negeri Bali"
+],
+[
+"134",
+"Politeknik Negeri Balikpapan"
+],
+[
+"135",
+"Politeknik Negeri Bandung"
+],
+[
+"136",
+"Politeknik Negeri Banjarmasin"
+],
+[
+"137",
+"Politeknik Negeri Banyuwangi"
+],
+[
+"138",
+"Politeknik Negeri Batam"
+],
+[
+"139",
+"Politeknik Negeri Bengkalis"
+],
+[
+"140",
+"Politeknik Negeri Cilacap"
+],
+[
+"141",
+"Politeknik Negeri Fakfak"
+],
+[
+"142",
+"Politeknik Negeri Indramayu"
+],
+[
+"143",
+"Politeknik Negeri Jakarta"
+],
+[
+"144",
+"Politeknik Negeri Jember"
+],
+[
+"145",
+"Politeknik Negeri Ketapang"
+],
+[
+"146",
+"Politeknik Negeri Kupang"
+],
+[
+"147",
+"Politeknik Negeri Lhokseumawe"
+],
+[
+"148",
+"Politeknik Negeri Madiun"
+],
+[
+"149",
+"Politeknik Negeri Madura"
+],
+[
+"150",
+"Politeknik Negeri Malang"
+],
+[
+"151",
+"Politeknik Negeri Manado"
+],
+[
+"152",
+"Politeknik Negeri Medan"
+],
+[
+"153",
+"Politeknik Negeri Media Kreatif"
+],
+[
+"154",
+"Politeknik Negeri Padang"
+],
+[
+"155",
+"Politeknik Negeri Pontianak"
+],
+[
+"156",
+"Politeknik Negeri Samarinda"
+],
+[
+"157",
+"Politeknik Negeri Sambas"
+],
+[
+"158",
+"Politeknik Negeri Semarang"
+],
+[
+"159",
+"Politeknik Negeri Sriwijaya"
+],
+[
+"160",
+"Politeknik Negeri Subang"
+],
+[
+"161",
+"Politeknik Negeri Tanah Laut"
+],
+[
+"162",
+"Politeknik Negeri Ujung Pandang"
+],
+[
+"163",
+"Politeknik Pekerjaan Umum"
+],
+[
+"164",
+"Politeknik Pelayaran Banten"
+],
+[
+"165",
+"Politeknik Pelayaran Barombong"
+],
+[
+"166",
+"Politeknik Pelayaran Malahayati"
+],
+[
+"168",
+"Politeknik Pelayaran Sorong"
+],
+[
+"169",
+"Politeknik Pelayaran Sulawesi Utara"
+],
+[
+"170",
+"Politeknik Pelayaran Sumatera Barat"
+],
+[
+"171",
+"Politeknik Pelayaran Surabaya"
+],
+[
+"172",
+"Politeknik Penerbangan Indonesia Curug"
+],
+[
+"173",
+"Politeknik Penerbangan Medan"
+],
+[
+"174",
+"Politeknik Penerbangan Surabaya"
+],
+[
+"175",
+"Politeknik Perkapalan Negeri Surabaya"
+],
+[
+"176",
+"Politeknik Pertanian Negeri Pangkajene Kepulauan"
+],
+[
+"177",
+"Politeknik Pertanian Negeri Samarinda"
+],
+[
+"178",
+"Politeknik PGRI Banten"
+],
+[
+"179",
+"Politeknik Piksi Ganesha Indonesia"
+],
+[
+"180",
+"Politeknik Pratama Mulia"
+],
+[
+"181",
+"Politeknik Purbaya"
+],
+[
+"182",
+"Politeknik Raflesia"
+],
+[
+"183",
+"Politeknik Sendawar"
+],
+[
+"184",
+"Politeknik STMI Jakarta"
+],
+[
+"185",
+"Politeknik STTT Bandung"
+],
+[
+"186",
+"Politeknik Sukabumi"
+],
+[
+"187",
+"Politeknik Tanjungbalai"
+],
+[
+"188",
+"Politeknik TEDC"
+],
+[
+"189",
+"Politeknik Teknologi Kimia Industri"
+],
+[
+"190",
+"Politeknik Transportasi Darat Indonesia - STTD"
+],
+[
+"191",
+"Politeknik Unggulan Kalimantan"
+],
+[
+"192",
+"Politeknik Unisma Malang"
+],
+[
+"193",
+"Sekolah Tinggi Energi dan Mineral"
+],
+[
+"194",
+"Sekolah Tinggi Ilmu Kesehatan Binalita Sudama"
+],
+[
+"195",
+"Sekolah Tinggi Ilmu Kesehatan Muhammadiyah Aceh"
+],
+[
+"196",
+"Sekolah Tinggi Ilmu Kesehatan Widya Husada"
+],
+[
+"197",
+"Sekolah Tinggi Ilmu Maritim Ami"
+],
+[
+"198",
+"Sekolah Tinggi Ilmu Maritim Mutiara Jaya"
+],
+[
+"199",
+"Sekolah Tinggi Ilmu Pelayaran Jakarta"
+],
+[
+"200",
+"Sekolah Tinggi Ilmu Teknik Bina Putra"
+],
+[
+"201",
+"Sekolah Tinggi Ilmu Teknik Prabumulih"
+],
+[
+"202",
+"Sekolah Tinggi Ilmu Teknik Serasan"
+],
+[
+"203",
+"Sekolah Tinggi Manajemen Logistik Indonesia"
+],
+[
+"204",
+"Sekolah Tinggi Maritim Dan Transpor AMNI"
+],
+[
+"205",
+"Sekolah Tinggi Maritim Yogyakarta"
+],
+[
+"206",
+"Sekolah Tinggi Perikanan"
+],
+[
+"208",
+"Sekolah Tinggi Teknik Baramuli"
+],
+[
+"209",
+"Sekolah Tinggi Teknik Bima"
+],
+[
+"210",
+"Sekolah Tinggi Teknik Iskandar Thani"
+],
+[
+"211",
+"Sekolah Tinggi Teknik Lingkungan Mataram"
+],
+[
+"212",
+"Sekolah Tinggi Teknik Malang"
+],
+[
+"213",
+"Sekolah Tinggi Teknik Multimedia Cendikia Abditama"
+],
+[
+"214",
+"Sekolah Tinggi Teknik Qomaruddin"
+],
+[
+"215",
+"Sekolah Tinggi Teknik Wiworotomo"
+],
+[
+"216",
+"Sekolah Tinggi Teknologi 'Warga' Surakarta"
+],
+[
+"217",
+"Sekolah Tinggi Teknologi Adisutjipto"
+],
+[
+"218",
+"Sekolah Tinggi Teknologi Angkatan Laut"
+],
+[
+"219",
+"Sekolah Tinggi Teknologi Bandung"
+],
+[
+"220",
+"Sekolah Tinggi Teknologi Banten"
+],
+[
+"221",
+"Sekolah Tinggi Teknologi Bina Tunggal"
+],
+[
+"222",
+"Sekolah Tinggi Teknologi Bontang"
+],
+[
+"223",
+"Sekolah Tinggi Teknologi Cipasung"
+],
+[
+"224",
+"Sekolah Tinggi Teknologi Cirebon"
+],
+[
+"225",
+"Sekolah Tinggi Teknologi Dr Kh Ez Muttaqien"
+],
+[
+"226",
+"Sekolah Tinggi Teknologi Dumai"
+],
+[
+"227",
+"Sekolah Tinggi Teknologi Duta Bangsa"
+],
+[
+"228",
+"Sekolah Tinggi Teknologi Fatahillah Cilegon"
+],
+[
+"229",
+"Sekolah Tinggi Teknologi Garut"
+],
+[
+"230",
+"Sekolah Tinggi Teknologi Gempol"
+],
+[
+"231",
+"Sekolah Tinggi Teknologi Immanuel"
+],
+[
+"232",
+"Sekolah Tinggi Teknologi Indragiri"
+],
+[
+"233",
+"Sekolah Tinggi Teknologi Industri Bontang"
+],
+[
+"234",
+"Sekolah Tinggi Teknologi Industri Padang"
+],
+[
+"235",
+"Sekolah Tinggi Teknologi Jakarta"
+],
+[
+"236",
+"Sekolah Tinggi Teknologi Kedirgantaraan"
+],
+[
+"237",
+"Sekolah Tinggi Teknologi Mandala"
+],
+[
+"238",
+"Sekolah Tinggi Teknologi Mekongga"
+],
+[
+"239",
+"Sekolah Tinggi Teknologi Migas"
+],
+[
+"240",
+"Sekolah Tinggi Teknologi Mineral Indonesia"
+],
+[
+"241",
+"Sekolah Tinggi Teknologi Minyak dan Gas Bumi"
+],
+[
+"242",
+"Sekolah Tinggi Teknologi Muhammadiyah Cileungsi"
+],
+[
+"243",
+"Sekolah Tinggi Teknologi Muhammadiyah Kebumen"
+],
+[
+"244",
+"Sekolah Tinggi Teknologi Mutu Muhammadiyah"
+],
+[
+"245",
+"Sekolah Tinggi Teknologi Nasional Jambi"
+],
+[
+"246",
+"Sekolah Tinggi Teknologi Nuklir Yogyakarta"
+],
+[
+"247",
+"Sekolah Tinggi Teknologi Nasional Sleman"
+],
+[
+"248",
+"Sekolah Tinggi Teknologi Nusantara Indonesia"
+],
+[
+"249",
+"Sekolah Tinggi Teknologi Nusantara Lampung"
+],
+[
+"250",
+"Sekolah Tinggi Teknologi Pagaralam"
+],
+[
+"251",
+"Sekolah Tinggi Teknologi Payakumbuh"
+],
+[
+"252",
+"Sekolah Tinggi Teknologi Pekanbaru"
+],
+[
+"253",
+"Sekolah Tinggi Teknologi Pelalawan"
+],
+[
+"254",
+"Sekolah Tinggi Teknologi Pelita Bangsa"
+],
+[
+"255",
+"Sekolah Tinggi Teknologi Pomosda"
+],
+[
+"256",
+"Sekolah Tinggi Teknologi Ronggolawe"
+],
+[
+"257",
+"Sekolah Tinggi Teknologi Sinar Husni"
+],
+[
+"258",
+"Sekolah Tinggi Teknologi Texmaco"
+],
+[
+"259",
+"Sekolah Tinggi Teknologi Wastukancana"
+],
+[
+"260",
+"Sekolah Tinggi Teknologi Yupentek"
+],
+[
+"261",
+"STITEK Bina Taruna"
+],
+[
+"262",
+"Universitas 17 Agustus 1945 Banyuwangi"
+],
+[
+"263",
+"Universitas 17 Agustus 1945 Cirebon"
+],
+[
+"264",
+"Universitas 17 Agustus 1945 Jakarta"
+],
+[
+"265",
+"Universitas 17 Agustus 1945 Samarinda"
+],
+[
+"266",
+"Universitas 17 Agustus 1945 Semarang"
+],
+[
+"267",
+"Universitas 17 Agustus 1945 Surabaya"
+],
+[
+"268",
+"Universitas 45 Surabaya"
+],
+[
+"269",
+"Universitas Abdurrab"
+],
+[
+"270",
+"Universitas Abulyatama"
+],
+[
+"271",
+"Universitas Achmad Yani Banjarmasin"
+],
+[
+"272",
+"Universitas Agung Podomoro"
+],
+[
+"273",
+"Universitas Ahmad Dahlan"
+],
+[
+"274",
+"Universitas Airlangga"
+],
+[
+"275",
+"Universitas Aisyiyah Yogyakarta"
+],
+[
+"276",
+"Universitas Almuslim"
+],
+[
+"277",
+"Universitas Al-Azhar"
+],
+[
+"278",
+"Universitas Al-Azhar Indonesia"
+],
+[
+"279",
+"Universitas Alwashliyah"
+],
+[
+"280",
+"Universitas Amir Hamzah"
+],
+[
+"281",
+"Universitas Andalas"
+],
+[
+"282",
+"Universitas Andi Djemma Palopo"
+],
+[
+"283",
+"Universitas Antakusuma"
+],
+[
+"284",
+"Universitas Asahan"
+],
+[
+"285",
+"Universitas Atma Jaya Makassar"
+],
+[
+"286",
+"Universitas Atma Jaya Yogyakarta"
+],
+[
+"287",
+"Universitas Azzahra"
+],
+[
+"288",
+"Universitas Bakrie"
+],
+[
+"289",
+"Universitas Bali Internasional"
+],
+[
+"290",
+"Universitas Balikpapan"
+],
+[
+"291",
+"Universitas Bandar Lampung"
+],
+[
+"292",
+"Universitas Bandung Raya"
+],
+[
+"293",
+"Universitas Bangka Belitung"
+],
+[
+"294",
+"Universitas Banten Jaya"
+],
+[
+"295",
+"Universitas Batam"
+],
+[
+"296",
+"Universitas Batanghari Jambi"
+],
+[
+"297",
+"Universitas Baturaja"
+],
+[
+"298",
+"Universitas Bengkulu"
+],
+[
+"299",
+"Universitas Bhayangkara Jakarta Raya"
+],
+[
+"300",
+"Universitas Bhayangkara Surabaya"
+],
+[
+"301",
+"Universitas Billfath"
+],
+[
+"302",
+"Universitas Bina Darma"
+],
+[
+"303",
+"Universitas Bina Nusantara"
+],
+[
+"304",
+"Universitas Bina Sarana Informatika"
+],
+[
+"305",
+"Universitas Bina Taruna Gorontalo"
+],
+[
+"306",
+"Universitas Binawan"
+],
+[
+"307",
+"Universitas Bojonegoro"
+],
+[
+"308",
+"Universitas Borneo Tarakan"
+],
+[
+"309",
+"Universitas Borobudur"
+],
+[
+"310",
+"Universitas Bosowa"
+],
+[
+"311",
+"Universitas Brawijaya"
+],
+[
+"312",
+"Universitas Buana Perjuangan Karawang"
+],
+[
+"313",
+"Universitas Buddhi Dharma"
+],
+[
+"314",
+"Universitas Budi Luhur"
+],
+[
+"315",
+"Universitas Bumi Hijrah Tidore"
+],
+[
+"316",
+"Universitas Bunda Mulia"
+],
+[
+"317",
+"Universitas Bung Hatta"
+],
+[
+"318",
+"Universitas Bung Karno"
+],
+[
+"319",
+"Universitas Cendekia Abditama"
+],
+[
+"320",
+"Universitas Cenderawasih"
+],
+[
+"322",
+"Universitas Cordova"
+],
+[
+"323",
+"Universitas Darma Agung"
+],
+[
+"324",
+"Universitas Darma Persada"
+],
+[
+"325",
+"Universitas Darul Ulum"
+],
+[
+"327",
+"Universitas Darul Ulum Islamic Centre Sudirman"
+],
+[
+"328",
+"Universitas Darussalam Ambon"
+],
+[
+"329",
+"Universitas Darwan Ali"
+],
+[
+"330",
+"Universitas Dayanu Ikhsanuddin"
+],
+[
+"331",
+"Universitas Dharma Andalas"
+],
+[
+"332",
+"Universitas Dian Nusantara"
+],
+[
+"333",
+"Universitas Dian Nuswantoro"
+],
+[
+"334",
+"Universitas Diponegoro"
+],
+[
+"335",
+"Universitas Dirgantara Marsekal Suryadarma"
+],
+[
+"336",
+"Universitas Dr Soetomo"
+],
+[
+"337",
+"Universitas Efarina"
+],
+[
+"338",
+"Universitas Ekasakti"
+],
+[
+"339",
+"Universitas Esa Unggul"
+],
+[
+"340",
+"Universitas Fajar"
+],
+[
+"341",
+"Universitas Faletehan"
+],
+[
+"342",
+"Universitas Flores"
+],
+[
+"343",
+"Universitas Gadjah Mada"
+],
+[
+"344",
+"Universitas Gajayana"
+],
+[
+"345",
+"Universitas Galuh Ciamis"
+],
+[
+"346",
+"Universitas Garut"
+],
+[
+"347",
+"Universitas Global Jakarta"
+],
+[
+"348",
+"Universitas Gorontalo"
+],
+[
+"349",
+"Universitas Graha Nusantara"
+],
+[
+"350",
+"Universitas Gresik"
+],
+[
+"351",
+"Universitas Gunadarma"
+],
+[
+"352",
+"Universitas Gunung Kidul"
+],
+[
+"353",
+"Universitas Gunung Leuser Aceh"
+],
+[
+"354",
+"Universitas Halu Oleo"
+],
+[
+"355",
+"Universitas Hamzanwadi"
+],
+[
+"356",
+"Universitas Hang Tuah"
+],
+[
+"357",
+"Universitas Harapan Medan"
+],
+[
+"358",
+"Universitas Hasanuddin"
+],
+[
+"359",
+"Universitas Hasyim Asy'ari Tebuireng Jombang"
+],
+[
+"360",
+"Universitas Hindu Indonesia"
+],
+[
+"361",
+"Universitas HKBP Nommensen"
+],
+[
+"362",
+"Universitas HKBP Nommensen Pematangsiantar"
+],
+[
+"363",
+"Universitas IBA"
+],
+[
+"364",
+"Universitas Ibn Khaldun"
+],
+[
+"365",
+"Universitas Ichsan Gorontalo"
+],
+[
+"366",
+"Universitas Indo Global Mandiri"
+],
+[
+"367",
+"Universitas Indonesia"
+],
+[
+"368",
+"Universitas Indonesia Mandiri"
+],
+[
+"369",
+"Universitas Indraprasta PGRI"
+],
+[
+"370",
+"Universitas Insan Cendekia Mandiri"
+],
+[
+"371",
+"Universitas Internasional Batam"
+],
+[
+"372",
+"Universitas Internasional Semen Indonesia"
+],
+[
+"373",
+"Universitas Iqra Buru"
+],
+[
+"374",
+"Universitas Iskandar Muda"
+],
+[
+"375",
+"Universitas Islam 45"
+],
+[
+"376",
+"Universitas Islam Al-Azhar Mataram"
+],
+[
+"377",
+"Universitas Islam Al-Ihya Kuningan"
+],
+[
+"378",
+"Universitas Islam As-Syafiiyah"
+],
+[
+"379",
+"Universitas Islam Balitar"
+],
+[
+"380",
+"Universitas Islam Bandung"
+],
+[
+"381",
+"Universitas Islam Batik"
+],
+[
+"382",
+"Universitas Islam Darul Ulum"
+],
+[
+"383",
+"Universitas Islam Indonesia"
+],
+[
+"384",
+"Universitas Islam Indragiri"
+],
+[
+"385",
+"Universitas Islam Jakarta"
+],
+[
+"386",
+"Universitas Islam Kadiri"
+],
+[
+"387",
+"Universitas Islam Kalimantan Muhammad Arsyad Al Banjari Banjarmasin"
+],
+[
+"388",
+"Universitas Islam Kuantan Singingi"
+],
+[
+"389",
+"Universitas Islam Labuhan Batu"
+],
+[
+"390",
+"Universitas Islam Lamongan"
+],
+[
+"391",
+"Universitas Islam Majapahit"
+],
+[
+"392",
+"Universitas Islam Makassar"
+],
+[
+"393",
+"Universitas Islam Malang"
+],
+[
+"394",
+"Universitas Islam Nahdlatul Ulama Jepara"
+],
+[
+"395",
+"Universitas Islam Negeri Ar-Raniry Banda Aceh"
+],
+[
+"396",
+"Universitas Islam Negeri Sultan Syarif Kasim"
+],
+[
+"397",
+"Universitas Islam Negeri Sunan Ampel"
+],
+[
+"398",
+"Universitas Islam Negeri Sunan Gunung Djati Bandung"
+],
+[
+"399",
+"Universitas Islam Negeri Sunan Kalijaga"
+],
+[
+"400",
+"Universitas Islam Negeri Syarif Hidayatullah"
+],
+[
+"401",
+"Universitas Islam Nusantara"
+],
+[
+"402",
+"Universitas Islam Ogan Komering Ilir Kayuagung"
+],
+[
+"403",
+"Universitas Islam Raden Rahmat"
+],
+[
+"404",
+"Universitas Islam Riau"
+],
+[
+"405",
+"Universitas Islam Sultan Agung"
+],
+[
+"406",
+"Universitas Islam Sumatera Utara"
+],
+[
+"407",
+"Universitas Islam Syekh Yusuf"
+],
+[
+"408",
+"Universitas Ivet"
+],
+[
+"409",
+"Universitas Jakarta"
+],
+[
+"410",
+"Universitas Jambi"
+],
+[
+"411",
+"Universitas Janabadra"
+],
+[
+"412",
+"Universitas Jayabaya"
+],
+[
+"413",
+"Universitas Jember"
+],
+[
+"414",
+"Universitas Jenderal Achmad Yani"
+],
+[
+"415",
+"Universitas Jenderal Soedirman"
+],
+[
+"416",
+"Universitas Kadiri"
+],
+[
+"417",
+"Universitas Kahuripan Kediri"
+],
+[
+"418",
+"Universitas Kaltara"
+],
+[
+"419",
+"Universitas Kartini"
+],
+[
+"420",
+"Universitas Katolik Darma Cendika"
+],
+[
+"421",
+"Universitas Katolik De La Salle"
+],
+[
+"422",
+"Universitas Katolik Indonesia Atma Jaya"
+],
+[
+"423",
+"Universitas Katolik Musi Charitas"
+],
+[
+"424",
+"Universitas Katolik Parahyangan"
+],
+[
+"425",
+"Universitas Katolik Santo Thomas"
+],
+[
+"426",
+"Universitas Katolik Soegijapranata"
+],
+[
+"427",
+"Universitas Katolik Widya Karya"
+],
+[
+"428",
+"Universitas Katolik Widya Mandala Madiun"
+],
+[
+"429",
+"Universitas Katolik Widya Mandala Surabaya"
+],
+[
+"430",
+"Universitas Katolik Widya Mandira Kupang"
+],
+[
+"431",
+"Universitas Kebangsaan"
+],
+[
+"432",
+"Universitas Kebangsaan Republik Indonesia"
+],
+[
+"433",
+"Universitas Khairun"
+],
+[
+"434",
+"Universitas Komputer Indonesia"
+],
+[
+"435",
+"Universitas Krisnadwipayana"
+],
+[
+"436",
+"Universitas Kristen Immanuel Yogyakarta"
+],
+[
+"437",
+"Universitas Kristen Indonesia"
+],
+[
+"438",
+"Universitas Kristen Indonesia Maluku"
+],
+[
+"439",
+"Universitas Kristen Indonesia Paulus"
+],
+[
+"440",
+"Universitas Kristen Indonesia Tomohon"
+],
+[
+"441",
+"Universitas Kristen Indonesia Toraja"
+],
+[
+"442",
+"Universitas Kristen Krida Wacana"
+],
+[
+"443",
+"Universitas Kristen Maranatha"
+],
+[
+"444",
+"Universitas Kristen Palangkaraya"
+],
+[
+"445",
+"Universitas Kristen Papua"
+],
+[
+"446",
+"Universitas Kristen Petra"
+],
+[
+"447",
+"Universitas Kristen Satya Wacana"
+],
+[
+"448",
+"Universitas Kristen Surakarta"
+],
+[
+"449",
+"Universitas Kutai Kartanegara Tenggarong"
+],
+[
+"450",
+"Universitas Lakidende Unahaa"
+],
+[
+"451",
+"Universitas Lambung Mangkurat"
+],
+[
+"452",
+"Universitas Lampung"
+],
+[
+"453",
+"Universitas Lancang Kuning"
+],
+[
+"454",
+"Universitas Langlang Buana"
+],
+[
+"455",
+"Universitas Lintas Internasional Indonesia"
+],
+[
+"456",
+"Universitas Ma Chung"
+],
+[
+"457",
+"Universitas Maarif Hasyim Latif"
+],
+[
+"458",
+"Universitas Ma'arif Nahdlatul Ulama Kebumen"
+],
+[
+"459",
+"Universitas Madako Toli-toli"
+],
+[
+"460",
+"Universitas Madura"
+],
+[
+"461",
+"Universitas Mahasaraswati Denpasar"
+],
+[
+"462",
+"Universitas Mahasaraswati Mataram"
+],
+[
+"463",
+"Universitas Mahendradatta"
+],
+[
+"464",
+"Universitas Majalengka"
+],
+[
+"465",
+"Universitas Malahayati"
+],
+[
+"466",
+"Universitas Malikussaleh"
+],
+[
+"467",
+"Universitas Maritim Amni"
+],
+[
+"468",
+"Universitas Maritim Raja Ali Haji"
+],
+[
+"469",
+"Universitas Mataram"
+],
+[
+"470",
+"Universitas Mathla ul Anwar"
+],
+[
+"471",
+"Universitas Medan Area"
+],
+[
+"472",
+"Universitas Megou Pak Tulang Bawang"
+],
+[
+"473",
+"Universitas Mercu Buana"
+],
+[
+"474",
+"Universitas Merdeka Madiun"
+],
+[
+"475",
+"Universitas Merdeka Malang"
+],
+[
+"476",
+"Universitas Mitra Karya"
+],
+[
+"477",
+"Universitas Mochammad Sroedji"
+],
+[
+"478",
+"Universitas Mohammad Husni Thamrin Jakarta"
+],
+[
+"479",
+"Universitas Mpu Tantular"
+],
+[
+"480",
+"Universitas Muara Bungo"
+],
+[
+"481",
+"Universitas Muhadi Setiabudi"
+],
+[
+"482",
+"Universitas Muhammadiyah Aceh"
+],
+[
+"483",
+"Universitas Muhammadiyah Bandung"
+],
+[
+"484",
+"Universitas Muhammadiyah Bangka Belitung"
+],
+[
+"485",
+"Universitas Muhammadiyah Banjarmasin"
+],
+[
+"486",
+"Universitas Muhammadiyah Buton"
+],
+[
+"487",
+"Universitas Muhammadiyah Cirebon"
+],
+[
+"488",
+"Universitas Muhammadiyah Enrekang"
+],
+[
+"489",
+"Universitas Muhammadiyah Gresik"
+],
+[
+"490",
+"Universitas Muhammadiyah Jakarta"
+],
+[
+"491",
+"Universitas Muhammadiyah Jember"
+],
+[
+"492",
+"Universitas Muhammadiyah Kalimantan Timur"
+],
+[
+"493",
+"Universitas Muhammadiyah Kendari"
+],
+[
+"494",
+"Universitas Muhammadiyah Kudus"
+],
+[
+"495",
+"Universitas Muhammadiyah Lampung"
+],
+[
+"496",
+"Universitas Muhammadiyah Luwuk Banggai"
+],
+[
+"497",
+"Universitas Muhammadiyah Magelang"
+],
+[
+"498",
+"Universitas Muhammadiyah Makassar"
+],
+[
+"499",
+"Universitas Muhammadiyah Malang"
+],
+[
+"500",
+"Universitas Muhammadiyah Maluku Utara"
+],
+[
+"501",
+"Universitas Muhammadiyah Mataram"
+],
+[
+"502",
+"Universitas Muhammadiyah Metro"
+],
+[
+"503",
+"Universitas Muhammadiyah Palangka Raya"
+],
+[
+"504",
+"Universitas Muhammadiyah Palembang"
+],
+[
+"505",
+"Universitas Muhammadiyah Palu"
+],
+[
+"506",
+"Universitas Muhammadiyah Pare-pare"
+],
+[
+"507",
+"Universitas Muhammadiyah Pekajangan Pekalongan"
+],
+[
+"508",
+"Universitas Muhammadiyah Ponorogo"
+],
+[
+"509",
+"Universitas Muhammadiyah Pontianak"
+],
+[
+"510",
+"Universitas Muhammadiyah Prof. Dr. Hamka"
+],
+[
+"511",
+"Universitas Muhammadiyah Purwokerto"
+],
+[
+"512",
+"Universitas Muhammadiyah Purworejo"
+],
+[
+"513",
+"Universitas Muhammadiyah Riau"
+],
+[
+"514",
+"Universitas Muhammadiyah Semarang"
+],
+[
+"515",
+"Universitas Muhammadiyah Sidoarjo"
+],
+[
+"516",
+"Universitas Muhammadiyah Sorong"
+],
+[
+"517",
+"Universitas Muhammadiyah Sukabumi"
+],
+[
+"518",
+"Universitas Muhammadiyah Sumatera Barat"
+],
+[
+"519",
+"Universitas Muhammadiyah Sumatera Utara"
+],
+[
+"520",
+"Universitas Muhammadiyah Surabaya"
+],
+[
+"521",
+"Universitas Muhammadiyah Surakarta"
+],
+[
+"522",
+"Universitas Muhammadiyah Tangerang"
+],
+[
+"523",
+"Universitas Muhammadiyah Tasikmalaya"
+],
+[
+"524",
+"Universitas Muhammadiyah Yogyakarta"
+],
+[
+"525",
+"Universitas Mulawarman"
+],
+[
+"526",
+"Universitas Multimedia Nusantara"
+],
+[
+"527",
+"Universitas Muria Kudus"
+],
+[
+"528",
+"Universitas Musamus Merauke"
+],
+[
+"529",
+"Universitas Musi Rawas"
+],
+[
+"530",
+"Universitas Muslim Indonesia"
+],
+[
+"531",
+"Universitas Nahdlatul Ulama Al Ghazali Cilacap"
+],
+[
+"532",
+"Universitas Nahdlatul Ulama Blitar"
+],
+[
+"533",
+"Universitas Nahdlatul Ulama Kalimantan Selatan"
+],
+[
+"534",
+"Universitas Nahdlatul Ulama Nusa Tenggara Barat"
+],
+[
+"535",
+"Universitas Nahdlatul Ulama Sidoarjo"
+],
+[
+"536",
+"Universitas Nahdlatul Ulama Sumatera Barat"
+],
+[
+"537",
+"Universitas Nahdlatul Ulama Sunan Giri"
+],
+[
+"538",
+"Universitas Nahdlatul Ulama Surakarta"
+],
+[
+"539",
+"Universitas Nahdlatul Ulama Yogyakarta"
+],
+[
+"540",
+"Universitas Nani Bili Nusantara"
+],
+[
+"541",
+"Universitas Narotama"
+],
+[
+"542",
+"Universitas Nasional"
+],
+[
+"543",
+"Universitas Negeri Gorontalo"
+],
+[
+"544",
+"Universitas Negeri Jakarta"
+],
+[
+"545",
+"Universitas Negeri Makassar"
+],
+[
+"546",
+"Universitas Negeri Malang"
+],
+[
+"547",
+"Universitas Negeri Manado"
+],
+[
+"548",
+"Universitas Negeri Medan"
+],
+[
+"549",
+"Universitas Negeri Padang"
+],
+[
+"550",
+"Universitas Negeri Semarang"
+],
+[
+"551",
+"Universitas Negeri Surabaya"
+],
+[
+"552",
+"Universitas Negeri Yogyakarta"
+],
+[
+"553",
+"Universitas Ngurah Rai"
+],
+[
+"554",
+"Universitas Nuku"
+],
+[
+"555",
+"Universitas Nurtanio"
+],
+[
+"556",
+"Universitas Nurul Jadid"
+],
+[
+"557",
+"Universitas Nusa Cendana"
+],
+[
+"558",
+"Universitas Nusa Lontar Rote"
+],
+[
+"559",
+"Universitas Nusa Nipa"
+],
+[
+"560",
+"Universitas Nusa Putra"
+],
+[
+"561",
+"Universitas Nusa Tenggara Barat"
+],
+[
+"562",
+"Universitas Nusantara PGRI Kediri"
+],
+[
+"563",
+"Universitas Padjadjaran"
+],
+[
+"564",
+"Universitas Pahlawan Tuanku Tambusai"
+],
+[
+"565",
+"Universitas Pakuan"
+],
+[
+"566",
+"Universitas Palangka Raya"
+],
+[
+"567",
+"Universitas Palembang"
+],
+[
+"568",
+"Universitas Pamulang"
+],
+[
+"569",
+"Universitas Panca Bhakti"
+],
+[
+"570",
+"Universitas Panca Marga"
+],
+[
+"571",
+"Universitas Pancasakti Tegal"
+],
+[
+"572",
+"Universitas Pancasila"
+],
+[
+"573",
+"Universitas Pandanaran"
+],
+[
+"574",
+"Universitas Papua"
+],
+[
+"575",
+"Universitas Pasifik Morotai"
+],
+[
+"576",
+"Universitas Pasir Pengaraian"
+],
+[
+"577",
+"Universitas Pasundan"
+],
+[
+"578",
+"Universitas Patria Artha"
+],
+[
+"579",
+"Universitas Pattimura"
+],
+[
+"580",
+"Universitas Pawyatan Daha"
+],
+[
+"581",
+"Universitas Pejuang Republik Indonesia"
+],
+[
+"582",
+"Universitas Pekalongan"
+],
+[
+"583",
+"Universitas Pelita Bangsa"
+],
+[
+"584",
+"Universitas Pelita Harapan"
+],
+[
+"585",
+"Universitas Pelita Harapan Surabaya"
+],
+[
+"586",
+"Universitas Pembangunan Indonesia"
+],
+[
+"587",
+"Universitas Pembangunan Jaya"
+],
+[
+"588",
+"Universitas Pembangunan Nasional Veteran Jakarta"
+],
+[
+"589",
+"Universitas Pembangunan Nasional Veteran Jawa Timur"
+],
+[
+"590",
+"Universitas Pembangunan Nasional Veteran Yogyakarta"
+],
+[
+"591",
+"Universitas Pembangunan Panca Budi"
+],
+[
+"593",
+"Universitas Pembinaan Masyarakat Indonesia"
+],
+[
+"594",
+"Universitas Pendidikan Ganesha"
+],
+[
+"595",
+"Universitas Pendidikan Indonesia"
+],
+[
+"596",
+"Universitas Pendidikan Mandalika"
+],
+[
+"597",
+"Universitas Pendidikan Muhammadiyah Sorong"
+],
+[
+"598",
+"Universitas Pendidikan Nasional"
+],
+[
+"599",
+"Universitas Peradaban"
+],
+[
+"600",
+"Universitas Perjuangan Tasikmalaya"
+],
+[
+"601",
+"Universitas Persada Indonesia Yai"
+],
+[
+"602",
+"Universitas Pertamina"
+],
+[
+"603",
+"Universitas PGRI Adi Buana"
+],
+[
+"604",
+"Universitas PGRI Argopuro Jember"
+],
+[
+"605",
+"Universitas PGRI Banyuwangi"
+],
+[
+"606",
+"Universitas PGRI Madiun"
+],
+[
+"607",
+"Universitas PGRI Palembang"
+],
+[
+"608",
+"Universitas PGRI Ronggolawe"
+],
+[
+"609",
+"Universitas PGRI Semarang"
+],
+[
+"610",
+"Universitas Potensi Utama"
+],
+[
+"611",
+"Universitas Pradita"
+],
+[
+"612",
+"Universitas Pramita Indonesia"
+],
+[
+"613",
+"Universitas Prasetiya Mulya"
+],
+[
+"614",
+"Universitas Presiden"
+],
+[
+"615",
+"Universitas Prima Indonesia"
+],
+[
+"616",
+"Universitas Prof Dr Hazairin SH"
+],
+[
+"617",
+"Universitas Proklamasi 45"
+],
+[
+"618",
+"Universitas Putera Batam"
+],
+[
+"619",
+"Universitas Putra Indonesia Yptk Padang"
+],
+[
+"620",
+"Universitas Qomaruddin"
+],
+[
+"621",
+"Universitas Quality"
+],
+[
+"622",
+"Universitas Respati Yogyakarta"
+],
+[
+"623",
+"Universitas Riau"
+],
+[
+"624",
+"Universitas Riau Kepulauan"
+],
+[
+"625",
+"Universitas Sahid"
+],
+[
+"626",
+"Universitas Sahid Surakarta"
+],
+[
+"627",
+"Universitas Sains Al Qur`an"
+],
+[
+"628",
+"Universitas Sains dan Teknologi Jayapura"
+],
+[
+"629",
+"Universitas Sains dan Teknologi Komputer"
+],
+[
+"630",
+"Universitas Sam Ratulangi"
+],
+[
+"631",
+"Universitas Samawa"
+],
+[
+"632",
+"Universitas Sampoerna"
+],
+[
+"633",
+"Universitas Samudra"
+],
+[
+"634",
+"Universitas Sanata Dharma"
+],
+[
+"635",
+"Universitas Sang Bumi Ruwa Jurai"
+],
+[
+"636",
+"Universitas Sangga Buana"
+],
+[
+"637",
+"Universitas Sari Mutiara Indonesia Medan"
+],
+[
+"638",
+"Universitas Sari Putra Indonesia Tomohon"
+],
+[
+"639",
+"Universitas Sarjanawiyata Tamansiswa"
+],
+[
+"640",
+"Universitas Satya Negara Indonesia"
+],
+[
+"641",
+"Universitas Satya Wiyata Mandala"
+],
+[
+"642",
+"Universitas Sawerigading Makassar"
+],
+[
+"643",
+"Universitas Sebelas Maret"
+],
+[
+"644",
+"Universitas Semarang"
+],
+[
+"645",
+"Universitas Sembilanbelas November Kolaka"
+],
+[
+"646",
+"Universitas Serambi Mekkah"
+],
+[
+"647",
+"Universitas Serang Raya"
+],
+[
+"648",
+"Universitas Setia Budi Surakarta"
+],
+[
+"649",
+"Universitas Siliwangi"
+],
+[
+"650",
+"Universitas Simalungun"
+],
+[
+"652",
+"Universitas Singaperbangsa Karawang"
+],
+[
+"653",
+"Universitas Sintuwu Maroso Poso"
+],
+[
+"654",
+"Universitas Sisingamangaraja XII Tapanuli Utara"
+],
+[
+"655",
+"Universitas Soerjo"
+],
+[
+"656",
+"Universitas Sriwijaya"
+],
+[
+"657",
+"Universitas Stikubank"
+],
+[
+"658",
+"Universitas Subang"
+],
+[
+"659",
+"Universitas Sulawesi Barat"
+],
+[
+"660",
+"Universitas Sulawesi Tenggara"
+],
+[
+"661",
+"Universitas Sultan Ageng Tirtayasa"
+],
+[
+"662",
+"Universitas Sultan Fatah"
+],
+[
+"663",
+"Universitas Sumatera Utara"
+],
+[
+"664",
+"Universitas Sunan Bonang"
+],
+[
+"665",
+"Universitas Sunan Giri Surabaya"
+],
+[
+"666",
+"Universitas Surabaya"
+],
+[
+"667",
+"Universitas Surakarta"
+],
+[
+"668",
+"Universitas Surapati"
+],
+[
+"669",
+"Universitas Surya"
+],
+[
+"671",
+"Universitas Suryakancana"
+],
+[
+"672",
+"Universitas Swadaya Gunung Jati"
+],
+[
+"673",
+"Universitas Swiss German"
+],
+[
+"674",
+"Universitas Syiah Kuala"
+],
+[
+"675",
+"Universitas Tadulako"
+],
+[
+"676",
+"Universitas Tama Jagakarsa"
+],
+[
+"677",
+"Universitas Tamansiswa"
+],
+[
+"678",
+"Universitas Tanjungpura"
+],
+[
+"679",
+"Universitas Tanri Abeng"
+],
+[
+"680",
+"Universitas Tarumanagara"
+],
+[
+"681",
+"Universitas Teknokrat Indonesia"
+],
+[
+"682",
+"Universitas Teknologi Sulawesi"
+],
+[
+"683",
+"Universitas Teknologi Sulawesi Utara"
+],
+[
+"684",
+"Universitas Teknologi Sumbawa"
+],
+[
+"685",
+"Universitas Teknologi Surabaya"
+],
+[
+"686",
+"Universitas Teknologi Yogyakarta"
+],
+[
+"687",
+"Universitas Telkom"
+],
+[
+"688",
+"Universitas Teuku Umar"
+],
+[
+"689",
+"Universitas Tidar"
+],
+[
+"690",
+"Universitas Tomakaka"
+],
+[
+"691",
+"Universitas Tompotika Luwuk Banggai"
+],
+[
+"692",
+"Universitas Tribhuwana Tungga Dewi"
+],
+[
+"693",
+"Universitas Tridharma"
+],
+[
+"694",
+"Universitas Tridinanti"
+],
+[
+"695",
+"Universitas Trisakti"
+],
+[
+"696",
+"Universitas Trunajaya Bontang"
+],
+[
+"697",
+"Universitas Trunojoyo"
+],
+[
+"698",
+"Universitas Tulang Bawang"
+],
+[
+"699",
+"Universitas Tunas Pembangunan Surakarta (UTP)"
+],
+[
+"700",
+"Universitas Udayana"
+],
+[
+"701",
+"Universitas Universal"
+],
+[
+"702",
+"Universitas Veteran Bangun Nusantara"
+],
+[
+"704",
+"Universitas Wahid Hasyim"
+],
+[
+"705",
+"Universitas Wahidiyah"
+],
+[
+"706",
+"Universitas Warmadewa"
+],
+[
+"707",
+"Universitas Widya Dharma"
+],
+[
+"708",
+"Universitas Widya Gama"
+],
+[
+"709",
+"Universitas Widya Husada Semarang"
+],
+[
+"710",
+"Universitas Widya Kartika"
+],
+[
+"711",
+"Universitas Widya Mataram"
+],
+[
+"712",
+"Universitas Widyatama"
+],
+[
+"713",
+"Universitas Wijaya Kusuma Purwokerto"
+],
+[
+"714",
+"Universitas Wijaya Kusuma Surabaya"
+],
+[
+"715",
+"Universitas Wijaya Putra"
+],
+[
+"716",
+"Universitas Winaya Mukti"
+],
+[
+"717",
+"Universitas Wiralodra"
+],
+[
+"718",
+"Universitas Wiraraja"
+],
+[
+"719",
+"Universitas Wisnuwardhana"
+],
+[
+"720",
+"Universitas W R Supratman"
+],
+[
+"721",
+"Universitas Yapis Papua"
+],
+[
+"722",
+"Universitas Yos Soedarso"
+],
+[
+"723",
+"Universitas Yudharta Pasuruan"
+],
+[
+"724",
+"Politeknik Bina Trada Semarang"
+],
+[
+"725",
+"Universitas Nahdlatul Ulama Indonesia"
+],
+[
+"726",
+"Universitas Bina Bangsa"
+],
+[
+"727",
+"Politeknik Adiguna Maritim Indonesia Medan"
+],
+[
+"728",
+"Politeknik Teknologi Nuklir Indonesia"
+],
+[
+"729",
+"Universitas Dharma AUB Surakarta"
+],
+[
+"730",
+"Institut Teknologi Calvin"
+],
+[
+"731",
+"Institut Teknologi Sawit Indonesia"
+],
+[
+"732",
+"Universitas Muhammadiyah Berau"
+],
+[
+"733",
+"Universitas San Pedro"
+],
+[
+"734",
+"Institut Sains Dan Teknologi Pembangunan Indonesia"
+],
+[
+"735",
+"Universitas Abdurachman Saleh Situbondo"
+],
+[
+"736",
+"Politeknik Perkeretaapian Indonesia Madiun"
+],
+[
+"737",
+"Universitas KH. Bahaudin Mudhary Madura"
+],
+[
+"738",
+"Politeknik Kesehatan Muhammadiyah Makassar"
+],
+[
+"739",
+"Universitas Nahdlatul Ulama Lampung"
+],
+[
+"740",
+"Sekolah Tinggi Teknik Karawang"
+],
+[
+"741",
+"Sekolah Tinggi Teknologi Sapta Taruna"
+],
+[
+"742",
+"Universitas Muhammadiyah A.R.Fachruddin"
+],
+[
+"744",
+"Politeknik Sinar Mas Berau Coal"
+],
+[
+"745",
+"Universitas Gunung Rinjani"
+],
+[
+"746",
+"Universitas Aisyah Pringsewu"
+],
+[
+"747",
+"Universitas Cokroaminoto Makassar"
+],
+[
+"748",
+"Politeknik Islam Syekh Salman Al-Farisi Rantau"
+],
+[
+"749",
+"Universitas Multi Data Palembang"
+],
+[
+"750",
+"Universitas Patompo"
+],
+[
+"751",
+"Universitas Bhinneka PGRI"
+],
+[
+"752",
+"Universitas Lamappapoleonro"
+],
+[
+"753",
+"Universitas Muhammadiyah Bima"
+],
+[
+"754",
+"Universitas Citra Bangsa"
+],
+[
+"755",
+"Universitas Tulungagung"
+],
+[
+"756",
+"Akademi Maritim Nasional Jaya"
+],
+[
+"757",
+"Akademi Komunitas Toyota Indonesia"
+],
+[
+"758",
+"Institut Teknologi dan Bisnis Ahmad Dahlan Lamongan"
+],
+[
+"759",
+"Politeknik Negeri Lampung"
+],
+[
+"760",
+"Institut Teknologi Insan Cendekia Mandiri"
+],
+[
+"761",
+"Politeknik Masamy Internasional"
+],
+[
+"762",
+"Universitas Sutomo"
+],
+[
+"763",
+"Universitas Katolik Indonesia Santu Paulus Ruteng"
+],
+[
+"764",
+"Universitas Pertahanan"
+],
+[
+"765",
+"Akademi Maritim Maluku"
+],
+[
+"766",
+"Institut Sains dan Teknologi Nahdlatul Ulama Bali"
+],
+[
+"767",
+"Universitas Pepabri Makassar"
+],
+[
+"768",
+"Universitas Bestari"
+],
+[
+"769",
+"Akademi Teknik Soroako"
+],
+[
+"770",
+"Politeknik Negeri Nunukan"
+],
+[
+"771",
+"Universitas Karimun"
+],
+[
+"772",
+"Politeknik Semen Indonesia"
+],
+[
+"773",
+"Sekolah Tinggi Teknologi Indonesia"
+],
+[
+"774",
+"Universitas Pohuwato"
+],
+[
+"775",
+"Politeknik Bhakti Asih Purwakarta"
+],
+[
+"776",
+"Sekolah Tinggi Teknik Nusantara Mandiri"
+],
+[
+"777",
+"Universitas Syekh Yusuf Al Makassari Gowa"
+],
+[
+"779",
+"Politeknik Bombana"
+],
+[
+"780",
+"Universitas Persatuan Guru 1945 NTT"
+],
+[
+"781",
+"Sekolah Tinggi Ilmu Kesehatan Semarang"
+],
+[
+"782",
+"Universitas Mangku Wiyata"
+],
+[
+"783",
+"Universitas Katolik Santo Agustinus Hippo"
+],
+[
+"784",
+"Universitas Mayasari Bakti"
+],
+[
+"785",
+"Institut Teknologi Mitra Gama"
+],
+[
+"786",
+"Universitas Bondowoso"
+],
+[
+"787",
+"Institut Teknologi Petroleum Balongan"
+],
+[
+"788",
+"Universitas Teknologi Nusantara"
+],
+[
+"789",
+"Universitas Linggabuana PGRI Sukabumi"
+],
+[
+"790",
+"Universitas Al-Khairiyah"
+],
+[
+"791",
+"Universitas Setia Budhi Rangkasbitung"
+],
+[
+"792",
+"Universitas Logistik dan Bisnis Internasional"
+],
+[
+"793",
+"Institut Teknologi Bisnis Riau"
+],
+[
+"794",
+"Akademi Teknik Alat Berat Indonesia"
+],
+[
+"795",
+"Universitas Sehati Indonesia"
+],
+[
+"796",
+"Politeknik YPPB Belitang"
+],
+[
+"797",
+"Politeknik Takumi"
+],
+[
+"798",
+"Institut Teknologi dan Sains Nahdlatul Ulama Sriwijaya Sumatera Selatan"
+],
+[
+"799",
+"Politeknik Geologi Dan Pertambangan Agp"
+],
+[
+"800",
+"Institut Teknologi dan Bisnis Nobel Indonesia"
+],
+[
+"801",
+"Universitas Satyagama"
+],
+[
+"802",
+"Politeknik LPP Yogyakarta"
+],
+[
+"803",
+"Institut Teknologi AI Mahrusiyah"
+],
+[
+"805",
+"Institut Teknologi Pagar Alam"
+],
+[
+"806",
+"Universitas Cahaya Prima"
+],
+[
+"807",
+"Sekolah Tinggi Meteorologi Klimatologi dan Geofisika"
+],
+[
+"808",
+"Politeknik Internasional Tamansiswa Mojokerto"
+],
+[
+"809",
+"Universitas Ibnu Sina"
+],
+[
+"810",
+"Universitas Insan Budi Utomo"
+],
+[
+"811",
+"Akademi Maritim Cirebon"
+],
+[
+"812",
+"Universitas Prabumulih"
+],
+[
+"813",
+"Institut Teknologi Al-Muhajirin"
+],
+[
+"814",
+"Universitas Ma'soem"
+],
+[
+"815",
+"Politeknik Ilmu Pelayaran Balikpapan"
+],
+[
+"817",
+"Akademi Inovasi Indonesia"
+],
+[
+"818",
+"Institut Teknologi Mojosari"
+],
+[
+"819",
+"Politeknik Madyathika"
+],
+[
+"820",
+"STT Minyak dan Gas Cilacap"
+],
+[
+"821",
+"Universitas Al Hikmah Jepara"
+],
+[
+"822",
+"Akademi Maritim Nusantara Banjarmasin"
+],
+[
+"823",
+"Institut Kesehatan dan Teknologi Al Insyirah"
+],
+[
+"824",
+"Universitas Islam Negeri Datokarama Palu"
+],
+[
+"825",
+"Akademi Teknologi Pringsewu"
+],
+[
+"826",
+"Universitas Internasional Papua"
+],
+[
+"827",
+"Universitas Sipatokkong Mambo"
+],
+[
+"828",
+"Universitas AKPRIND Indonesia"
+],
+[
+"829",
+"Universitas Adzkia"
+],
+[
+"830",
+"Institut Teknologi Bacharuddin Jusuf Habibie"
+],
+[
+"831",
+"Institut Teknologi dan Bisnis Karya Pembangunan Papua"
+],
+[
+"832",
+"Universitas Islam Negeri Walisongo Semarang"
+],
+[
+"833",
+"Universitas Mandala Waluya"
+],
+[
+"834",
+"Universitas Islam Negeri Maulana Malik Ibrahim"
+],
+[
+"835",
+"Universitas Kuningan"
+],
+[
+"836",
+"STITEK Dharma Yadi Makassar"
+],
+[
+"837",
+"Universitas Muhammadiyah Gorontalo"
+],
+[
+"838",
+"Institut Sains dan Teknologi Muhammadiyah Tarakan"
+],
+[
+"839",
+"Institut Sains dan Teknologi Muhammadiyah Tarakan"
+],
+[
+"840",
+"Sekolah Tinggi Teknik Atlas Nusantara"
+],
+[
+"841",
+"Sekolah Tinggi Teknik Raden Wijaya"
+],
+[
+"842",
+"Institut Teknologi Alberth Foenay"
+],
+[
+"843",
+"Universitas Nggusuwaru"
+],
+[
+"844",
+"Universitas Islam Kebangsaan Indonesia"
+],
+[
+"845",
+"Institut Teknologi dan Sains Nahdlatul Ulama Kalimantan"
+],
+[
+"846",
+"Politeknik Tunas Garuda"
+],
+[
+"847",
+"Universitas Kristen Teknologi Solo"
+],
+[
+"848",
+"Politeknik Prasetiya Mandiri"
+],
+[
+"849",
+"Politeknik Insan Tazakka"
+],
+[
+"850",
+"Universitas Kristen Cipta Wacana"
+],
+[
+"851",
+"Akademi Telekomunikasi Indonesia Gemilang"
+],
+[
+"852",
+"Institut Teknologi dan Sains Nahdlatul Ulama Padangsidimpuan"
+],
+[
+"855",
+"Politeknik Muhammadiyah Makassar"
+],
+[
+"856",
+"Politeknik Tridaya Virtu Morosi"
+],
+[
+"858",
+"Universitas Insan Cita Indonesia"
+],
+[
+"859",
+"Politeknik Transportasi Sungai Danau dan Penyeberangan"
+],
+[
+"860",
+"Universitas Bakti Indonesia"
+],
+[
+"861",
+"Sekolah Tinggi Ilmu Maritim Mega Buana"
+],
+[
+"862",
+"Institut Kesehatan dan Teknologi Pondok Karya Pembangunan"
+],
+[
+"863",
+"Universitas Caritas Indonesia"
+],
+[
+"864",
+"Sekolah Tinggi Sains dan Teknologi Mnukwar"
+],
+[
+"865",
+"Politeknik Gihon"
+],
+[
+"866",
+"Universitas Ratu Samban"
+],
+[
+"867",
+"Universitas Bali Dwipa"
+],
+[
+"868",
+"Universitas Muhammadiyah Sinjai"
+],
+[
+"869",
+"Universitas Muhammadiyah Cileungsi"
+],
+[
+"870",
+"Universitas Teknologi Digital"
+],
+[
+"871",
+"Politeknik Dewantara"
+],
+[
+"872",
+"Sekolah Tinggi Teknik Multimedia Internasional Malang"
+],
+[
+"873",
+"Universitas Cipta Mandiri"
+],
+[
+"874",
+"Universitas Wira Bhakti"
+],
+[
+"875",
+"Universitas Sindang Kasih Majalengka"
+],
+[
+"876",
+"Institut Teknologi Perkebunan Pelalawan Indonesia"
+],
+[
+"878",
+"Universitas PGRI Yogyakarta"
+],
+[
+"879",
+"Politeknik Transportasi Darat Bali"
+],
+[
+"880",
+"Universitas Ary Ginanjar"
+],
+[
+"881",
+"Universitas Muhammadiyah Tegal"
+],
+[
+"882",
+"Universitas Nias"
+],
+[
+"883",
+"Universitas Nurul Hasan Bacan"
+],
+[
+"884",
+"Politeknik Palu"
+],
+[
+"885",
+"Sekolah Tinggi Teknologi Pekerjaan Umum"
+],
+[
+"887",
+"Politeknik ATK Yogyakarta"
+],
+[
+"888",
+"Universitas Klabat"
+],
+[
+"889",
+"Universitas Mbojo Bima"
+],
+[
+"890",
+"Politeknik Caltex Riau"
+],
+[
+"891",
+"Universitas Madani"
+],
+[
+"892",
+"Universitas Madani Indonesia"
+],
+[
+"893",
+"Universitas Duta Bangsa Surakarta"
+],
+[
+"894",
+"Universitas Muhammadiyah Banten"
+],
+[
+"895",
+"Universitas Nusa Megarkencana"
+],
+[
+"896",
+"Universitas Sapta Mandiri"
+],
+[
+"897",
+"Universitas Serasan"
+],
+[
+"898",
+"Universitas Sains Indonesia"
+],
+[
+"899",
+"Institut Teknologi Bisnis dan Kesehatan Muhammadiyah Muna Barat"
+],
+[
+"900",
+"Universitas Prof Dr Moestopo (Beragama)"
+],
+[
+"901",
+"Institut Teknologi dan Kesehatan Aspirasi"
+],
+[
+"902",
+"Universitas Taruna Bakti"
+],
+[
+"903",
+"Politeknik Manufaktur Ceper"
+],
+[
+"904",
+"Politeknik Industri Petrokimia Banten"
+],
+[
+"905",
+"Politeknik Alkon Kalimantan"
+],
+[
+"906",
+"Politeknik Kampar"
+],
+[
+"907",
+"Institut Teknologi Sains dan Kesehatan PKU Muhammadiyah Surakarta"
+],
+[
+"908",
+"Universitas Bima Sakapenta"
+],
+[
+"909",
+"Universitas Muhammadiyah PKU Surakarta"
+],
+[
+"910",
+"Institut Teknologi Lombok"
+],
+[
+"911",
+"Universitas PGRI Mpu Sindok"
+],
+[
+"912",
+"Universitas Nahdlatul Ulama Kalimantan Barat"
+],
+[
+"913",
+"Universitas Muhammadiyah Palopo"
+],
+[
+"914",
+"Institut Teknologi dan Bisnis Indragiri"
+],
+[
+"915",
+"Universitas Kristen Wira Wacana Sumba"
+],
+[
+"916",
+"Politeknik Energi dan Pertambangan Bandung"
+],
+[
+"918",
+"Institut Teknologi Pembangunan Surabaya"
+],
+[
+"919",
+"Akademi Komunitas Industri Manufaktur Bantaeng"
+],
+[
+"921",
+"Universitas Cokroaminoto Yogyakarta"
+],
+[
+"922",
+"Universitas Aisyiyah Palembang"
+],
+[
+"923",
+"Universitas Muhammadiyah Gombong"
+],
+[
+"924",
+"Akademi Penerbang Indonesia Banyuwangi"
+],
+[
+"925",
+"Universitas Kurnia Jaya Persada"
+],
+[
+"926",
+"Universitas Muhammadiyah Brebes"
+],
+[
+"927",
+"Universitas Mulia"
+],
+[
+"928",
+"Politeknik Perikanan Negeri Tual"
+],
+[
+"929",
+"Politeknik Sorowako"
+],
+[
+"930",
+"Universitas Modern Al Rifa`ie Indonesia"
+],
+[
+"931",
+"Institut Kesehatan Mitra Bunda"
+],
+[
+"932",
+"Universitas Prof Dr Hafiz MPH"
+],
+[
+"933",
+"Universitas Muhammadiyah Lamongan"
+],
+[
+"934",
+"Institut Teknologi Gamalama"
+],
+[
+"935",
+"Universitas Sepuluh Nopember Papua"
+],
+[
+"936",
+"Universitas Sains dan Teknologi Indonesia"
+],
+[
+"937",
+"Universitas Sunan Gresik"
+],
+[
+"938",
+"Universitas Harkat Negeri"
+],
+[
+"939",
+"Universitas Darul Ma`arif"
+],
+[
+"940",
+"Institut Kesehatan dan Teknologi Graha Medika"
+],
+[
+"941",
+"Universitas Bima Internasional MFH"
+],
+[
+"942",
+"Politeknik Driyorejo"
+],
+[
+"943",
+"Universitas Muhammadiyah Kolaka Utara"
+],
+[
+"944",
+"Politeknik Bumi Akpelni"
+],
+[
+"945",
+"Institut Keguruan dan Teknologi Larantuka"
+],
+[
+"946",
+"Institut Teknologi dan Bisnis Riau Pesisir"
+],
+[
+"947",
+"Universitas Muhammadiyah Papua Barat"
+],
+[
+"948",
+"Politeknik Kirana"
+],
+[
+"949",
+"Politeknik Enjiniring Pertanian Indonesia"
+],
+[
+"950",
+"Universitas Islam Negeri K.H. Abdurrahman Wahid Pekalongan"
+],
+[
+"951",
+"Universitas Islam Dr Khez Muttaqien"
+],
+[
+"952",
+"Universitas Merdeka Surabaya"
+],
+[
+"953",
+"Universitas Sali Al-Aitaam"
+],
+[
+"954",
+"Akademi Maritim Belawan"
+],
+[
+"955",
+"Universitas Cahaya Surya"
+],
+[
+"956",
+"Akademi Komunitas Perkebunan Yogyakarta"
+],
+[
+"957",
+"Institut Pertanian Stiper"
+],
+[
+"958",
+"Politeknik Penerbangan Jayapura"
+],
+[
+"959",
+"Universitas LT Dummy"
+],
+[
+"960",
+"Universitas Tarakanita"
+],
+[
+"961",
+"Politeknik Digital Boash Indonesia"
+],
+[
+"962",
+"Universitas Karyadarma Kupang"
+],
+[
+"963",
+"Politeknik Indonesia Venezuela"
+],
+[
+"964",
+"Universitas Ahmad Dahlan Aceh"
+],
+[
+"965",
+"Universitas Graha Edukasi Makassar"
+],
+[
+"966",
+"Institut Teknologi dan Bisnis Maritim Balik Diwa"
+],
+[
+"967",
+"Universitas Dr. Djar Wattiheluw"
+],
+[
+"968",
+"Universitas Muhammadiyah Bone"
+],
+[
+"969",
+"Institut Agama Kristen Negeri Ambon"
+],
+[
+"970",
+"Politeknik Mitra Industri"
+],
+[
+"971",
+"Politeknik Kelautan dan Perikanan Sidoarjo"
+],
+[
+"972",
+"Universitas Annuqayah"
+],
+[
+"973",
+"Akademi Komunitas Industri Pertambangan Bukit Asam"
+],
+[
+"974",
+"Universitas Nahdlatul Ulama Purwokerto"
+],
+[
+"975",
+"Akademi Perikanan Kamasan Biak"
+],
+[
+"976",
+"Universitas Abdul Azis Lamadjido"
+],
+[
+"977",
+"Universitas Walisongo Gempol Pasuruan"
+],
+[
+"979",
+"Akademi Komunitas Negeri Aceh Barat"
+],
+[
+"980",
+"Universitas Manado"
+],
+[
+"981",
+"Universitas Yuppentek Indonesia"
+],
+[
+"982",
+"Universitas Muhammadiyah Bekasi Karawang"
+],
+[
+"983",
+"Universitas Sains Teknologi Ekonomi Digital Indonesia"
+],
+[
+"984",
+"Universitas Banten"
+],
+[
+"985",
+"Universitas Nahdlatul Ulama Sulawesi Tenggara"
+],
+[
+"986",
+"Universitas Teknologi Bandung"
+],
+[
+"987",
+"Akademi Komunitas Negeri Pacitan"
+],
+[
+"988",
+"Universitas Yatsi Madani"
+],
+[
+"989",
+"Universitas Stella Maris Sumba"
+],
+[
+"990",
+"Politeknik St Wilhelmus"
+],
+[
+"991",
+"Universitas Tangerang Raya"
+],
+[
+"992",
+"Universitas Muhammadiyah Teluk Bintuni"
+],
+[
+"993",
+"Institut Ilmu Hukum dan Teknologi Pembangunan Papua"
+],
+[
+"994",
+"Politeknik Jatiluhur"
+],
+[
+"995",
+"Universitas Teknologi Ronggolawe"
+],
+[
+"996",
+"Universitas Graha Ganesha"
+],
+[
+"997",
+"Universitas Bakti Tunas Husada"
+],
+[
+"998",
+"Institut Teknologi Dan Sains Nahdlatul Ulama Pekalongan"
+],
+[
+"999",
+"Politeknik Sains Global"
+],
+[
+"1000",
+"Politeknik Penerbangan Makassar"
+],
+[
+"1001",
+"Universitas Doktor Nugroho Magetan"
+]
+],
+"jenjang": [
+[
+"1",
+"S. (S1)"
+],
+[
+"2",
+"M. (S2)"
+],
+[
+"3",
+"Dr. (S3)"
+],
+[
+"4",
+"A.P. (D1)"
+],
+[
+"5",
+"A.M. (D2)"
+],
+[
+"6",
+"A.Md. (D3)"
+],
+[
+"7",
+"Ir. (PSPPI)"
+],
+[
+"8",
+"S.Tr. (S.Tr)"
+],
+[
+"9",
+"M.Tr. (M.Tr)"
+],
+[
+"10",
+"D.Tr. (D.Tr)"
+]
+],
+"prodi": [
+[
+"1",
+"Aeronautika"
+],
+[
+"2",
+"Biomedik/Biomedis"
+],
+[
+"3",
+"Bioteknologi"
+],
+[
+"4",
+"Bioteknologi Tanah dan Lingkungan"
+],
+[
+"5",
+"Elektro Mekanika"
+],
+[
+"6",
+"Elektromedik"
+],
+[
+"7",
+"Elektronika"
+],
+[
+"8",
+"Elektronika dan Instrumentasi"
+],
+[
+"9",
+"Elektronika Industri"
+],
+[
+"10",
+"Elektronika Instrumentasi"
+],
+[
+"11",
+"Energi"
+],
+[
+"12",
+"Energi Terbarukan"
+],
+[
+"13",
+"Geofisika"
+],
+[
+"14",
+"Instrumentasi"
+],
+[
+"15",
+"Instrumentasi dan Elektronika"
+],
+[
+"16",
+"Instrumentasi Dan Kontrol Industri"
+],
+[
+"17",
+"Instrumentasi dan Otomasi Industri"
+],
+[
+"18",
+"Keselamatan dan Kesehatan Kerja"
+],
+[
+"19",
+"Keselamatan dan Kesehatan Kerja Pertambangan Umum"
+],
+[
+"20",
+"Manajemen Rekayasa"
+],
+[
+"21",
+"Manajemen Proyek Konstruksi"
+],
+[
+"22",
+"Manajemen Rekayasa Konstruksi Gedung"
+],
+[
+"23",
+"Manajemen Teknologi Keimigrasian"
+],
+[
+"24",
+"Manajemen Transportasi"
+],
+[
+"25",
+"Manajemen Transportasi Udara"
+],
+[
+"26",
+"Mekanik Industri dan Desain"
+],
+[
+"27",
+"Mekatronika"
+],
+[
+"28",
+"Mesin Industri"
+],
+[
+"29",
+"Mesin Otomotif"
+],
+[
+"30",
+"Mesin Produksi"
+],
+[
+"31",
+"Meteorologi Terapan"
+],
+[
+"32",
+"Metrologi dan Instrumentasi"
+],
+[
+"33",
+"Perencanaan Jalan dan Jembatan"
+],
+[
+"34",
+"Perkeretaapian"
+],
+[
+"35",
+"Permesinan Kapal"
+],
+[
+"36",
+"Permesinan Perikanan"
+],
+[
+"37",
+"Perminyakan"
+],
+[
+"38",
+"Produksi dan Manajemen Industri Perkebunan"
+],
+[
+"39",
+"Rekayasa Infrastruktur"
+],
+[
+"40",
+"Rekayasa Infrastruktur dan Lingkungan"
+],
+[
+"41",
+"Rekayasa Infrastruktur Lingkungan"
+],
+[
+"42",
+"Rekayasa Jalan dan Jembatan"
+],
+[
+"43",
+"Rekayasa Kayu"
+],
+[
+"44",
+"Rekayasa Kehutanan"
+],
+[
+"45",
+"Rekayasa Perancangan Mekanik"
+],
+[
+"46",
+"Rekayasa Pertambangan"
+],
+[
+"47",
+"Rekayasa Teknologi Manufaktur"
+],
+[
+"48",
+"Rekayasa Tekstil dan Apparel"
+],
+[
+"49",
+"Rekayasa / Teknik Fisika"
+],
+[
+"50",
+"Rekayasa / Teknik Industri"
+],
+[
+"51",
+"Rekayasa / Teknik Sipil"
+],
+[
+"52",
+"Sistem dan Teknik Jalan Raya"
+],
+[
+"53",
+"Sistem dan Teknik Transportasi"
+],
+[
+"54",
+"Sistem Kelistrikan"
+],
+[
+"55",
+"Sistem Pembangkit Energi"
+],
+[
+"56",
+"Sistem Telekomunikasi"
+],
+[
+"57",
+"Teknik Aeronautika"
+],
+[
+"58",
+"Teknik Aeronautika Pertahanan"
+],
+[
+"59",
+"Teknik Alat Berat"
+],
+[
+"60",
+"Teknik Alat Tanah"
+],
+[
+"61",
+"Teknik Bangunan dan Jalur Perkeretaapian"
+],
+[
+"62",
+"Teknik Bangunan dan Landasan"
+],
+[
+"63",
+"Teknik Bangunan Kapal"
+],
+[
+"64",
+"Teknik Bangunan Rawa"
+],
+[
+"65",
+"Teknik Bioenergi dan Kemurgi"
+],
+[
+"66",
+"Teknik Biomedik / Teknik Biomedis"
+],
+[
+"67",
+"Teknik Bioproses"
+],
+[
+"68",
+"Teknik Biosistem"
+],
+[
+"69",
+"Teknik dan Manajemen Industri"
+],
+[
+"70",
+"Teknik dan Manajemen Lingkungan"
+],
+[
+"71",
+"Teknik dan Manajemen Perbekalan"
+],
+[
+"72",
+"Teknik dan Pengelolaan Sumber Daya Air"
+],
+[
+"73",
+"Teknik Desain dan Manufaktur"
+],
+[
+"74",
+"Teknik Dirgantara"
+],
+[
+"75",
+"Teknik Ekonomi Konstruksi"
+],
+[
+"76",
+"Teknik Eksplorasi Produksi Minyak dan Gas"
+],
+[
+"77",
+"Teknik Elektro"
+],
+[
+"78",
+"Teknik Elektro dan Informatika"
+],
+[
+"79",
+"Teknik Elektro Industri"
+],
+[
+"80",
+"Teknik Elektro Komputer Kontrol"
+],
+[
+"81",
+"Teknik Elektro Medik"
+],
+[
+"82",
+"Teknik Elektro Perkeretaapian"
+],
+[
+"83",
+"Teknik Elektromedik"
+],
+[
+"84",
+"Teknik Elektronika"
+],
+[
+"85",
+"Teknik Elektronika Industri"
+],
+[
+"86",
+"Teknik Elektronika Kapal Perang"
+],
+[
+"87",
+"Teknik Elektronika Pertahanan"
+],
+[
+"88",
+"Teknik Energi"
+],
+[
+"89",
+"Teknik Energi Terbarukan"
+],
+[
+"90",
+"Teknik Farmasi"
+],
+[
+"91",
+"Teknik Fisika"
+],
+[
+"92",
+"Teknik Geodesi"
+],
+[
+"93",
+"Teknik Geodesi dan Geomatika"
+],
+[
+"94",
+"Teknik Geofisika"
+],
+[
+"95",
+"Teknik Geologi"
+],
+[
+"96",
+"Teknik Geologi Terapan"
+],
+[
+"97",
+"Teknik Geomatika"
+],
+[
+"98",
+"Teknik Industri"
+],
+[
+"99",
+"Teknik Industri Agro"
+],
+[
+"100",
+"Teknik Industri Otomotif"
+],
+[
+"101",
+"Teknik Industri Tekstil"
+],
+[
+"102",
+"Teknik Infrastruktur Sipil dan Perencanaan Arsitektur"
+],
+[
+"103",
+"Teknik Instrumentasi Kilang"
+],
+[
+"104",
+"Teknik Jalan Jembatan"
+],
+[
+"105",
+"Teknik Kelautan"
+],
+[
+"106",
+"Teknik Kelistrikan Kapal"
+],
+[
+"107",
+"Teknik Kemasan"
+],
+[
+"108",
+"Teknik Keselamatan dan Kesehatan Kerja"
+],
+[
+"109",
+"Teknik Keselamatan dari Kebakaran"
+],
+[
+"110",
+"Teknik Keselamatan Otomotif"
+],
+[
+"111",
+"Teknik Keselamatan"
+],
+[
+"112",
+"Teknik Kimia"
+],
+[
+"113",
+"Teknik Kimia Bahan Nabati"
+],
+[
+"114",
+"Teknik Kimia Industri"
+],
+[
+"115",
+"Teknik Kimia Mineral"
+],
+[
+"116",
+"Teknik Kimia Polimer"
+],
+[
+"117",
+"Teknik Kimia Produksi Bersih"
+],
+[
+"118",
+"Teknik Konservasi Energi"
+],
+[
+"119",
+"Teknik Lingkungan"
+],
+[
+"120",
+"Teknik Listrik"
+],
+[
+"121",
+"Teknik Listrik Bandar Udara"
+],
+[
+"122",
+"Teknik Listrik Bandara"
+],
+[
+"123",
+"Teknik Listrik Industri"
+],
+[
+"124",
+"Teknik Logistik"
+],
+[
+"125",
+"Teknik Manajemen Industri"
+],
+[
+"126",
+"Teknik Manajemen Industri Pertahanan"
+],
+[
+"127",
+"Teknik Manufaktur"
+],
+[
+"128",
+"Teknik Manufaktur Industri Agro"
+],
+[
+"129",
+"Teknik Manufaktur Kapal"
+],
+[
+"130",
+"Teknik Material"
+],
+[
+"131",
+"Teknik Material dan Metalurgi"
+],
+[
+"132",
+"Teknik Mekanik Umum"
+],
+[
+"133",
+"Teknik Mekanika"
+],
+[
+"134",
+"Teknik Mekanika Perkeretaapian"
+],
+[
+"135",
+"Teknik Mekanikal Bandar Udara"
+],
+[
+"136",
+"Teknik Mekanisasi Pengolahan"
+],
+[
+"137",
+"Teknik Mekatronika"
+],
+[
+"138",
+"Teknik Mesin"
+],
+[
+"139",
+"Teknik Mesin Alat Berat"
+],
+[
+"140",
+"Teknik Mesin dan Biosistem"
+],
+[
+"141",
+"Teknik Mesin dan Manufaktur"
+],
+[
+"142",
+"Teknik Mesin Industri"
+],
+[
+"143",
+"Teknik Mesin Kapal Perang"
+],
+[
+"144",
+"Teknik Mesin Kilang"
+],
+[
+"145",
+"Teknik Mesin Otomotif"
+],
+[
+"146",
+"Teknik Mesin Pertahanan"
+],
+[
+"147",
+"Teknik Mesin Pertanian"
+],
+[
+"148",
+"Teknik Mesin Pertanian dan Pangan"
+],
+[
+"149",
+"Teknik Mesin Produksi dan Perawatan"
+],
+[
+"150",
+"Teknik Metalurgi"
+],
+[
+"151",
+"Teknik Metalurgi dan Material"
+],
+[
+"152",
+"Teknik Mineral"
+],
+[
+"153",
+"Teknik Nautika"
+],
+[
+"154",
+"Teknik Navigasi Udara"
+],
+[
+"155",
+"Teknik Nuklir"
+],
+[
+"156",
+"Teknik Operasional Mesin dan Peralatan Industri"
+],
+[
+"157",
+"Teknik Otomasi"
+],
+[
+"158",
+"Teknik Otomasi dan Industri"
+],
+[
+"159",
+"Teknik Otomasi Listrik Industri"
+],
+[
+"160",
+"Teknik Otomotif"
+],
+[
+"161",
+"Teknik Otomotif dan Alat Berat"
+],
+[
+"162",
+"Teknik Otomotif Elektronik"
+],
+[
+"163",
+"Teknik Otomotif Kendaraan Tempur"
+],
+[
+"164",
+"Teknik Panas Bumi"
+],
+[
+"165",
+"Teknik Pangan"
+],
+[
+"166",
+"Teknik Pembangkit Energi"
+],
+[
+"167",
+"Teknologi Pembuatan Perkakas Presisi"
+],
+[
+"168",
+"Pemeliharaan Mesin"
+],
+[
+"169",
+"Teknik Pemeliharaan Mesin Otomasi"
+],
+[
+"170",
+"Teknik Pendingin dan Tata Udara"
+],
+[
+"171",
+"Teknik Penerbangan/Dirgantara"
+],
+[
+"172",
+"Teknik Pengairan"
+],
+[
+"173",
+"Teknologi Pengecoran Logam"
+],
+[
+"174",
+"Teknik Pengelasan"
+],
+[
+"175",
+"Teknik Pengelolaan Bencana Alam"
+],
+[
+"176",
+"Teknik Pengelolaan dan Pemeliharaan Infrastruktur Sipil"
+],
+[
+"177",
+"Teknik Pengelolaan dan Perawatan Alat Berat"
+],
+[
+"178",
+"Teknik Pengolahan Limbah"
+],
+[
+"179",
+"Teknik Pengolahan Minyak dan Gas"
+],
+[
+"180",
+"Teknik Pengolahan Produk Perikanan"
+],
+[
+"181",
+"Teknik Pengolahan Sawit"
+],
+[
+"182",
+"Teknik Perancangan dan Konstruksi Kapal"
+],
+[
+"183",
+"Teknik Perancangan dan Konstruksi Mesin"
+],
+[
+"184",
+"Teknik Perancangan Irigasi dan Penanganan Pantai"
+],
+[
+"185",
+"Teknik Perancangan Jalan dan Jembatan"
+],
+[
+"186",
+"Teknik Perancangan Mekanik"
+],
+[
+"187",
+"Teknik Perancangan Mekanik dan Mesin"
+],
+[
+"188",
+"Teknik Perancangan Mekanik Umum"
+],
+[
+"189",
+"Teknologi Perancangan Perkakas Presisi"
+],
+[
+"190",
+"Teknik Perawatan dan Perbaikan Gedung"
+],
+[
+"191",
+"Teknik Perawatan dan Perbaikan Mesin"
+],
+[
+"192",
+"Teknik Perawatan Mesin dan Peralatan Industri"
+],
+[
+"193",
+"Teknik Perencanaan Irigasi dan Rawa"
+],
+[
+"194",
+"Teknik Perkapalan"
+],
+[
+"195",
+"Teknik Permesinan Kapal"
+],
+[
+"196",
+"Teknik Perminyakan"
+],
+[
+"197",
+"Teknik Perminyakan dan Gas Bumi"
+],
+[
+"198",
+"Teknik Perpipaan"
+],
+[
+"199",
+"Teknik Pertambangan"
+],
+[
+"200",
+"Teknik Pertambangan Batubara"
+],
+[
+"201",
+"Teknik Pertambangan Mineral"
+],
+[
+"202",
+"Teknik Pesawat Udara"
+],
+[
+"203",
+"Teknik Produksi dan Proses Manufaktur"
+],
+[
+"204",
+"Teknik Produksi Furnitur"
+],
+[
+"205",
+"Teknik Produksi Minyak dan Gas"
+],
+[
+"206",
+"Teknik Sipil"
+],
+[
+"207",
+"Teknik Sipil Bangunan Gedung"
+],
+[
+"208",
+"Teknik Sipil dan Bangunan"
+],
+[
+"209",
+"Teknik Sipil dan Lingkungan"
+],
+[
+"210",
+"Teknik Sipil Pertahanan"
+],
+[
+"211",
+"Teknik Sistem Perkapalan"
+],
+[
+"212",
+"Teknik Sumber Daya Air"
+],
+[
+"213",
+"Teknik Sumberdaya Lahan dan Lingkungan"
+],
+[
+"214",
+"Teknik Survey Dan Pemetaan"
+],
+[
+"215",
+"Teknik Tekstil"
+],
+[
+"216",
+"Teknik Telekomunikasi"
+],
+[
+"217",
+"Teknik Telekomunikasi dan Navigasi Udara"
+],
+[
+"218",
+"Teknik Telekomunikasi Militer"
+],
+[
+"219",
+"Teknik Tenaga Listrik"
+],
+[
+"220",
+"Teknik Transportasi"
+],
+[
+"221",
+"Teknik Transportasi Laut"
+],
+[
+"222",
+"Teknika"
+],
+[
+"223",
+"Teknobiologi"
+],
+[
+"224",
+"Teknobiomedik"
+],
+[
+"225",
+"Teknokimia Nuklir"
+],
+[
+"226",
+"Teknologi Batik"
+],
+[
+"227",
+"Teknologi Biomedis"
+],
+[
+"228",
+"Teknologi Bioproses"
+],
+[
+"229",
+"Teknologi Elektromedis"
+],
+[
+"230",
+"Teknologi Elektro-medis"
+],
+[
+"231",
+"Teknologi Industri"
+],
+[
+"232",
+"Teknologi Industri Cetak Kemasan"
+],
+[
+"233",
+"Teknologi Industri Tekstil"
+],
+[
+"234",
+"Teknologi Kebumian dan Lingkungan"
+],
+[
+"235",
+"Teknologi Kelautan"
+],
+[
+"236",
+"Teknologi Kimia Industri"
+],
+[
+"237",
+"Teknologi Kimia Tekstil"
+],
+[
+"238",
+"Teknologi Komunikasi Mobil"
+],
+[
+"239",
+"Teknologi Konstruksi Bangunan Air"
+],
+[
+"240",
+"Teknologi Konstruksi Bangunan Gedung"
+],
+[
+"241",
+"Teknologi Listrik"
+],
+[
+"242",
+"Teknologi Manufaktur"
+],
+[
+"243",
+"Teknologi Penginderaan Jauh"
+],
+[
+"244",
+"Teknologi Pengolahan Minyak dan Gas"
+],
+[
+"245",
+"Teknologi Pengolahan Pulp dan Kertas"
+],
+[
+"246",
+"Teknologi Rekayasa Elektro"
+],
+[
+"247",
+"Teknologi Rekayasa Elektro-medis"
+],
+[
+"248",
+"Teknologi Rekayasa Instrumentasi dan Kontrol"
+],
+[
+"249",
+"Teknologi Rekayasa Jaringan Telekomunikasi"
+],
+[
+"250",
+"Teknologi Rekayasa Kimia Industri"
+],
+[
+"251",
+"Teknologi Rekayasa Konstruksi Jalan dan Jembatan"
+],
+[
+"252",
+"Teknologi Rekayasa Konstruksi Perkapalan"
+],
+[
+"253",
+"Teknologi Rekayasa Konversi Energi"
+],
+[
+"254",
+"Teknologi Rekayasa Logistik"
+],
+[
+"255",
+"Teknologi Rekayasa Manufaktur"
+],
+[
+"256",
+"Teknologi Rekayasa Mesin"
+],
+[
+"257",
+"Teknologi Rekayasa Otomasi"
+],
+[
+"258",
+"Teknologi Rekayasa Pembangkit Energi"
+],
+[
+"259",
+"Teknologi Survey dan Pemetaan Dasar"
+],
+[
+"260",
+"Telekomunikasi"
+],
+[
+"261",
+"Transportasi"
+],
+[
+"262",
+"Transportasi Darat"
+],
+[
+"263",
+"Transportasi Laut"
+],
+[
+"264",
+"Program Studi Program Profesi Insinyur"
+],
+[
+"265",
+"Teknik Elektronika Kampus Kota Kediri"
+],
+[
+"266",
+"Teknik Mesin Produksi dan Perawatan Kampus Kota Kediri"
+],
+[
+"267",
+"Teknik Mesin, Kampus Kediri"
+],
+[
+"268",
+"Teknik Otomotif Elektronik (Kampus Kab Pamekasan)"
+],
+[
+"270",
+"Elektro Pelayaran"
+],
+[
+"271",
+"Instrumentasi dan Elektronika Migas"
+],
+[
+"272",
+"Instrumentasi dan Kontrol"
+],
+[
+"273",
+"Keselamatan dan Kesehatan Kerja Pertambangan Umum dan Perusahaan Manufaktur"
+],
+[
+"274",
+"Rekayasa/Teknik Fisika"
+],
+[
+"275",
+"Rekayasa/Teknik Industri"
+],
+[
+"276",
+"Rekayasa/Teknik Sipil"
+],
+[
+"277",
+"Teknik Air Tanah"
+],
+[
+"278",
+"Teknologi Survei dan Pemetaan Dasar"
+],
+[
+"279",
+"Rekayasa Tekstil"
+],
+[
+"280",
+"Manajemen Integritas Material"
+],
+[
+"281",
+"Rekayasa Industri (Kampus Kota Madiun)"
+],
+[
+"282",
+"Teknik Biomedis"
+],
+[
+"283",
+"Teknik Biomedik"
+],
+[
+"284",
+"Teknik Sipil (Kampus Kab. Kapuas Hulu)"
+],
+[
+"285",
+"Teknik Telekomunikasi (Kampus Kota Jakarta Barat)"
+],
+[
+"286",
+"Logistik"
+],
+[
+"287",
+"Tata Operasi Perakitan Kendaraan Roda 4"
+],
+[
+"288",
+"Teknologi Otomotif"
+],
+[
+"289",
+"Sistem Komputer"
+],
+[
+"291",
+"Perancangan Jalan dan Jembatan"
+],
+[
+"292",
+"Teknik Telekomunikasi (Kampus Jakarta)"
+],
+[
+"293",
+"Manajemen Rekayasa Konstruksi"
+],
+[
+"294",
+"Jaringan Telekomunikasi Digital"
+],
+[
+"295",
+"Teknologi Rekayasa Otomotif Kampus Kab. Lumajang"
+],
+[
+"296",
+"Teknologi Konstruksi Jalan, Jembatan, dan Bangunan Air"
+],
+[
+"297",
+"Teknologi Pertambangan"
+],
+[
+"298",
+"Teknologi Pemeliharaan Pesawat Udara"
+],
+[
+"299",
+"Teknologi Sipil Kampus Kab. Lumajang"
+],
+[
+"300",
+"Teknik Mesin Kampus Kab. Demak"
+],
+[
+"301",
+"Teknik Listrik Kampus Kab Pelalawan"
+],
+[
+"302",
+"Manajemen Teknologi"
+],
+[
+"303",
+"Rekayasa Industri"
+],
+[
+"304",
+"Rekayasa Elektro"
+],
+[
+"305",
+"Teknologi Rekayasa Kontruksi Jalan dan Jembatan"
+],
+[
+"306",
+"Teknik Sistem"
+],
+[
+"307",
+"Teknologi Rekayasa Pemeliharaan Alat Berat"
+],
+[
+"308",
+"Teknologi Rekayasa Konstruksi Jalan dan Jembatan"
+],
+[
+"309",
+"Teknik Keselamatan dan Resiko"
+],
+[
+"310",
+"Teknologi Rekayasa Elektronika"
+],
+[
+"311",
+"Teknik Infrastruktur Lingkungan"
+],
+[
+"312",
+"Rekayasa Sipil"
+],
+[
+"313",
+"Teknik Elektro Kampus Kota Serang"
+],
+[
+"314",
+"Teknik Mesin Kampus Kota Serang"
+],
+[
+"315",
+"Instrumentasi Meteorologi Klimatologi Dan Geofisika"
+],
+[
+"316",
+"Rekayasa Mesin"
+],
+[
+"317",
+"Teknik Penerbangan"
+],
+[
+"318",
+"Teknologi Rekayasa Otomotif"
+],
+[
+"319",
+"Teknologi Rekayasa Pengemasan"
+],
+[
+"320",
+"Teknologi Mesin"
+],
+[
+"321",
+"Teknologi Rekayasa Instrumentasi"
+],
+[
+"322",
+"Teknik Sistem Energi"
+],
+[
+"323",
+"Teknologi Rekayasa Permesinan Kapal"
+],
+[
+"324",
+"Teknologi Rekayasa Operasi Kapal"
+],
+[
+"325",
+"Perawatan Mesin Pengolah Hasil Perkebunan"
+],
+[
+"326",
+"Teknologi Rekayasa Mesin Industri Perkebunan"
+],
+[
+"327",
+"Teknologi Rekayasa Perancangan Manufaktur"
+],
+[
+"328",
+"Rekayasa Elektro Medis"
+],
+[
+"329",
+"Teknologi Pulp dan Kertas"
+],
+[
+"330",
+"Teknik Pengolahan Pulp dan Kertas"
+],
+[
+"331",
+"Manajemen Konstruksi"
+],
+[
+"332",
+"Manajemen Rekayasa dan Konstruksi"
+],
+[
+"333",
+"Teknik Konstruksi"
+],
+[
+"334",
+"Teknik Konstruksi Perkapalan"
+],
+[
+"335",
+"Teknik Konstruksi Sipil"
+],
+[
+"336",
+"Teknik Konstruksi Bangunan"
+],
+[
+"337",
+"Teknik Konstruksi Gedung"
+],
+[
+"338",
+"Konstruksi Gedung"
+],
+[
+"339",
+"Konstruksi Sipil"
+],
+[
+"340",
+"Konstruksi Bangunan"
+],
+[
+"341",
+"Konstruksi Bangunan Gedung"
+],
+[
+"342",
+"Teknologi Rekayasa Mekatronika"
+],
+[
+"343",
+"Teknologi Rekayasa Kimia Berkelanjutan"
+],
+[
+"344",
+"PJJ Teknik Telekomunikasi"
+],
+[
+"345",
+"Teknik Industri dan Manajemen"
+],
+[
+"346",
+"Teknik Logistik (Kampus Kota Surabaya)"
+],
+[
+"347",
+"Teknologi Elektro Medis"
+],
+[
+"348",
+"Teknik Instrumentasi"
+],
+[
+"349",
+"Teknologi Geomatika"
+],
+[
+"350",
+"Teknik Sumberdaya Lahan dan Lingkungan"
+],
+[
+"351",
+"Teknologi Rekayasa Energi Terbarukan"
+],
+[
+"352",
+"Profesi Insinyur Kehutanan"
+],
+[
+"353",
+"Manufaktur Kampus Kota Pekalongan"
+],
+[
+"354",
+"Teknologi Rekayasa Bangunan Gedung"
+],
+[
+"355",
+"Teknologi Rekayasa Konstruksi Bangunan Gedung"
+],
+[
+"356",
+"Teknologi Rekayasa Instalasi Listrik"
+],
+[
+"357",
+"Teknik Pertambangan (Kampus Kabupaten Sawahlunto)"
+],
+[
+"358",
+"Teknik Otomotif (Kampus Kabupaten Sawahlunto)"
+],
+[
+"359",
+"Teknologi Rekayasa Sistem Elektronika"
+],
+[
+"360",
+"Teknik Kimia (Kampus Kab Siak)"
+],
+[
+"361",
+"Teknik Mesin Produksi dan Perawatan (Kampus Kab. Siak)"
+],
+[
+"362",
+"Teknologi Rekayasa Mesin Pertanian"
+],
+[
+"363",
+"Ilmu Teknik Sipil"
+],
+[
+"364",
+"Teknologi Rekayasa Konstruksi Bangunan Air"
+],
+[
+"365",
+"Rekayasa Perawatan dan Restorasi Jembatan"
+],
+[
+"366",
+"Teknologi Rekayasa Energi Terbarukan"
+],
+[
+"367",
+"Teknik Telekomunikasi dan Navigasi Udara"
+],
+[
+"368",
+"Perancangan Bangunan Gedung"
+],
+[
+"369",
+"Jasa Konstruksi"
+],
+[
+"370",
+"Teknologi Pangan"
+],
+[
+"371",
+"Rekayasa Tata Kelola Air Terpadu"
+],
+[
+"372",
+"Teknologi Industri Pertanian"
+],
+[
+"373",
+"Teknik Perkeretaapian"
+],
+[
+"374",
+"Perawatan Mesin"
+],
+[
+"375",
+"Teknik Perawatan Mesin"
+],
+[
+"376",
+"Perawatan dan Perbaikan Mesin"
+],
+[
+"377",
+"Teknologi Metalurgi Industri Logam"
+],
+[
+"378",
+"Teknologi Listrik Industri Logam"
+],
+[
+"379",
+"Teknologi Sipil"
+],
+[
+"380",
+"PJJ Teknik Industri"
+],
+[
+"381",
+"Teknik Industri Kampus Kota Semarang"
+],
+[
+"382",
+"Teknik Sipil Bangunan Air"
+],
+[
+"383",
+"Pengelolaan Sumberdaya Air"
+],
+[
+"384",
+"Teknik Pembuatan Perkakas Presisi"
+],
+[
+"385",
+"Teknik Pengecoran Logam"
+],
+[
+"386",
+"Teknik Perancangan Perkakas Presisi"
+],
+[
+"387",
+"Teknologi Otomotif Elektronik"
+],
+[
+"388",
+"Teknologi Rekayasa Informatika Industri"
+],
+[
+"389",
+"Teknologi Rekayasa Material Maju"
+],
+[
+"390",
+"Manajemen Teknologi Rekayasa"
+],
+[
+"391",
+"Gambar Rekayasa Mesin"
+],
+[
+"392",
+"Ilmu Forensik"
+],
+[
+"393",
+"Intelijen Teknologi"
+],
+[
+"394",
+"Perkeretaapaian"
+],
+[
+"395",
+"Rekayasa Perawatan dan Retorasi Jembatan"
+],
+[
+"396",
+"Teknik Biomedik/Teknik Biomedis"
+],
+[
+"397",
+"Teknologi Rekayasa Permesinan Kapal"
+],
+[
+"398",
+"Rekayasa Keselamatan"
+],
+[
+"399",
+"Rekayasa Keselamatan Proses"
+],
+[
+"400",
+"Rekayasa Keselamatan Kebakaran"
+],
+[
+"401",
+"Teknologi Mekanika Otomotif"
+],
+[
+"402",
+"Rekayasa Sistem Transportasi Jalan"
+],
+[
+"403",
+"Teknologi Rekayasa Keselamatan"
+],
+[
+"404",
+"Teknologi Elektro Perkeretaapian"
+],
+[
+"405",
+"Teknologi Rekayasa Cetak dan Grafis 3 Dimensi"
+],
+[
+"406",
+"Teknologi Pengolahan Karet dan Plastik"
+],
+[
+"407",
+"Teknologi Pengolahan Kulit"
+],
+[
+"408",
+"Teknologi Pengolahan Produk Kulit"
+],
+[
+"409",
+"Rekayasa Berkelanjutan"
+],
+[
+"410",
+"Teknologi Rekayasa Elektrikal Mekanik"
+],
+[
+"411",
+"Teknologi Rekayasa Energi Berkelanjutan"
+],
+[
+"412",
+"Teknologi Rekayasa Industri"
+],
+[
+"413",
+"Teknologi Rekayasa Multimedia"
+],
+[
+"414",
+"Teknologi Rekayasa Robotika"
+],
+[
+"415",
+"Teknologi Rekayasa Utilitas"
+],
+[
+"416",
+"Rekayasa Geologi"
+],
+[
+"417",
+"Teknik Robotika dan Kecerdasan Buatan"
+],
+[
+"418",
+"Teknologi Rekayasa Manufaktur (Kampus Kota Pekalongan)"
+],
+[
+"419",
+"Teknologi Mekanika Perkeretaapian"
+],
+[
+"420",
+"Teknologi Bangunan dan Jalur Perkeretaapian"
+],
+[
+"421",
+"Nautika"
+],
+[
+"422",
+"Teknologi Rekayasa Kelistrikan Kapal"
+],
+[
+"423",
+"Alat Berat"
+],
+[
+"424",
+"Teknologi Konstruksi Jalan dan Jembatan"
+],
+[
+"425",
+"Teknologi Pembangkit Tenaga Listrik"
+],
+[
+"426",
+"Teknik Konversi Energi"
+],
+[
+"427",
+"Teknik Otomasi Industri"
+],
+[
+"428",
+"Proses Manufaktur"
+],
+[
+"429",
+"Manajemen Transportasi Laut"
+],
+[
+"430",
+"Petro dan Oleo Kimia"
+],
+[
+"431",
+"Teknik Industri Pertanian"
+],
+[
+"432",
+"Teknologi Pasca Panen"
+],
+[
+"433",
+"Rekayasa Pertanian"
+],
+[
+"434",
+"Rekayasa Hayati"
+],
+[
+"435",
+"Teknologi Kimia"
+],
+[
+"436",
+"Teknologi Pengolahan"
+],
+[
+"437",
+"Teknologi Pengolahan Hasil Bumi"
+],
+[
+"438",
+"Teknologi Pengolahan Hasil Laut"
+],
+[
+"439",
+"Teknologi Pengolahan Hasil Ternak"
+],
+[
+"440",
+"Teknologi Pengolahan Hasil Perikanan"
+],
+[
+"441",
+"Teknologi Pengolahan Hasil Perkebunan"
+],
+[
+"442",
+"Teknologi Pengolahan Sawit"
+],
+[
+"443",
+"Teknik Industri Kampus Kab. Cirebon"
+],
+[
+"444",
+"Teknik Sipil (Kampus Kota Bandung)"
+],
+[
+"445",
+"Teknik Elektro (Kampus Kota Bandung)"
+],
+[
+"446",
+"Rekayasa Logistik"
+],
+[
+"447",
+"Teknik Berkelanjutan"
+],
+[
+"448",
+"Teknik Elektronika (Kampus Kota Metro)"
+],
+[
+"449",
+"Teknik Otomotif (Kampus Kota Metro)"
+],
+[
+"450",
+"Teknik Sipil (Kampus Kota Metro)"
+],
+[
+"451",
+"Teknologi Rekayasa Konstruksi Bangunan Gedung"
+],
+[
+"452",
+"Logistik Minyak dan Gas"
+],
+[
+"453",
+"Manajemen Transportasi Perkeretaapian"
+],
+[
+"454",
+"Operator dan Peralatan Alat Berat"
+],
+[
+"455",
+"Pemeliharaan Alat Berat"
+],
+[
+"456",
+"Pengolahan Minyak dan Gas"
+],
+[
+"457",
+"Perawatan Alat Berat"
+],
+[
+"458",
+"Rekayasa Minyak dan Gas"
+],
+[
+"459",
+"Studi Nautika"
+],
+[
+"460",
+"Tata Operasi dan Pemeliharaan Alat Berat"
+],
+[
+"461",
+"Teknik Analisis Lab Minyak dan Gas"
+],
+[
+"462",
+"Teknologi Rekayasa Sistem Kelistrikan Minyak dan Gas"
+],
+[
+"463",
+"Teknologi Instrumentasi Industri Petrokimia"
+],
+[
+"464",
+"Teknologi Mesin Industri Petrokimia"
+],
+[
+"465",
+"Teknologi Proses Industri Petrokimia"
+],
+[
+"466",
+"Teknik Pengolahan Kelapa Sawit"
+],
+[
+"467",
+"Teknologi Rekayasa Elektromedis"
+],
+[
+"468",
+"Teknologi Rekayasa Pelaksanaan Bangunan Sipil"
+],
+[
+"469",
+"Teknik Rekayasa Infrastruktur dan Lingkungan"
+],
+[
+"470",
+"Teknik Listrik dan Instalasi"
+],
+[
+"471",
+"Teknologi Metalurgi Ekstraksi"
+],
+[
+"472",
+"Teknologi Rekayasa Geomatika dan Survei"
+],
+[
+"473",
+"Teknologi Rekayasa Pengelasan dan Fabrikasi"
+],
+[
+"474",
+"Teknologi Geologi"
+],
+[
+"475",
+"Teknologi Metalurgi"
+],
+[
+"476",
+"Teknik Instrumentasi & Elektronika Migas"
+],
+[
+"477",
+"Teknologi Rekayasa Penginderaan Jauh"
+],
+[
+"478",
+"Optimasi Rekayasa Kimia"
+],
+[
+"479",
+"Teknik Infrastruktur Sipil dan Perancangan Arsitektur"
+],
+[
+"480",
+"Keteknikan Pertanian"
+],
+[
+"481",
+"Ilmu Keteknikan Pertanian"
+],
+[
+"482",
+"Sistem Siber-Fisik"
+],
+[
+"483",
+"Ilmu Teknik Kimia"
+],
+[
+"484",
+"Teknik Sipil (Kampus Kabupaten Penajam Paser Utara)"
+],
+[
+"485",
+"Teknik Pengolahan Migas"
+],
+[
+"486",
+"Teknik Perawatan Pesawat Udara"
+],
+[
+"487",
+"Teknologi Rekayasa Metalurgi"
+],
+[
+"488",
+"Teknik Perencanaan Jalan dan Jembatan"
+],
+[
+"489",
+"Teknik Industri Kampus Batang"
+],
+[
+"490",
+"Ilmu Teknik Elektro"
+],
+[
+"491",
+"Teknologi Navigasi Udara"
+],
+[
+"492",
+"Manajemen Transportasi Jalan"
+],
+[
+"493",
+"Teknik Pertanian"
+],
+[
+"494",
+"Teknik Pertanian dan Biosistem"
+],
+[
+"495",
+"Teknik Pengolahan Hasil Pertanian"
+],
+[
+"496",
+"Teknik Pembuatan Tenun Ikat"
+],
+[
+"497",
+"Teknik Pembuatan Peralatan dan Perkakas Produksi"
+],
+[
+"498",
+"Teknik Pembuatan Benang"
+],
+[
+"499",
+"Teknik Pembuatan Garmen"
+],
+[
+"500",
+"Teknik Pembuatan Kain Tenun"
+],
+[
+"501",
+"Teknologi Rekayasa Pemeliharaan Pesawat Udara"
+],
+[
+"502",
+"Teknik Industri (Kampus Cirebon)"
+],
+[
+"503",
+"Pengelolaan Infrastruktur Air Bersih dan Sanitasi"
+],
+[
+"504",
+"Teknik Komputer"
+],
+[
+"505",
+"Teknik Komputer (Kampus Kota Surabaya)"
+],
+[
+"506",
+"BroadBand Multimedia"
+],
+[
+"507",
+"Ilmu dan Teknik Material"
+],
+[
+"508",
+"Ilmu Teknik Mesin"
+],
+[
+"509",
+"Teknik Konstruksi Jalan dan Jembatan"
+],
+[
+"510",
+"Teknologi Rekayasa Sistem Mekanikal Minyak dan Gas"
+],
+[
+"511",
+"Ilmu Teknik Kelautan"
+],
+[
+"512",
+"Teknologi Hasil Perikanan"
+],
+[
+"513",
+"Teknologi Rekayasa Aeronautika"
+],
+[
+"514",
+"Rekayasa Keselamatan Proses Kimia"
+],
+[
+"515",
+"Teknologi Rekayasa Pangan"
+],
+[
+"516",
+"Ilmu dan Teknologi Peternakan"
+],
+[
+"517",
+"Ilmu Produksi dan Teknologi Peternakan"
+],
+[
+"518",
+"Ilmu Teknologi Pangan"
+],
+[
+"519",
+"Rekayasa Pertanian dan Biosistem"
+],
+[
+"520",
+"Teknik Produksi Sayuran Organik"
+],
+[
+"521",
+"Teknik Produksi Tanaman Organik"
+],
+[
+"522",
+"Teknologi Agroindustri"
+],
+[
+"523",
+"Teknologi Akuakultur"
+],
+[
+"524",
+"Teknologi Benih"
+],
+[
+"525",
+"Teknologi Budi Daya Perikanan"
+],
+[
+"526",
+"Teknologi Budidaya Perairan"
+],
+[
+"527",
+"Teknologi Cerdas Penangkapan lkan"
+],
+[
+"528",
+"Teknologi dan Bisnis Perikanan dan Kelautan"
+],
+[
+"529",
+"Teknologi dan Industri Peternakan"
+],
+[
+"530",
+"Teknologi dan Manajemen Ternak"
+],
+[
+"531",
+"Teknologi Hasil Hutan"
+],
+[
+"532",
+"Teknologi Hasil Perairan"
+],
+[
+"533",
+"Teknologi Hasil Perikanan"
+],
+[
+"534",
+"Teknologi Hasil Perkebunan"
+],
+[
+"535",
+"Teknologi Hasil Pertanian"
+],
+[
+"536",
+"Teknologi Hasil Ternak"
+],
+[
+"537",
+"Teknologi Mekanisasi Pertanian"
+],
+[
+"538",
+"Teknologi Pakan Ternak"
+],
+[
+"539",
+"Teknologi Pangan dan Hasil Pertanian"
+],
+[
+"540",
+"Teknologi Pascapanen"
+],
+[
+"541",
+"Teknologi Pembenihan lkan"
+],
+[
+"542",
+"Teknologi Penangkapan Ikan"
+],
+[
+"543",
+"Teknologi Perikanan Tangkap"
+],
+[
+"544",
+"Teknologi Pertanian"
+],
+[
+"545",
+"Teknologi Produk Kayu"
+],
+[
+"546",
+"Teknologi Produksi Pakan Ternak"
+],
+[
+"547",
+"Teknologi Produksi Peternakan"
+],
+[
+"548",
+"Teknologi Produksi Tanaman Hortikultura"
+],
+[
+"549",
+"Teknologi Produksi Tanaman Pangan"
+],
+[
+"550",
+"Teknologi Produksi Tanaman Perkebunan"
+],
+[
+"551",
+"Teknologi Rekayasa Pemeliharaan Pesawat Udara"
+],
+[
+"552",
+"Teknologi Rekayasa Sistem Aerial Nirawak"
+],
+[
+"553",
+"Perancangan Manufaktur"
+],
+[
+"554",
+"Ilmu Teknik Pertanian"
+],
+[
+"555",
+"Rekayasa Energi Terbarukan"
+],
+[
+"556",
+"Teknik Sipil (Kampus Kab. Morowali)"
+],
+[
+"557",
+"Teknik Sipil Kampus Kab Tojo Una-una"
+],
+[
+"558",
+"Teknologi Produksi Halal"
+],
+[
+"559",
+"Teknik Elektromedis"
+],
+[
+"560",
+"Rekayasa Instrumentasi dan Otomasi"
+],
+[
+"561",
+"Teknik Elektro (Kampus Kota Surabaya)"
+],
+[
+"562",
+"Teknik Telekomunikasi (Kampus Kota Surabaya)"
+],
+[
+"563",
+"Teknik Pengendalian Pencemaran Lingkungan"
+],
+[
+"564",
+"Teknologi Rekayasa Pengendalian Pencemaran Lingkungan"
+],
+[
+"565",
+"Rekayasa Instrumentasi dan Automasi"
+],
+[
+"566",
+"Rekayasa Keolahragaan"
+],
+[
+"567",
+"Rekayasa Kosmetik"
+],
+[
+"568",
+"Teknologi Rekayasa Bioproses Energi Terbarukan"
+],
+[
+"569",
+"Manajemen Transportasi Perairan Daratan"
+],
+[
+"570",
+"Pengecoran"
+],
+[
+"571",
+"Pembuatan Peralatan dan Perkakas Produksi"
+],
+[
+"572",
+"Pendidikan Profesi Insinyur"
+],
+[
+"573",
+"Teknologi Elektronika"
+],
+[
+"574",
+"Teknologi Telekomunikasi"
+],
+[
+"575",
+"Ilmu Teknik"
+],
+[
+"576",
+"Biosistem"
+],
+[
+"577",
+"Teknologi Industri Kimia"
+],
+[
+"578",
+"Ilmu dan Teknologi Hasil Hutan"
+],
+[
+"579",
+"Teknologi Mesin (Kampus Kab. Sanggau)"
+],
+[
+"580",
+"Teknologi Penginderaan"
+],
+[
+"581",
+"Ilmu Teknik Sipil (Kampus Jakarta)"
+],
+[
+"582",
+"Mekanisasi Pertanian"
+],
+[
+"583",
+"Pengelolaan Sumber Daya Air"
+],
+[
+"584",
+"Teknik Industri (Kampus Kota Surabaya)"
+],
+[
+"585",
+"Teknik Telekomunikasi (Kampus Kabupaten Banyumas)"
+],
+[
+"586",
+"Profesi Insinyur Peternakan"
+],
+[
+"587",
+"Rekayasa Nanoteknologi"
+],
+[
+"588",
+"Teknologi Pengelasan Logam"
+],
+[
+"589",
+"Konstruksi Pondasi, Beton dan Pengaspalan Jalan"
+],
+[
+"590",
+"Instalasi dan Pemeliharaan Jaringan Listrik"
+],
+[
+"591",
+"Teknologi Rekayasa Kelautan"
+],
+[
+"592",
+"Teknik Perawatan Alat Tambang"
+],
+[
+"593",
+"Pemeliharaan Kendaraan Ringan"
+],
+[
+"594",
+"Kendaraan Ringan"
+],
+[
+"595",
+"Sistem Kelistrikan Kapal"
+],
+[
+"596",
+"Profesi Insinyur"
+],
+[
+"597",
+"Teknologi Rekayasa Tenaga Listrik"
+],
+[
+"598",
+"Teknik Mesin (Kampus Kabupaten Balangan)"
+],
+[
+"599",
+"Rekayasa Sistem Energi"
+],
+[
+"600",
+"Ketatalaksanaan Angkutan Laut dan Kepelabuhan"
+],
+[
+"601",
+"Optimasi Desain Mekanik"
+],
+[
+"602",
+"Teknik Industri (Kampus Kabupaten Banyumas)"
+],
+[
+"603",
+"Teknik Elektro (Kampus Kabupaten Banyumas)"
+],
+[
+"604",
+"Teknik Telekomunikasi (Kampus Kabupaten Banyumas)"
+],
+[
+"605",
+"Teknik Biomedis (Kampus Kabupaten Banyumas)"
+],
+[
+"606",
+"Teknik Logistik (Kampus Kabupaten Banyumas)"
+],
+[
+"607",
+"Teknologi Sipil (Kampus Kab Lumajang)"
+],
+[
+"608",
+"Teknik Elektronika (Kampus Kab. Kediri)"
+],
+[
+"609",
+"Teknik Mesin Produksi dan Perawatan (Kampus Kota Kediri)"
+],
+[
+"610",
+"Profesi Insinyur Teknologi Pertanian"
+],
+[
+"611",
+"Teknologi Daya Gerak"
+],
+[
+"612",
+"Kecerdasan Buatan dan Robotika"
+],
+[
+"613",
+"Mekanisasi Perikanan"
+]
+]
+}

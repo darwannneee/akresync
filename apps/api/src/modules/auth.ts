@@ -3,21 +3,14 @@ import type { RequestHandler } from 'express';
 import { z } from 'zod';
 import { API_ROUTES } from '@akreditasi/shared';
 import { hashRefreshToken, newRefreshToken, signAccessToken } from '../auth/tokens.js';
-import { createUser, loadActiveUser, toAuthUser, verifyPassword } from '../auth/users.js';
+import { loadActiveUser, toAuthUser, verifyPassword } from '../auth/users.js';
 import type { AppContext } from '../context.js';
 import { q1 } from '../db/pool.js';
-import { badRequest, unauthorized } from '../errors.js';
+import { AppError, unauthorized } from '../errors.js';
 import { envelope, mount, parse } from '../lib/http.js';
 
 const COOKIE = 'refresh_token';
 
-const registerSchema = z.object({
-  email: z.string().email().max(200),
-  password: z.string().min(10, 'minimal 10 karakter').max(200),
-  fullName: z.string().trim().min(2).max(200),
-  institutionId: z.string().uuid(),
-  programId: z.string().uuid().optional(),
-});
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(1) });
 
 export function authRoutes(ctx: AppContext, router: Router, auth: RequestHandler) {
@@ -49,19 +42,19 @@ export function authRoutes(ctx: AppContext, router: Router, auth: RequestHandler
     };
   }
 
-  mount(router, auth, API_ROUTES.register, async (req, res) => {
-    const b = parse(registerSchema, req.body);
-    if (!(await q1(ctx.pool, 'SELECT 1 FROM institutions WHERE id=$1', [b.institutionId]))) throw badRequest('Institusi tidak ditemukan');
-    const user = await createUser(ctx.pool, { email: b.email, password: b.password, fullName: b.fullName, role: 'upps', institutionId: b.institutionId });
-    res.status(201).json(envelope(await issueSession(res, user)));
-  });
-
   mount(router, auth, API_ROUTES.login, async (req, res) => {
     const b = parse(loginSchema, req.body);
-    const row = await q1(ctx.pool, 'SELECT id, role, email, full_name, institution_id, password_hash, is_active FROM users WHERE email = $1', [b.email.trim().toLowerCase()]);
+    const row = await q1(ctx.pool, 'SELECT id, role, email, full_name, institution_id, password_hash, is_active, status FROM users WHERE email = $1', [b.email.trim().toLowerCase()]);
     // Selalu jalankan perbandingan agar waktu respons tidak membedakan email terdaftar.
     const ok = await verifyPassword(b.password, row?.password_hash ?? '$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinv');
-    if (!row || !row.is_active || !ok) throw unauthorized('Email atau kata sandi salah');
+    if (!row || !ok) throw unauthorized('Email atau kata sandi salah');
+    // Pesan khusus hanya setelah kata sandi benar (tidak membocorkan status akun kepada pihak lain).
+    if (row.status === 'pending_verification') throw new AppError(403, 'ACCOUNT_PENDING', 'Akun sedang menunggu verifikasi Sekretariat Administrasi.');
+    if (row.status === 'rejected') {
+      const note = (await q1<{ review_note: string | null }>(ctx.pool, 'SELECT review_note FROM upps_registrations WHERE user_id = $1', [row.id]))?.review_note;
+      throw new AppError(403, 'ACCOUNT_REJECTED', `Pendaftaran akun ditolak${note ? `: ${note}` : ''}.`);
+    }
+    if (!row.is_active) throw unauthorized('Email atau kata sandi salah');
     res.json(envelope(await issueSession(res, toAuthUser(row))));
   });
 

@@ -40,14 +40,22 @@ const ALL: 'authenticated' = 'authenticated';
 /** Daftar endpoint /api/v1. Backend dan frontend wajib mengikuti path & peran ini. */
 export const API_ROUTES = {
   // Autentikasi & master (O)
-  register: { method: 'POST', path: '/auth/register', roles: 'public', storage: 'O', description: 'Registrasi akun UPPS' },
+  register: { method: 'POST', path: '/auth/register', roles: 'public', storage: 'O', description: 'Registrasi mandiri UPPS (multipart: field data JSON + berkas photo?, sppa, spsu); akun menunggu verifikasi Sekretariat Administrasi' },
   login: { method: 'POST', path: '/auth/login', roles: 'public', storage: 'O', description: 'Masuk, kembalikan access token + set refresh cookie' },
   refresh: { method: 'POST', path: '/auth/refresh', roles: 'public', storage: 'O', description: 'Perbarui access token' },
   logout: { method: 'POST', path: '/auth/logout', roles: ALL, storage: 'O', description: 'Cabut refresh token' },
   me: { method: 'GET', path: '/auth/me', roles: ALL, storage: 'O', description: 'Profil pengguna aktif' },
   institutions: { method: 'GET', path: '/institutions', roles: 'public', storage: 'O', description: 'Daftar institusi' },
   programs: { method: 'GET', path: '/institutions/:institutionId/programs', roles: 'public', storage: 'O', description: 'Program studi per institusi' },
+  refLevels: { method: 'GET', path: '/ref/levels', roles: 'public', storage: 'O', description: 'Daftar jenjang program studi' },
+  refProgramNames: { method: 'GET', path: '/ref/program-names', roles: 'public', storage: 'O', description: 'Daftar nama program studi' },
   assessors: { method: 'GET', path: '/assessors', roles: ['kea'], storage: 'O', description: 'Daftar asesor aktif' },
+
+  // Verifikasi akun UPPS oleh Sekretariat Administrasi (O)
+  listUppsRegistrations: { method: 'GET', path: '/upps-registrations', roles: ['sek_adm'], storage: 'O', description: 'Daftar registrasi UPPS (?status=)' },
+  getUppsRegistration: { method: 'GET', path: '/upps-registrations/:id', roles: ['sek_adm'], storage: 'O', description: 'Detail registrasi UPPS + baris prodi' },
+  downloadUppsRegistrationFile: { method: 'GET', path: '/upps-registrations/:id/files/:kind', roles: ['sek_adm'], storage: 'O', description: 'Unduh berkas registrasi (kind = photo|sppa|spsu) + verifikasi SHA-256' },
+  decideUppsRegistration: { method: 'POST', path: '/upps-registrations/:id/decision', roles: ['sek_adm'], storage: 'O', description: 'Setujui (enroll identitas Fabric + buat prodi) atau tolak {result: approved|rejected, note}' },
 
   // Pengajuan & dokumen
   createDraft: { method: 'POST', path: '/submissions', roles: ['upps'], storage: 'O', description: 'Buat draf pengajuan' },

@@ -5,6 +5,7 @@ import { LoginPage, NotFoundPage, RegisterPage } from '../pages/AuthPages';
 import { DashboardPage } from '../pages/DashboardPage';
 import { NewDraftPage } from '../pages/NewDraftPage';
 import { SubmissionDetailPage } from '../pages/SubmissionDetailPage';
+import { UppsVerificationDetail, UppsVerificationList } from '../features/sekretariat/UppsVerification';
 import { ScoringPage } from '../features/asesor/ScoringPage';
 
 export function AppRoutes() {
@@ -20,7 +21,11 @@ export function AppRoutes() {
             <Route path="/upps" element={<DashboardPage />} />
             <Route path="/upps/baru" element={<NewDraftPage />} />
           </Route>
-          <Route element={<RequireAuth roles={['sek_adm']} />}><Route path="/sekretariat/administrasi" element={<DashboardPage />} /></Route>
+          <Route element={<RequireAuth roles={['sek_adm']} />}>
+            <Route path="/sekretariat/administrasi" element={<DashboardPage />} />
+            <Route path="/sekretariat/administrasi/akun-upps" element={<UppsVerificationList />} />
+            <Route path="/sekretariat/administrasi/akun-upps/:id" element={<UppsVerificationDetail />} />
+          </Route>
           <Route element={<RequireAuth roles={['sek_keu']} />}><Route path="/sekretariat/keuangan" element={<DashboardPage />} /></Route>
           <Route element={<RequireAuth roles={['kea']} />}><Route path="/kea" element={<DashboardPage />} /></Route>
           <Route element={<RequireAuth roles={['asesor']} />}>

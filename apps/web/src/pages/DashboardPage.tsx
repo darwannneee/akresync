@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, ClipboardList, Hourglass, Inbox, Plus, Search } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ClipboardList, Hourglass, Inbox, Plus, Search, UserCheck } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { Badge, Button, DataTable, EmptyState, FormError, Input, Kpi, PageHeader, Select, Skeleton, Tabs } from '../components/ui';
 import { useTaskQueue, type TaskItem } from '../features/common/useTasks';
 import { StagePill } from '../features/common/StagePill';
 import { errorMessage } from '../api/client';
+import { usePendingRegistrationCount } from '../features/sekretariat/uppsRegistrations';
 import { fmtDateTime, fmtNumber, ROLE_NAME } from '../lib/labels';
 import { currentIndex, holderLabel } from '../lib/workflow';
 import type { SubmissionSummary } from '../api/types';
@@ -43,6 +44,7 @@ export function DashboardPage() {
   const { user } = useAuth();
   const [params] = useSearchParams();
   const { rows, tasks, counts, loading, query } = useTaskQueue();
+  const pendingRegs = usePendingRegistrationCount(user?.role === 'sek_adm');
   const [tab, setTab] = useState<'queue' | 'all'>('queue');
   const [stage, setStage] = useState('');
   const [text, setText] = useState(params.get('q') ?? '');
@@ -58,6 +60,13 @@ export function DashboardPage() {
       <PageHeader title={TITLE[user.role]} eyebrow={ROLE_NAME[user.role]}
         subtitle={counts.action ? `Terdapat ${counts.action} pengajuan yang menunggu tindakan Bapak/Ibu. Mulailah dari daftar tugas di bawah.` : 'Tidak ada tugas yang menunggu Bapak/Ibu saat ini. Perubahan status akan tampil otomatis.'}
         actions={user.role === 'upps' ? <Link to="/upps/baru"><Button icon={<Plus size={16} />}>Ajukan akreditasi baru</Button></Link> : undefined} />
+      {user.role === 'sek_adm' && (
+        <Link to="/sekretariat/administrasi/akun-upps" className="card mb-6 flex flex-wrap items-center gap-4 p-4 hover:bg-navy-50/60 sm:p-5">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-navy-50 text-navy-700"><UserCheck size={22} aria-hidden /></span>
+          <div className="min-w-0 flex-1 basis-64"><p className="font-display text-base font-semibold text-navy-900">Verifikasi akun UPPS</p><p className="text-base text-muted">{pendingRegs ? `${pendingRegs} pendaftaran UPPS menunggu verifikasi Bapak/Ibu.` : 'Tidak ada pendaftaran UPPS yang menunggu verifikasi.'}</p></div>
+          <Button variant={pendingRegs ? 'primary' : 'secondary'} icon={<ArrowRight size={16} />}>{pendingRegs ? 'Periksa pendaftaran' : 'Buka daftar pendaftaran'}</Button>
+        </Link>
+      )}
       {query.isError && <div className="mb-4"><FormError message={errorMessage(query.error)} /></div>}
       <div className="mb-6 grid gap-4 md:grid-cols-3">
         {kpi ? [0, 1, 2].map((i) => <Skeleton key={i} className="h-[104px]" />) : <>

@@ -1,19 +1,20 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Bell, ClipboardCheck, ClipboardList, FilePlus2, FolderOpen, Gavel, ListChecks, LogOut, Menu, Receipt, Search, X, ChevronRight } from 'lucide-react';
+import { Bell, ClipboardCheck, ClipboardList, FilePlus2, FolderOpen, Gavel, ListChecks, LogOut, Menu, Receipt, Search, X, ChevronRight, UserCheck } from 'lucide-react';
 import { ROLE_HOME, type AppRole } from '@akreditasi/shared';
 import { useAuth } from '../auth/AuthContext';
 import { notifications, useEventStream, useNotifications } from '../api/sse';
 import type { SubmissionDetail } from '../api/types';
 import { ROLE_NAME, fmtDateTime, shortId } from '../lib/labels';
 import { useTaskQueue } from '../features/common/useTasks';
+import { usePendingRegistrationCount } from '../features/sekretariat/uppsRegistrations';
 import { cx } from './ui';
 
-interface NavItem { to: string; label: string; icon: typeof Bell; badge?: boolean }
+interface NavItem { to: string; label: string; icon: typeof Bell; badge?: boolean; pendingRegistrations?: boolean }
 const NAV: Record<AppRole, NavItem[]> = {
   upps: [{ to: ROLE_HOME.upps, label: 'Pengajuan Saya', icon: FolderOpen, badge: true }, { to: '/upps/baru', label: 'Pengajuan Baru', icon: FilePlus2 }],
-  sek_adm: [{ to: ROLE_HOME.sek_adm, label: 'Antrean Administrasi', icon: ClipboardCheck, badge: true }],
+  sek_adm: [{ to: ROLE_HOME.sek_adm, label: 'Antrean Administrasi', icon: ClipboardCheck, badge: true }, { to: '/sekretariat/administrasi/akun-upps', label: 'Verifikasi Akun UPPS', icon: UserCheck, pendingRegistrations: true }],
   sek_keu: [{ to: ROLE_HOME.sek_keu, label: 'Tagihan dan Pembayaran', icon: Receipt, badge: true }],
   kea: [{ to: ROLE_HOME.kea, label: 'Antrean KEA', icon: ListChecks, badge: true }],
   asesor: [{ to: ROLE_HOME.asesor, label: 'Penugasan Saya', icon: ClipboardList, badge: true }],
@@ -44,7 +45,10 @@ function Breadcrumb() {
   if (p === '/upps/baru') crumbs.push({ label: 'Pengajuan Baru' });
   else if (p.startsWith('/pengajuan/')) crumbs.push({ to: home, label: 'Pengajuan' }, { label: sub?.programName ?? `Pengajuan ${shortId(sid ?? '')}` });
   else if (p.includes('/penilaian/')) crumbs.push({ to: home, label: 'Penugasan' }, { to: `/pengajuan/${sid}`, label: sub?.programName ?? `Pengajuan ${shortId(sid ?? '')}` }, { label: `Penilaian ${params.phase === 'AL' ? 'Asesmen Lapangan' : 'Asesmen Kecukupan'}` });
-  else crumbs.push({ label: NAV[user.role][0]!.label });
+  else if (p.startsWith('/sekretariat/administrasi/akun-upps')) {
+    if (sid) crumbs.push({ to: '/sekretariat/administrasi/akun-upps', label: 'Verifikasi Akun UPPS' }, { label: 'Rincian pendaftaran' });
+    else crumbs.push({ label: 'Verifikasi Akun UPPS' });
+  } else crumbs.push({ label: NAV[user.role][0]!.label });
   return (
     <nav aria-label="Jejak halaman" className="min-w-0">
       <ol className="flex min-w-0 items-center gap-1 text-sm text-muted">
@@ -108,6 +112,7 @@ export function Layout() {
   const nav = useNavigate();
   const loc = useLocation();
   const tasks = useTaskQueue();
+  const pendingRegs = usePendingRegistrationCount(user?.role === 'sek_adm');
   useEventStream(!!user);
   useEffect(() => { setOpen(false); }, [loc.pathname]);
   if (!user) return null;
@@ -122,6 +127,7 @@ export function Layout() {
           <NavLink key={n.to} to={n.to} end className={({ isActive }) => cx('group flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors', isActive ? 'bg-white/15 font-semibold text-white ring-1 ring-white/10' : 'text-navy-100 hover:bg-white/10 hover:text-white')}>
             <n.icon size={18} aria-hidden className="shrink-0" />
             <span className="flex-1">{n.label}</span>
+            {n.pendingRegistrations && pendingRegs > 0 && <span aria-label={`${pendingRegs} pendaftaran menunggu verifikasi`} className="grid h-6 min-w-[24px] place-items-center rounded-full bg-accent px-2 text-xs font-bold text-navy-950">{pendingRegs}</span>}
             {n.badge && tasks.counts.action > 0 && <span aria-label={`${tasks.counts.action} perlu tindakan`} className="grid h-6 min-w-[24px] place-items-center rounded-full bg-accent px-2 text-xs font-bold text-navy-950">{tasks.counts.action}</span>}
           </NavLink>
         ))}

@@ -20,6 +20,7 @@ import { recordRoutes } from './modules/records.js';
 import { responseRoutes } from './modules/responses.js';
 import { scheduleRoutes } from './modules/schedules.js';
 import { submissionRoutes } from './modules/submissions.js';
+import { uppsRegistrationRoutes } from './modules/uppsRegistration.js';
 import { systemRoutes } from './modules/system.js';
 
 export function createApp(ctx: AppContext): Express {
@@ -37,6 +38,7 @@ export function createApp(ctx: AppContext): Express {
   const router = Router();
   authRoutes(ctx, router, auth);
   masterRoutes(ctx, router, auth);
+  uppsRegistrationRoutes(ctx, router, auth);
   submissionRoutes(ctx, router, auth);
   paymentRoutes(ctx, router, auth);
   assignmentRoutes(ctx, router, auth);
