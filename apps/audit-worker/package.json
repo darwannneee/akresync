@@ -1,0 +1,29 @@
+{
+  "name": "@akreditasi/audit-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsx watch --env-file-if-exists=.env src/main.ts",
+    "start": "node --env-file-if-exists=.env dist/main.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@akreditasi/shared": "workspace:*",
+    "@grpc/grpc-js": "^1.12.2",
+    "@hyperledger/fabric-gateway": "^1.7.1",
+    "kafkajs": "^2.2.4",
+    "pg": "^8.13.1",
+    "pino": "^9.5.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

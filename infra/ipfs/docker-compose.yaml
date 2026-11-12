@@ -1,0 +1,22 @@
+# IPFS Kubo single-node, swarm privat (PSK). swarm.key dibangkitkan ke .runtime/ipfs/ oleh ipfs.sh.
+name: akresync-ipfs
+
+services:
+  ipfs:
+    image: ipfs/kubo:v0.32.1
+    container_name: akresync-ipfs
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      LIBP2P_FORCE_PNET: "1"
+      GOMEMLIMIT: 400MiB
+    ports:
+      - "127.0.0.1:5001:5001"   # API (hanya loopback)
+      - "127.0.0.1:8080:8080"   # gateway lokal (hanya loopback); swarm 4001 tidak dipublikasikan
+    volumes:
+      - ipfs-data:/data/ipfs
+      - ${IPFS_RT}/swarm.key:/swarm.key:ro
+      - ./init/001-private-swarm.sh:/container-init.d/001-private-swarm.sh:ro
+
+volumes:
+  ipfs-data:

@@ -36,3 +36,5 @@ coverage/
 # OS
 .DS_Store
 **/.DS_Store
+**/vitest.config.ts
+**/vitest.config.mts

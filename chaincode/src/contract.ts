@@ -1,4 +1,4 @@
-import { Contract, Info, Transaction, type Context } from 'fabric-contract-api';
+import { Contract, Context, Info, Transaction } from 'fabric-contract-api';
 import {
   AUDIT_SERVICE_UID,
   CHAINCODE,

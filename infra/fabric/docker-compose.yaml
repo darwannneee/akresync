@@ -1,0 +1,299 @@
+# Jaringan Hyperledger Fabric 2.5 lokal (dibuat otomatis lewat network.sh; jangan jalankan langsung tanpa --env-file).
+# Variabel (FABRIC_RT, STATE_DB, CA_ADMIN_PASS, COUCH_USER, COUCH_PASS) berasal dari .runtime/fabric/compose.env.
+name: akresync-fabric
+
+x-ca: &ca
+  image: hyperledger/fabric-ca:1.5.15
+  mem_limit: 96m
+  restart: unless-stopped
+  networks: [fabric]
+
+x-couch: &couch
+  image: couchdb:3.3.3
+  mem_limit: 256m
+  restart: unless-stopped
+  profiles: [couchdb]
+  environment:
+    COUCHDB_USER: ${COUCH_USER}
+    COUCHDB_PASSWORD: ${COUCH_PASS}
+  networks: [fabric]
+
+x-peer: &peer
+  image: hyperledger/fabric-peer:2.5.12
+  mem_limit: 512m
+  restart: unless-stopped
+  working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+  command: peer node start
+  networks: [fabric]
+
+x-peer-env: &peer-env
+  FABRIC_LOGGING_SPEC: ${FABRIC_LOG:-INFO}
+  CORE_PEER_TLS_ENABLED: "true"
+  CORE_PEER_TLS_CERT_FILE: /etc/hyperledger/fabric/tls/server.crt
+  CORE_PEER_TLS_KEY_FILE: /etc/hyperledger/fabric/tls/server.key
+  CORE_PEER_TLS_ROOTCERT_FILE: /etc/hyperledger/fabric/tls/ca.crt
+  CORE_PEER_MSPCONFIGPATH: /etc/hyperledger/fabric/msp
+  CORE_PEER_LISTENADDRESS: 0.0.0.0:7051
+  CORE_PEER_GATEWAY_ENABLED: "true"
+  CORE_PEER_GOSSIP_USELEADERELECTION: "true"
+  CORE_PEER_GOSSIP_ORGLEADER: "false"
+  CORE_LEDGER_STATE_STATEDATABASE: ${STATE_DB:-CouchDB}
+  CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME: ${COUCH_USER}
+  CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD: ${COUCH_PASS}
+  GOMEMLIMIT: 400MiB
+
+services:
+  ca-orderer:
+    <<: *ca
+    container_name: ca-orderer
+    command: fabric-ca-server start -b admin:${CA_ADMIN_PASS}
+    environment:
+      FABRIC_CA_SERVER_CA_NAME: ca-orderer
+      FABRIC_CA_SERVER_TLS_ENABLED: "true"
+      FABRIC_CA_SERVER_CSR_CN: ca-orderer
+      FABRIC_CA_SERVER_CSR_HOSTS: ca-orderer,localhost,127.0.0.1
+      FABRIC_CA_SERVER_PORT: 7054
+    ports: ["127.0.0.1:6054:7054"]
+    volumes: ["${FABRIC_RT}/ca/orderer:/etc/hyperledger/fabric-ca-server"]
+
+  ca-upps:
+    <<: *ca
+    container_name: ca-upps
+    command: fabric-ca-server start -b admin:${CA_ADMIN_PASS}
+    environment:
+      FABRIC_CA_SERVER_CA_NAME: ca-upps
+      FABRIC_CA_SERVER_TLS_ENABLED: "true"
+      FABRIC_CA_SERVER_CSR_CN: ca-upps
+      FABRIC_CA_SERVER_CSR_HOSTS: ca-upps,localhost,127.0.0.1
+      FABRIC_CA_SERVER_PORT: 7054
+    ports: ["127.0.0.1:7054:7054"]
+    volumes: ["${FABRIC_RT}/ca/upps:/etc/hyperledger/fabric-ca-server"]
+
+  ca-sekretariat:
+    <<: *ca
+    container_name: ca-sekretariat
+    command: fabric-ca-server start -b admin:${CA_ADMIN_PASS}
+    environment:
+      FABRIC_CA_SERVER_CA_NAME: ca-sekretariat
+      FABRIC_CA_SERVER_TLS_ENABLED: "true"
+      FABRIC_CA_SERVER_CSR_CN: ca-sekretariat
+      FABRIC_CA_SERVER_CSR_HOSTS: ca-sekretariat,localhost,127.0.0.1
+      FABRIC_CA_SERVER_PORT: 7054
+    ports: ["127.0.0.1:8054:7054"]
+    volumes: ["${FABRIC_RT}/ca/sekretariat:/etc/hyperledger/fabric-ca-server"]
+
+  ca-kea:
+    <<: *ca
+    container_name: ca-kea
+    command: fabric-ca-server start -b admin:${CA_ADMIN_PASS}
+    environment:
+      FABRIC_CA_SERVER_CA_NAME: ca-kea
+      FABRIC_CA_SERVER_TLS_ENABLED: "true"
+      FABRIC_CA_SERVER_CSR_CN: ca-kea
+      FABRIC_CA_SERVER_CSR_HOSTS: ca-kea,localhost,127.0.0.1
+      FABRIC_CA_SERVER_PORT: 7054
+    ports: ["127.0.0.1:9054:7054"]
+    volumes: ["${FABRIC_RT}/ca/kea:/etc/hyperledger/fabric-ca-server"]
+
+  ca-asesor:
+    <<: *ca
+    container_name: ca-asesor
+    command: fabric-ca-server start -b admin:${CA_ADMIN_PASS}
+    environment:
+      FABRIC_CA_SERVER_CA_NAME: ca-asesor
+      FABRIC_CA_SERVER_TLS_ENABLED: "true"
+      FABRIC_CA_SERVER_CSR_CN: ca-asesor
+      FABRIC_CA_SERVER_CSR_HOSTS: ca-asesor,localhost,127.0.0.1
+      FABRIC_CA_SERVER_PORT: 7054
+    ports: ["127.0.0.1:10054:7054"]
+    volumes: ["${FABRIC_RT}/ca/asesor:/etc/hyperledger/fabric-ca-server"]
+
+  ca-majelis:
+    <<: *ca
+    container_name: ca-majelis
+    command: fabric-ca-server start -b admin:${CA_ADMIN_PASS}
+    environment:
+      FABRIC_CA_SERVER_CA_NAME: ca-majelis
+      FABRIC_CA_SERVER_TLS_ENABLED: "true"
+      FABRIC_CA_SERVER_CSR_CN: ca-majelis
+      FABRIC_CA_SERVER_CSR_HOSTS: ca-majelis,localhost,127.0.0.1
+      FABRIC_CA_SERVER_PORT: 7054
+    ports: ["127.0.0.1:11054:7054"]
+    volumes: ["${FABRIC_RT}/ca/majelis:/etc/hyperledger/fabric-ca-server"]
+
+  orderer.akreditasi.test:
+    image: hyperledger/fabric-orderer:2.5.12
+    container_name: orderer.akreditasi.test
+    mem_limit: 256m
+    restart: unless-stopped
+    command: orderer
+    working_dir: /root
+    environment:
+      FABRIC_LOGGING_SPEC: ${FABRIC_LOG:-INFO}
+      GOMEMLIMIT: 200MiB
+      ORDERER_GENERAL_LISTENADDRESS: 0.0.0.0
+      ORDERER_GENERAL_LISTENPORT: 7050
+      ORDERER_GENERAL_LOCALMSPID: OrdererMSP
+      ORDERER_GENERAL_LOCALMSPDIR: /var/hyperledger/orderer/msp
+      ORDERER_GENERAL_TLS_ENABLED: "true"
+      ORDERER_GENERAL_TLS_PRIVATEKEY: /var/hyperledger/orderer/tls/server.key
+      ORDERER_GENERAL_TLS_CERTIFICATE: /var/hyperledger/orderer/tls/server.crt
+      ORDERER_GENERAL_TLS_ROOTCAS: "[/var/hyperledger/orderer/tls/ca.crt]"
+      ORDERER_GENERAL_BOOTSTRAPMETHOD: none
+      ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE: /var/hyperledger/orderer/tls/server.crt
+      ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY: /var/hyperledger/orderer/tls/server.key
+      ORDERER_GENERAL_CLUSTER_ROOTCAS: "[/var/hyperledger/orderer/tls/ca.crt]"
+      ORDERER_CHANNELPARTICIPATION_ENABLED: "true"
+      ORDERER_ADMIN_TLS_ENABLED: "true"
+      ORDERER_ADMIN_TLS_CERTIFICATE: /var/hyperledger/orderer/tls/server.crt
+      ORDERER_ADMIN_TLS_PRIVATEKEY: /var/hyperledger/orderer/tls/server.key
+      ORDERER_ADMIN_TLS_ROOTCAS: "[/var/hyperledger/orderer/tls/ca.crt]"
+      ORDERER_ADMIN_TLS_CLIENTROOTCAS: "[/var/hyperledger/orderer/tls/ca.crt]"
+      ORDERER_ADMIN_TLS_CLIENTAUTHREQUIRED: "true"
+      ORDERER_ADMIN_LISTENADDRESS: 0.0.0.0:7053
+    ports: ["127.0.0.1:7050:7050", "127.0.0.1:7053:7053"]
+    volumes:
+      - ${FABRIC_RT}/orgs/orderer/nodes/orderer.akreditasi.test/msp:/var/hyperledger/orderer/msp:ro
+      - ${FABRIC_RT}/orgs/orderer/nodes/orderer.akreditasi.test/tls:/var/hyperledger/orderer/tls:ro
+      - orderer-data:/var/hyperledger/production/orderer
+    networks: [fabric]
+
+  couchdb.upps.akreditasi.test:
+    <<: *couch
+    container_name: couchdb.upps.akreditasi.test
+    volumes: ["couch-upps:/opt/couchdb/data"]
+
+  peer0.upps.akreditasi.test:
+    <<: *peer
+    container_name: peer0.upps.akreditasi.test
+    environment:
+      <<: *peer-env
+      CORE_PEER_ID: peer0.upps.akreditasi.test
+      CORE_PEER_ADDRESS: peer0.upps.akreditasi.test:7051
+      CORE_PEER_GOSSIP_BOOTSTRAP: peer0.upps.akreditasi.test:7051
+      CORE_PEER_GOSSIP_EXTERNALENDPOINT: peer0.upps.akreditasi.test:7051
+      CORE_PEER_LOCALMSPID: UPPSMSP
+      CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS: couchdb.upps.akreditasi.test:5984
+    ports: ["127.0.0.1:7051:7051"]
+    volumes:
+      - ${FABRIC_RT}/orgs/upps/nodes/peer0.upps.akreditasi.test/msp:/etc/hyperledger/fabric/msp:ro
+      - ${FABRIC_RT}/orgs/upps/nodes/peer0.upps.akreditasi.test/tls:/etc/hyperledger/fabric/tls:ro
+      - peer-upps:/var/hyperledger/production
+
+  couchdb.sekretariat.akreditasi.test:
+    <<: *couch
+    container_name: couchdb.sekretariat.akreditasi.test
+    volumes: ["couch-sekretariat:/opt/couchdb/data"]
+
+  peer0.sekretariat.akreditasi.test:
+    <<: *peer
+    container_name: peer0.sekretariat.akreditasi.test
+    environment:
+      <<: *peer-env
+      CORE_PEER_ID: peer0.sekretariat.akreditasi.test
+      CORE_PEER_ADDRESS: peer0.sekretariat.akreditasi.test:7051
+      CORE_PEER_GOSSIP_BOOTSTRAP: peer0.sekretariat.akreditasi.test:7051
+      CORE_PEER_GOSSIP_EXTERNALENDPOINT: peer0.sekretariat.akreditasi.test:7051
+      CORE_PEER_LOCALMSPID: SekretariatMSP
+      CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS: couchdb.sekretariat.akreditasi.test:5984
+    ports: ["127.0.0.1:8051:7051"]
+    volumes:
+      - ${FABRIC_RT}/orgs/sekretariat/nodes/peer0.sekretariat.akreditasi.test/msp:/etc/hyperledger/fabric/msp:ro
+      - ${FABRIC_RT}/orgs/sekretariat/nodes/peer0.sekretariat.akreditasi.test/tls:/etc/hyperledger/fabric/tls:ro
+      - peer-sekretariat:/var/hyperledger/production
+
+  couchdb.kea.akreditasi.test:
+    <<: *couch
+    container_name: couchdb.kea.akreditasi.test
+    volumes: ["couch-kea:/opt/couchdb/data"]
+
+  peer0.kea.akreditasi.test:
+    <<: *peer
+    container_name: peer0.kea.akreditasi.test
+    environment:
+      <<: *peer-env
+      CORE_PEER_ID: peer0.kea.akreditasi.test
+      CORE_PEER_ADDRESS: peer0.kea.akreditasi.test:7051
+      CORE_PEER_GOSSIP_BOOTSTRAP: peer0.kea.akreditasi.test:7051
+      CORE_PEER_GOSSIP_EXTERNALENDPOINT: peer0.kea.akreditasi.test:7051
+      CORE_PEER_LOCALMSPID: KEAMSP
+      CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS: couchdb.kea.akreditasi.test:5984
+    ports: ["127.0.0.1:9051:7051"]
+    volumes:
+      - ${FABRIC_RT}/orgs/kea/nodes/peer0.kea.akreditasi.test/msp:/etc/hyperledger/fabric/msp:ro
+      - ${FABRIC_RT}/orgs/kea/nodes/peer0.kea.akreditasi.test/tls:/etc/hyperledger/fabric/tls:ro
+      - peer-kea:/var/hyperledger/production
+
+  couchdb.asesor.akreditasi.test:
+    <<: *couch
+    container_name: couchdb.asesor.akreditasi.test
+    volumes: ["couch-asesor:/opt/couchdb/data"]
+
+  peer0.asesor.akreditasi.test:
+    <<: *peer
+    container_name: peer0.asesor.akreditasi.test
+    environment:
+      <<: *peer-env
+      CORE_PEER_ID: peer0.asesor.akreditasi.test
+      CORE_PEER_ADDRESS: peer0.asesor.akreditasi.test:7051
+      CORE_PEER_GOSSIP_BOOTSTRAP: peer0.asesor.akreditasi.test:7051
+      CORE_PEER_GOSSIP_EXTERNALENDPOINT: peer0.asesor.akreditasi.test:7051
+      CORE_PEER_LOCALMSPID: AsesorMSP
+      CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS: couchdb.asesor.akreditasi.test:5984
+    ports: ["127.0.0.1:10051:7051"]
+    volumes:
+      - ${FABRIC_RT}/orgs/asesor/nodes/peer0.asesor.akreditasi.test/msp:/etc/hyperledger/fabric/msp:ro
+      - ${FABRIC_RT}/orgs/asesor/nodes/peer0.asesor.akreditasi.test/tls:/etc/hyperledger/fabric/tls:ro
+      - peer-asesor:/var/hyperledger/production
+
+  couchdb.majelis.akreditasi.test:
+    <<: *couch
+    container_name: couchdb.majelis.akreditasi.test
+    volumes: ["couch-majelis:/opt/couchdb/data"]
+
+  peer0.majelis.akreditasi.test:
+    <<: *peer
+    container_name: peer0.majelis.akreditasi.test
+    environment:
+      <<: *peer-env
+      CORE_PEER_ID: peer0.majelis.akreditasi.test
+      CORE_PEER_ADDRESS: peer0.majelis.akreditasi.test:7051
+      CORE_PEER_GOSSIP_BOOTSTRAP: peer0.majelis.akreditasi.test:7051
+      CORE_PEER_GOSSIP_EXTERNALENDPOINT: peer0.majelis.akreditasi.test:7051
+      CORE_PEER_LOCALMSPID: MajelisMSP
+      CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS: couchdb.majelis.akreditasi.test:5984
+    ports: ["127.0.0.1:11051:7051"]
+    volumes:
+      - ${FABRIC_RT}/orgs/majelis/nodes/peer0.majelis.akreditasi.test/msp:/etc/hyperledger/fabric/msp:ro
+      - ${FABRIC_RT}/orgs/majelis/nodes/peer0.majelis.akreditasi.test/tls:/etc/hyperledger/fabric/tls:ro
+      - peer-majelis:/var/hyperledger/production
+
+  # Chaincode-as-a-Service: dijalankan oleh `network.sh deploy` (profile cc) setelah CHAINCODE_ID diketahui.
+  cc-formal-records:
+    image: akresync/formal-records-cc:latest
+    container_name: cc-formal-records
+    profiles: [cc]
+    mem_limit: 256m
+    restart: unless-stopped
+    env_file: ${FABRIC_RT}/chaincode.env
+    environment:
+      CHAINCODE_SERVER_ADDRESS: 0.0.0.0:9999
+      NODE_OPTIONS: --max-old-space-size=160
+    networks: [fabric]
+
+networks:
+  fabric:
+    name: akresync-fabric
+
+volumes:
+  orderer-data:
+  peer-upps:
+  couch-upps:
+  peer-sekretariat:
+  couch-sekretariat:
+  peer-kea:
+  couch-kea:
+  peer-asesor:
+  couch-asesor:
+  peer-majelis:
+  couch-majelis:

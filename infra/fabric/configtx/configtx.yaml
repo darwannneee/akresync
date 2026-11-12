@@ -1,0 +1,216 @@
+# configtx.yaml - channel "accreditation" (Fabric 2.5, tanpa system channel).
+# Dipakai oleh network.sh di dalam kontainer fabric-tools; /fabric = .runtime/fabric.
+---
+Organizations:
+  - &OrdererOrg
+    Name: OrdererOrg
+    ID: OrdererMSP
+    MSPDir: /fabric/orgs/orderer/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+    OrdererEndpoints:
+      - orderer.akreditasi.test:7050
+
+  - &UPPS
+    Name: UPPS
+    ID: UPPSMSP
+    MSPDir: /fabric/orgs/upps/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('UPPSMSP.admin','UPPSMSP.peer','UPPSMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('UPPSMSP.admin','UPPSMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('UPPSMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('UPPSMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.upps.akreditasi.test
+        Port: 7051
+
+  - &Sekretariat
+    Name: Sekretariat
+    ID: SekretariatMSP
+    MSPDir: /fabric/orgs/sekretariat/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('SekretariatMSP.admin','SekretariatMSP.peer','SekretariatMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('SekretariatMSP.admin','SekretariatMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('SekretariatMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('SekretariatMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.sekretariat.akreditasi.test
+        Port: 7051
+
+  - &KEA
+    Name: KEA
+    ID: KEAMSP
+    MSPDir: /fabric/orgs/kea/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('KEAMSP.admin','KEAMSP.peer','KEAMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('KEAMSP.admin','KEAMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('KEAMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('KEAMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.kea.akreditasi.test
+        Port: 7051
+
+  - &Asesor
+    Name: Asesor
+    ID: AsesorMSP
+    MSPDir: /fabric/orgs/asesor/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('AsesorMSP.admin','AsesorMSP.peer','AsesorMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('AsesorMSP.admin','AsesorMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('AsesorMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('AsesorMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.asesor.akreditasi.test
+        Port: 7051
+
+  - &Majelis
+    Name: Majelis
+    ID: MajelisMSP
+    MSPDir: /fabric/orgs/majelis/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('MajelisMSP.admin','MajelisMSP.peer','MajelisMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('MajelisMSP.admin','MajelisMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('MajelisMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('MajelisMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.majelis.akreditasi.test
+        Port: 7051
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_5: true
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  Addresses:
+    - orderer.akreditasi.test:7050
+  EtcdRaft:
+    Consenters:
+      - Host: orderer.akreditasi.test
+        Port: 7050
+        ClientTLSCert: /fabric/orgs/orderer/nodes/orderer.akreditasi.test/tls/server.crt
+        ServerTLSCert: /fabric/orgs/orderer/nodes/orderer.akreditasi.test/tls/server.crt
+  BatchTimeout: 1s
+  BatchSize:
+    MaxMessageCount: 20
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 2 MB
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+  Capabilities:
+    <<: *OrdererCapabilities
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  AccreditationChannel:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *UPPS
+        - *Sekretariat
+        - *KEA
+        - *Asesor
+        - *Majelis
