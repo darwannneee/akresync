@@ -2,6 +2,7 @@ import {
   ACCREDITATION_RANKS,
   AGGREGATE_TYPES,
   APP_ROLES,
+  MAX_TOTAL_SCORE,
   AUDIT_EVENT_KINDS,
   DOCUMENT_TYPES,
   SHA256_HEX,
@@ -77,7 +78,7 @@ function nonNegInt(v: unknown, name: string): number {
 }
 
 function score(v: unknown, name: string): number {
-  if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 400) return bad(`${name}: harus angka 0..400`);
+  if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > MAX_TOTAL_SCORE) return bad(`${name}: harus angka 0..${MAX_TOTAL_SCORE}`);
   return v;
 }
 

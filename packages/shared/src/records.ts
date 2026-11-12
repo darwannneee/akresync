@@ -61,7 +61,7 @@ export interface AssessmentResultPayload {
   phase: AssessmentPhase;
   offerSeq: number;
   scoreSummarySha256: string; // hash rekap skor rinci (off-chain)
-  totalScore: number; // 0..400
+  totalScore: number; // 0..MAX_TOTAL_SCORE (403.92): jumlah skor x bobot, lihat instrument/
   minutesCid: string | null; // wajib untuk AL
   minutesSha256: string | null; // wajib untuk AL
   documentSetVersion: number;

@@ -1,4 +1,5 @@
 import { CalendarDays, Download, Link2, ScrollText, Users } from 'lucide-react';
+import { MAX_TOTAL_SCORE } from '@akreditasi/shared';
 import type { AuditEventView, SubmissionDetail } from '../../api/types';
 import { Badge, Button, Card, CopyableMono, DataTable, DL, EmptyState, Notice, ProofBadge, TechnicalDetails } from '../../components/ui';
 import {
@@ -79,7 +80,7 @@ export function AssignmentsTab({ s }: { s: SubmissionDetail }) {
             { key: 'a', header: 'Asesor', primary: true, cell: (a) => a.assessorName ?? a.assessorId },
             { key: 'p', header: 'Jenis', cell: (a) => PHASE_LABEL[a.phase] },
             { key: 's', header: 'Status', cell: (a) => <Badge tone={a.status === 'submitted' ? 'success' : 'warn'}>{ASSESS_STATUS_LABEL[a.status]}</Badge> },
-            { key: 't', header: 'Skor total (0 sampai 400)', align: 'right', cell: (a) => <b>{fmtNumber(a.totalScore)}</b> },
+            { key: 't', header: `Skor total (0 sampai ${fmtNumber(MAX_TOTAL_SCORE)})`, align: 'right', cell: (a) => <b>{fmtNumber(a.totalScore)}</b> },
           ]} />
         </section>
       )}

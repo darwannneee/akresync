@@ -1,6 +1,6 @@
 import type { RequestHandler, Router } from 'express';
 import { z } from 'zod';
-import { API_ROUTES, CHAIN_FUNCTIONS, type AssessmentResultPayload } from '@akreditasi/shared';
+import { API_ROUTES, CHAIN_FUNCTIONS, MAX_TOTAL_SCORE, computeTotal, validateScores, type AssessmentResultPayload, type InstrumentScores } from '@akreditasi/shared';
 import { hashSnapshot } from '@akreditasi/shared/node';
 import { loadSubmissionForUser } from '../auth/rbac.js';
 import type { AppContext } from '../context.js';
@@ -12,24 +12,17 @@ import { envelope, mount, mountWith, parse, requestIdFrom, uuidParam } from '../
 import { executeChainAction, findReplay } from './chainAction.js';
 import { assertAuditCommitted, camel, docDto, encryptAndStore, insertDocumentRow, requireFile, upload } from './common.js';
 
-export const MAX_ITEM = 4;
-export const MAX_TOTAL = 400;
+export const MAX_TOTAL = MAX_TOTAL_SCORE;
 
-/** Total dinormalisasi ke 0..400 dari butir bernilai 0..4. Mengembalikan null bila skor tidak valid. */
-export function computeTotalScore(scores: unknown): number {
-  if (!scores || typeof scores !== 'object' || Array.isArray(scores)) throw badRequest('scores harus berupa objek {kriteria: {butir: nilai}}');
-  let sum = 0;
-  let count = 0;
-  for (const [crit, items] of Object.entries(scores as Record<string, unknown>)) {
-    if (!items || typeof items !== 'object' || Array.isArray(items)) throw badRequest(`Kriteria ${crit} harus berupa objek butir`);
-    for (const [item, v] of Object.entries(items as Record<string, unknown>)) {
-      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > MAX_ITEM) throw badRequest(`Nilai ${crit}.${item} harus angka 0-${MAX_ITEM}`);
-      sum += v;
-      count++;
-    }
-  }
-  if (count === 0) throw badRequest('Skor tidak boleh kosong');
-  return Math.round((sum / (count * MAX_ITEM)) * MAX_TOTAL * 100) / 100;
+/**
+ * Validasi skor terhadap INSTRUMENT_DOKTOR_2025 lalu hitung total (jumlah skor x bobot, 0..MAX_TOTAL_SCORE).
+ * Bentuk skor: {K1: {"1": 3, "2": 4}, K2: {"4.1": 2, ...}} (kunci kriteria, lalu id butir).
+ * `complete` mewajibkan semua butir terisi (dipakai saat penyerahan).
+ */
+export function computeTotalScore(scores: unknown, opts: { complete?: boolean } = {}): number {
+  const v = validateScores(scores, opts);
+  if (!v.ok) throw badRequest(`Skor tidak valid: ${v.errors.slice(0, 5).join('; ')}`);
+  return computeTotal(scores as InstrumentScores);
 }
 
 const phaseSchema = z.enum(['AK', 'AL']);
@@ -113,7 +106,7 @@ export function assessmentRoutes(ctx: AppContext, router: Router, auth: RequestH
     assertPhaseActor(offer, user.id, phase);
     const row = await q1(ctx.pool, `SELECT * FROM assessments WHERE offer_id=$1 AND assessor_id=$2 AND phase=$3`, [offer.id, user.id, phase]);
     if (!row || !row.scores || Object.keys(row.scores).length === 0) throw conflict('Simpan skor rinci (draf) terlebih dahulu sebelum menyerahkan');
-    const total = computeTotalScore(row.scores);
+    const total = computeTotalScore(row.scores, { complete: true });
     const summary = hashSnapshot(row.scores);
     let minutesCid: string | null = null;
     let minutesSha: string | null = null;

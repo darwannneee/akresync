@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form';
+import { MAX_TOTAL_SCORE } from '@akreditasi/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ACCREDITATION_RANKS } from '@akreditasi/shared';
@@ -38,7 +39,7 @@ export function DecisionForm({ s }: ActionProps) {
   return (
     <form className="space-y-6" noValidate onSubmit={f.handleSubmit((v) => confirm.ask(v))}>
       {results.length > 0 && (
-        <StepSection n={1} title="Tinjau hasil penilaian" hint="Skor total pada skala 0 sampai 400.">
+        <StepSection n={1} title="Tinjau hasil penilaian" hint={`Skor total pada skala 0 sampai ${fmtNumber(MAX_TOTAL_SCORE)}.`}>
           <DL cols={3} items={results.map((a) => [`${a.phase === 'AK' ? 'Kecukupan' : 'Lapangan'} · ${a.assessorName ?? 'Asesor'}`, fmtNumber(a.totalScore)] as [string, string])} />
         </StepSection>
       )}

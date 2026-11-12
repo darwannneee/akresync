@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form';
+import { MAX_TOTAL_SCORE } from '@akreditasi/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../api/client';
@@ -66,7 +67,7 @@ export function Consistency({ s }: ActionProps) {
   const diff = totals.length === 2 ? Math.abs(totals[0]! - totals[1]!) : null;
   return (
     <div className="space-y-6">
-      <StepSection n={1} title="Bandingkan hasil kedua asesor" hint="Skor total pada skala 0 sampai 400.">
+      <StepSection n={1} title="Bandingkan hasil kedua asesor" hint={`Skor total pada skala 0 sampai ${fmtNumber(MAX_TOTAL_SCORE)}.`}>
         <DataTable rows={ak} rowKey={(a) => a.id} caption="Hasil Asesmen Kecukupan"
           columns={[{ key: 'n', header: 'Asesor', primary: true, cell: (a) => a.assessorName ?? a.assessorId }, { key: 's', header: 'Status', cell: () => <Badge tone="success">Telah diserahkan</Badge> }, { key: 't', header: 'Skor total', align: 'right', cell: (a) => <b>{fmtNumber(a.totalScore)}</b> }]} />
         {diff !== null && <p className="mt-3 text-base">Selisih skor kedua asesor: <b>{fmtNumber(diff)}</b></p>}
