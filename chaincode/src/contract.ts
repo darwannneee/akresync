@@ -373,17 +373,26 @@ export class FormalRecordContract extends Contract {
 
     let stageUpdate: ChainStageState | null = null;
     if (type === 'ASSIGNMENT_RESPONSE') {
-      const st = await this.requireStage(ctx, parsed.submissionId, ['ASSIGNMENT_OFFERED']);
-      const offer = st.activeOffer!;
-      if ((old.payload as Rec<'ASSIGNMENT_RESPONSE'>['payload']).offerSeq !== offer.offerSeq) {
+      const st = await this.getStageState(ctx, parsed.submissionId);
+      if (!st || !st.activeOffer) fail('PRECONDITION_FAILED', 'pengajuan belum memiliki penawaran aktif');
+      const offer = st!.activeOffer!;
+      const oldP = old.payload as Rec<'ASSIGNMENT_RESPONSE'>['payload'];
+      const newP = payload as unknown as Rec<'ASSIGNMENT_RESPONSE'>['payload'];
+      if (oldP.offerSeq !== offer.offerSeq) {
         fail('PRECONDITION_FAILED', 'penawaran sudah digantikan; tanggapan lama tidak dapat dikoreksi');
       }
-      offer.responses[old.actor.uid] = (payload as unknown as Rec<'ASSIGNMENT_RESPONSE'>['payload']).response;
-      offer.rejected = Object.values(offer.responses).includes('REJECT');
-      if (!offer.rejected && this.allAccepted(st.ownerUid, offer)) {
-        fail('PRECONDITION_FAILED', 'koreksi tidak boleh menjadikan penugasan efektif; gunakan penawaran ulang');
+      if (st!.stage === 'ASSIGNMENT_OFFERED') {
+        offer.responses[old.actor.uid] = newP.response;
+        offer.rejected = Object.values(offer.responses).includes('REJECT');
+        if (!offer.rejected && this.allAccepted(st!.ownerUid, offer)) {
+          fail('PRECONDITION_FAILED', 'koreksi tidak boleh menjadikan penugasan efektif; gunakan penawaran ulang');
+        }
+        stageUpdate = { ...st!, activeOffer: offer };
+      } else if (newP.response !== oldP.response) {
+        // Setelah penawaran melewati tahap tanggapan (efektif, AK/AL, dst.) keputusan ACCEPT/REJECT dibekukan;
+        // yang masih boleh dikoreksi hanya data pendukung (mis. hash alasan). STAGE tidak berubah.
+        fail('PRECONDITION_FAILED', `tanggapan tidak dapat diubah pada tahap ${st!.stage}; hanya data pendukung yang boleh dikoreksi`);
       }
-      stageUpdate = { ...st, activeOffer: offer };
     }
 
     const rec: Rec = {

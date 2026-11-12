@@ -4,7 +4,7 @@ import { API_ROUTES, CHAIN_FUNCTIONS, NON_CORRECTABLE_RECORD_TYPES, type RecordT
 import { loadSubmissionForUser } from '../auth/rbac.js';
 import type { AppContext } from '../context.js';
 import { fromDbKey, q, q1 } from '../db/pool.js';
-import { badRequest, conflict, notFound } from '../errors.js';
+import { AppError, badRequest, notFound } from '../errors.js';
 import { envelope, mount, parse, requestIdFrom, uuidParam } from '../lib/http.js';
 import { executeChainAction, findReplay } from './chainAction.js';
 
@@ -36,7 +36,7 @@ export function recordRoutes(ctx: AppContext, router: Router, auth: RequestHandl
     const replay = await findReplay(ctx, requestId, user.id, row.submission_id);
     if (replay) return void res.json(envelope({ recordId: row.id, replayed: true }, { chain: replay.chain }));
     const latest = await q1<{ v: number }>(ctx.pool, `SELECT max(version) AS v FROM formal_records WHERE record_key=$1 AND status='committed'`, [row.record_key]);
-    if (b.expectedVersion !== latest?.v) throw conflict(`Versi catatan sudah berubah (sekarang v${latest?.v}); muat ulang sebelum mengoreksi`, { currentVersion: latest?.v });
+    if (b.expectedVersion !== latest?.v) throw new AppError(409, 'VERSION_CONFLICT', `Versi catatan sudah berubah (sekarang v${latest?.v}); muat ulang sebelum mengoreksi`, { currentVersion: latest?.v });
     const r = await executeChainAction(ctx, {
       userId: user.id, submissionId: row.submission_id, recordType: row.record_type as RecordType, fn: CHAIN_FUNCTIONS.CorrectRecord, requestId,
       args: [requestId, fromDbKey(row.record_key), JSON.stringify(denormalizeKeys(b.payload)), b.reason, b.evidenceRef, String(b.expectedVersion)],

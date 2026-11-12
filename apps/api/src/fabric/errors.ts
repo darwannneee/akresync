@@ -38,7 +38,21 @@ export function mapChainError(err: unknown): AppError {
   if (err instanceof ChainCommitError) {
     return new AppError(502, 'CHAIN_COMMIT_FAILED', `Transaksi tidak valid di ledger (kode ${err.statusCode})`, { txId: err.txId });
   }
-  return new AppError(502, 'CHAIN_UNAVAILABLE', 'Jaringan Fabric tidak dapat memproses transaksi', { reason: text.slice(0, 300) });
+  if (isEndorseError(err)) {
+    // Gagal pada tahap endorsement (mis. peer pemanggil mati): transaksi belum pernah dikirim ke orderer.
+    return new AppError(503, 'CHAIN_UNAVAILABLE', 'Layanan ledger sedang tidak tersedia; tidak ada perubahan yang tersimpan. Silakan coba lagi sebentar lagi.', { reason: text.slice(0, 300), notSubmitted: true });
+  }
+  return new AppError(503, 'CHAIN_UNAVAILABLE', 'Jaringan Fabric tidak dapat memproses transaksi saat ini; silakan coba lagi sebentar lagi', { reason: text.slice(0, 300) });
+}
+
+/** Galat gateway pada fase endorse (sebelum transaksi dikirim ke orderer) => pasti tidak ter-commit. */
+export function isEndorseError(err: unknown): boolean {
+  let e: unknown = err;
+  for (let i = 0; i < 4 && e && typeof e === 'object'; i++) {
+    if ((e as { name?: string }).name === 'EndorseError') return true;
+    e = (e as { cause?: unknown }).cause;
+  }
+  return false;
 }
 
 /** Transaksi ter-commit di blok tetapi tidak VALID. */
