@@ -126,3 +126,25 @@ export const fmtNumber = (n: number | string | null | undefined, digits = 2) =>
   n === null || n === undefined || n === '' ? '—' : new Intl.NumberFormat('id-ID', { maximumFractionDigits: digits }).format(Number(n));
 export const short = (s?: string | null, head = 8, tail = 4) => (!s ? '—' : s.length > head + tail + 1 ? `${s.slice(0, head)}…${tail ? s.slice(-tail) : ''}` : s);
 export const shortId = (id: string) => id.slice(0, 8).toUpperCase();
+
+/** "Nov 26" dari 'YYYY-MM'. */
+export function fmtMonth(ym: string): string {
+  const [y, m] = ym.split('-').map(Number);
+  if (!y || !m) return ym;
+  return new Intl.DateTimeFormat('id-ID', { timeZone: 'UTC', month: 'short', year: '2-digit' }).format(new Date(Date.UTC(y, m - 1, 1)));
+}
+/** "3 jam lalu" */
+export function fmtRelative(s?: string | number | null): string {
+  const d = valid(s);
+  if (!d) return '—';
+  const sec = Math.round((d.getTime() - Date.now()) / 1000);
+  const rtf = new Intl.RelativeTimeFormat('id-ID', { numeric: 'auto' });
+  const abs = Math.abs(sec);
+  if (abs < 60) return rtf.format(Math.round(sec), 'second');
+  if (abs < 3600) return rtf.format(Math.round(sec / 60), 'minute');
+  if (abs < 86400) return rtf.format(Math.round(sec / 3600), 'hour');
+  if (abs < 86400 * 30) return rtf.format(Math.round(sec / 86400), 'day');
+  return fmtDate(s);
+}
+export const fmtDuration = (sec: number | null | undefined) =>
+  sec === null || sec === undefined ? '—' : sec < 60 ? `${fmtNumber(sec, 1)} detik` : sec < 3600 ? `${fmtNumber(sec / 60, 1)} menit` : `${fmtNumber(sec / 3600, 1)} jam`;

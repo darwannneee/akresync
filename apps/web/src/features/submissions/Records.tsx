@@ -67,7 +67,7 @@ function HistoryModal({ record, onClose }: { record: FormalRecordView | null; on
           const cur = h.value?.payload ?? {};
           const changed = prev ? Object.keys({ ...prev, ...cur }).filter((k) => JSON.stringify(prev[k]) !== JSON.stringify(cur[k])) : [];
           return (
-            <li key={h.txId} className="rounded border border-line p-3">
+            <li key={h.txId} className="rounded-lg border border-line p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Badge tone={h.value?.version === 1 ? 'info' : 'gold'}>{h.value?.version === 1 ? 'Versi asli' : `Versi ${h.value?.version ?? '?'}`}</Badge>
                 <span className="text-sm text-muted">{fmtDateTime(h.timestamp)}</span>
@@ -79,7 +79,7 @@ function HistoryModal({ record, onClose }: { record: FormalRecordView | null; on
                   {changed.map((k) => <li key={k}><b>{fieldLabel(k)}:</b> <span className="text-bad line-through">{fmtVal(k, prev?.[k])}</span> menjadi <span className="font-medium text-ok">{fmtVal(k, cur[k])}</span></li>)}
                 </ul>
               )}
-              <div className="mt-3"><TechnicalDetails items={[['Nomor transaksi', <CopyableMono key="t" value={h.txId} full />], ['Muatan lengkap', <pre key="p" className="max-h-60 overflow-auto rounded bg-white p-2 font-mono text-xs">{JSON.stringify(cur, null, 2)}</pre>]]} /></div>
+              <div className="mt-3"><TechnicalDetails items={[['Nomor transaksi', <CopyableMono key="t" value={h.txId} full />], ['Muatan lengkap', <pre key="p" className="max-h-60 overflow-auto rounded-lg bg-white p-2 font-mono text-xs">{JSON.stringify(cur, null, 2)}</pre>]]} /></div>
             </li>
           );
         })}

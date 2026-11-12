@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, ClipboardList, Hourglass, Inbox, Plus, UserCheck } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Plus, UserCheck } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { Badge, Button, Card, DataTable, EmptyState, FormError, Notice, PageHeader, Select, Skeleton, StatWidget } from '../components/ui';
+import { Badge, Button, Card, DataTable, EmptyState, FormError, Notice, PageHeader, Select, Skeleton } from '../components/ui';
+import { ActivityCard, AiCard, IntegrityCard, KpiRow, RanksCard, StagesCard, TrendCard, UppsProgressCard } from '../features/dashboard/panels';
+import { useDashboardStats } from '../features/common/queries';
 import { useTaskQueue } from '../features/common/useTasks';
 import { StagePill } from '../features/common/StagePill';
 import { errorMessage } from '../api/client';
@@ -28,12 +30,13 @@ export function DashboardPage() {
   const [params] = useSearchParams();
   const { rows, tasks, counts, loading, query } = useTaskQueue();
   const pendingRegs = usePendingRegistrationCount(user?.role === 'sek_adm');
+  const statsQ = useDashboardStats();
+  const stats = statsQ.data;
   const [stage, setStage] = useState('');
   const [text, setText] = useState(params.get('q') ?? '');
   useEffect(() => { const q = params.get('q'); if (q !== null) setText(q); }, [params]);
   const filtered = useMemo(() => rows.filter((s) => stage === '' || String(currentIndex(s)) === stage), [rows, stage]);
   if (!user) return null;
-  const kpi = loading && !rows.length;
   const detail = (s: SubmissionSummary) => `/pengajuan/${s.id}`;
   const prog = (s: SubmissionSummary) => <div><div className="font-medium text-ink">{s.programName ?? s.id.slice(0, 8)}{s.programLevel ? ` (${s.programLevel})` : ''}</div><div className="text-muted">{s.institutionName}</div></div>;
   return (
@@ -49,16 +52,11 @@ export function DashboardPage() {
           </span>
         </Notice>
       )}
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {kpi ? [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[78px]" />) : <>
-          <StatWidget tone="primary" label="Perlu tindakan Anda" value={counts.action} icon={<Inbox size={22} />} />
-          <StatWidget tone="warn" label="Sedang berjalan" value={counts.running} hint="Ditangani pihak lain" icon={<Hourglass size={22} />} />
-          <StatWidget tone="success" label="Selesai" value={counts.done} hint="Diterbitkan atau dihentikan" icon={<CheckCircle2 size={22} />} />
-          <StatWidget tone="neutral" label="Total pengajuan" value={counts.total} icon={<ClipboardList size={22} />} />
-        </>}
-      </div>
-      <div className="space-y-4">
-        <Card title="Tugas Saya" actions={<Badge tone={tasks.length ? 'info' : 'neutral'}>{tasks.length} tugas</Badge>}>
+      <section aria-label="Ringkasan statistik" className="mb-6"><KpiRow stats={stats} actionCount={counts.action} loading={statsQ.isLoading || (loading && !rows.length)} /></section>
+      {statsQ.isError && <div className="mb-6"><Notice tone="warn" title="Statistik belum dapat dimuat">{errorMessage(statsQ.error)}</Notice></div>}
+      <div className="space-y-6">
+        {user.role === 'upps' && !loading && <UppsProgressCard rows={rows} tasks={tasks} />}
+        <Card id="tugas-saya" title="Tugas Saya" actions={<Badge tone={tasks.length ? 'info' : 'neutral'}>{tasks.length} tugas</Badge>}>
           {loading && !rows.length ? <div className="space-y-2"><Skeleton className="h-10" /><Skeleton className="h-10" /></div>
             : tasks.length ? (
               <DataTable toolbar rows={tasks} rowKey={(t) => `${t.submission.id}-${t.action.key}`} caption="Tugas saya" pageSize={10}
@@ -72,11 +70,22 @@ export function DashboardPage() {
                 ]} />
             ) : <EmptyState icon={<CheckCircle2 size={24} />} title="Tidak ada tugas saat ini">Seluruh tugas Bapak/Ibu telah selesai. Daftar terisi otomatis bila ada pengajuan yang memerlukan tindakan.</EmptyState>}
         </Card>
+        {stats && (
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2"><StagesCard stats={stats} title={user.role === 'upps' ? 'Pengajuan saya per tahap' : 'Pengajuan per tahap'} /></div>
+            <RanksCard stats={stats} />
+            <div className="lg:col-span-2"><TrendCard stats={stats} /></div>
+            <IntegrityCard stats={stats} />
+            {['asesor', 'kea', 'majelis'].includes(user.role) && <AiCard stats={stats} />}
+            <div className={['asesor', 'kea', 'majelis'].includes(user.role) ? 'lg:col-span-2' : 'lg:col-span-3'}><ActivityCard stats={stats} wide={!['asesor', 'kea', 'majelis'].includes(user.role)} /></div>
+          </div>
+        )}
+        {statsQ.isLoading && <div className="grid gap-6 lg:grid-cols-3"><Skeleton className="h-72 !rounded-xl lg:col-span-2" /><Skeleton className="h-72 !rounded-xl" /></div>}
         <Card title="Daftar Pengajuan" actions={<Badge tone="neutral">{rows.length} pengajuan</Badge>}>
           {loading && !rows.length ? <Skeleton className="h-32" /> : (
             <DataTable toolbar rows={filtered} rowKey={(s) => s.id} caption="Daftar pengajuan" searchValue={text} onSearchChange={setText}
               search={(s) => `${s.programName ?? ''} ${s.institutionName ?? ''} ${s.id}`}
-              toolbarExtra={<label className="flex items-center gap-2">Tahap<Select aria-label="Saring menurut tahap" value={stage} onChange={(e) => setStage(e.target.value)} className="!w-auto !py-1">{STAGE_FILTERS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}</Select></label>}
+              toolbarExtra={<label className="flex min-w-0 max-w-full items-center gap-2 text-muted">Tahap<Select aria-label="Saring menurut tahap" value={stage} onChange={(e) => setStage(e.target.value)} className="!w-auto !min-h-[40px] min-w-0 max-w-[13rem] !py-1 sm:max-w-none">{STAGE_FILTERS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}</Select></label>}
               emptyText="Tidak ada pengajuan yang sesuai. Ubah kata kunci atau pilih Semua tahap."
               columns={[
                 { key: 'p', header: 'Program studi', primary: true, cell: prog },

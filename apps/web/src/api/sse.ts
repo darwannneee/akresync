@@ -47,6 +47,7 @@ export function useEventStream(enabled: boolean): void {
         void qc.invalidateQueries({ queryKey: ['audit', submissionId] });
       }
       void qc.invalidateQueries({ queryKey: ['submissions'] });
+      void qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
       list = [{ id: ++nid, at: new Date().toISOString(), unread: true, ...toNotification(type, data) }, ...list].slice(0, 20);
       emit();
     };

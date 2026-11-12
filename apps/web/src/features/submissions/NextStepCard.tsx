@@ -14,26 +14,26 @@ export function NextStepCard({ s, user, goTab }: { s: SubmissionDetail; user: Us
   if (!actions.length) {
     const done = finished && s.stage === 'released';
     return (
-      <section aria-label="Tindakan yang perlu dilakukan" className={`no-print card flex items-start gap-3 border-l-4 px-4 py-3 ${done ? 'border-l-ok' : 'border-l-slate-400'}`}>
-        {done ? <CheckCircle2 size={20} className="mt-0.5 shrink-0 text-ok" aria-hidden /> : <Hourglass size={20} className="mt-0.5 shrink-0 text-slate-500" aria-hidden />}
+      <section id="tindakan" aria-label="Tindakan yang perlu dilakukan" className="no-print card flex items-start gap-4 p-5">
+        <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${done ? 'bg-ok-bg text-ok' : 'bg-slate-100 text-slate-500'}`} aria-hidden>{done ? <CheckCircle2 size={22} /> : <Hourglass size={22} />}</span>
         <div className="min-w-0 text-sm">
-          <p className="font-medium text-ink">{done ? 'Proses selesai' : 'Belum ada tindakan untuk Bapak/Ibu'}</p>
+          <p className="text-base font-semibold text-ink">{done ? 'Proses selesai' : 'Belum ada tindakan untuk Bapak/Ibu'}</p>
           <p className="text-muted">{waiting}</p>
         </div>
       </section>
     );
   }
   return (
-    <section aria-label="Tindakan yang perlu dilakukan" className="no-print card border-l-4 border-l-navy-700">
-      <p className="border-b border-line px-4 py-2.5 text-sm font-medium text-navy-700">Tindakan yang perlu dilakukan</p>
-      <ul className="divide-y divide-line">
+    <section id="tindakan" aria-label="Tindakan yang perlu dilakukan" className="no-print scroll-mt-24 overflow-hidden rounded-xl border border-navy-200 bg-navy-50/60 shadow-card">
+      <p className="flex items-center gap-2 border-b border-navy-100 bg-navy-50 px-5 py-3 text-base font-semibold text-navy-900"><span aria-hidden className="h-2 w-2 rounded-full bg-navy-700" />Tindakan yang perlu dilakukan</p>
+      <ul className="divide-y divide-navy-100 bg-white">
         {actions.map((a) => (
-          <li key={a.key} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
+          <li key={a.key} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 px-5 py-4">
             <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="font-medium text-ink">{a.title}</span>
+              <span className="text-[15px] font-semibold text-ink">{a.title}</span>
               <Badge tone={a.storage === 'C' ? 'chain' : 'neutral'} icon={a.storage === 'C' ? <Link2 size={12} aria-hidden /> : <Save size={12} aria-hidden />}>{a.storage === 'C' ? 'Dicatat permanen' : 'Tersimpan dengan jejak audit'}</Badge>
             </div>
-            <Button size="sm" onClick={() => (a.key === 'ak_correction' ? goTab('catatan') : setOpenKey(a.key))}>{a.key === 'ak_correction' ? 'Buka Catatan Resmi' : 'Kerjakan'}</Button>
+            <Button onClick={() => (a.key === 'ak_correction' ? goTab('catatan') : setOpenKey(a.key))}>{a.key === 'ak_correction' ? 'Buka Catatan Resmi' : 'Kerjakan'}</Button>
           </li>
         ))}
       </ul>

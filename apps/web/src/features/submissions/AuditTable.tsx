@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { ShieldCheck, ScrollText } from 'lucide-react';
 import { api, errorMessage } from '../../api/client';
 import type { AuditEventView, AuditVerifyResult } from '../../api/types';
@@ -60,23 +59,3 @@ export function VerifyAll({ events }: { events: AuditEventView[] }) {
   );
 }
 
-const METRIC_LABEL: Record<string, string> = {
-  txCount: 'Jumlah pencatatan permanen', chainTxCount: 'Jumlah pencatatan permanen', recordCount: 'Jumlah catatan resmi',
-  totalPayloadBytes: 'Total ukuran data (byte)', payloadBytes: 'Ukuran data (byte)', auditCount: 'Jumlah peristiwa audit',
-  auditLagMsAvg: 'Rata-rata jeda pencatatan audit (ms)', auditLagMsMax: 'Jeda pencatatan terlama (ms)', auditLagMs: 'Jeda pencatatan audit (ms)',
-  auditPending: 'Audit menunggu pencatatan', auditFailed: 'Audit gagal dicatat',
-};
-export function MetricsCard({ submissionId }: { submissionId: string }) {
-  const q = useQuery({ queryKey: ['metrics', submissionId], queryFn: async () => (await api.get<Record<string, unknown>>(`/metrics/submissions/${submissionId}`)).data });
-  if (q.isLoading) return <p className="text-sm text-muted">Memuat metrik…</p>;
-  if (q.isError) return <Notice tone="danger">{errorMessage(q.error)}</Notice>;
-  const entries = Object.entries(q.data ?? {}).filter(([, v]) => v === null || typeof v !== 'object');
-  if (!entries.length) return <EmptyState title="Belum ada metrik" />;
-  return (
-    <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {entries.map(([k, v]) => (
-        <div key={k} className="rounded-lg bg-navy-50 p-4"><dt className="text-sm text-muted">{METRIC_LABEL[k] ?? k}</dt><dd className="text-xl font-medium text-navy-900">{v === null ? '—' : String(v)}</dd></div>
-      ))}
-    </dl>
-  );
-}

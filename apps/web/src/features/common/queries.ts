@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../api/client';
+import type { DashboardStats } from '@akreditasi/shared';
 import type { Assessor, AuditEventView, Institution, Program, SubmissionDetail, SubmissionSummary } from '../../api/types';
 
 export const fetchSubmission = async (id: string): Promise<SubmissionDetail> => {
@@ -37,3 +38,6 @@ export const useLevels = () =>
   useQuery({ queryKey: ['ref-levels'], staleTime: Infinity, queryFn: async () => (await api.get<LevelRef[]>('/ref/levels')).data ?? [] });
 export const useProgramNames = () =>
   useQuery({ queryKey: ['ref-program-names'], staleTime: Infinity, queryFn: async () => (await api.get<ProgramNameRef[]>('/ref/program-names')).data ?? [] });
+
+export const useDashboardStats = () =>
+  useQuery({ queryKey: ['dashboard-stats'], staleTime: 30_000, queryFn: async () => (await api.get<DashboardStats>('/dashboard/stats')).data });

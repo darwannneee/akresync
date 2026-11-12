@@ -8,7 +8,6 @@ import {
 } from '../../lib/labels';
 import { recordTime } from '../../lib/workflow';
 import { useDownload } from '../common/useAction';
-import { MetricsCard } from './AuditTable';
 import { AiProgressCard } from '../ai/ProgressCard';
 import { AiBanner, TotalsView } from '../ai/parts';
 
@@ -37,7 +36,7 @@ export function DecisionSummary({ s }: { s: SubmissionDetail }) {
   );
 }
 
-export function SummaryTab({ s, showMetrics }: { s: SubmissionDetail; showMetrics: boolean }) {
+export function SummaryTab({ s }: { s: SubmissionDetail }) {
   const pay = s.payments?.[0];
   return (
     <div className="space-y-5">
@@ -55,7 +54,6 @@ export function SummaryTab({ s, showMetrics }: { s: SubmissionDetail; showMetric
           <p className="mt-1">Percobaan ini tidak tercatat dan tidak mengubah status pengajuan.</p>
         </Notice>
       )}
-      {showMetrics && <Card title="Ukuran pencatatan"><MetricsCard submissionId={s.id} /></Card>}
     </div>
   );
 }

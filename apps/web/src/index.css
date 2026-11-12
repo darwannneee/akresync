@@ -1,6 +1,4 @@
-@import '@fontsource/roboto/400.css';
-@import '@fontsource/roboto/500.css';
-@import '@fontsource/roboto/700.css';
+@import '@fontsource-variable/inter';
 @import '@fontsource/jetbrains-mono/400.css';
 
 @tailwind base;
@@ -9,29 +7,34 @@
 
 :root {
   --navy-950: #0a1a33; --navy-900: #0b1f3a; --navy-700: #1e4d8c; --navy-50: #eef3fa;
-  --surface: #f1f3f8; --line: #dee2e8; --ink: #0f172a;
+  --surface: #f8fafc; --line: #e2e8f0; --ink: #0f172a;
 }
 
 @layer base {
-  html { @apply bg-surface text-ink antialiased; font-size: 16px; }
-  body { @apply min-h-screen font-sans text-sm; }
+  html { @apply bg-surface text-ink antialiased; font-size: 16px; font-feature-settings: 'cv11', 'ss01'; }
+  body { @apply min-h-screen font-sans text-[15px]; }
   h1, h2, h3, h4 { @apply font-sans text-ink; }
   :focus-visible { outline: 2px solid var(--navy-700); outline-offset: 2px; }
   ::selection { background: #c5d4ea; }
 }
 @layer components {
-  .input { @apply min-h-[38px] w-full rounded border border-slate-300 bg-white px-3 py-1.5 text-sm text-ink placeholder:text-slate-400 focus:border-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-700/20 disabled:bg-slate-100 disabled:text-slate-500; }
+  .input { @apply min-h-[42px] w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-[15px] text-ink shadow-sm placeholder:text-slate-400 transition-colors focus:border-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-700/20 disabled:bg-slate-100 disabled:text-slate-500; }
   .input[aria-invalid='true'] { @apply border-bad ring-1 ring-bad/30; }
-  .label { @apply mb-1 block text-sm font-medium text-ink; }
-  .card { @apply rounded-md border border-line bg-white shadow-card; }
-  .login-bg { background-color: #eef0f4; background-image: repeating-linear-gradient(115deg, rgba(255,255,255,.55) 0 1px, transparent 1px 22px), repeating-linear-gradient(65deg, rgba(180,188,201,.18) 0 1px, transparent 1px 28px); }
+  .label { @apply mb-1.5 block text-sm font-medium text-ink; }
+  .card { @apply rounded-xl border border-slate-200/80 bg-white shadow-card; }
 }
 
 @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 .dot-pulse { animation: pulse-dot 1.4s ease-in-out infinite; }
 @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
 .skeleton { background: linear-gradient(90deg, #eef1f6 25%, #f7f9fc 37%, #eef1f6 63%); background-size: 400px 100%; animation: shimmer 1.4s infinite linear; }
-@media (prefers-reduced-motion: reduce) { .dot-pulse, .skeleton { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .dot-pulse, .skeleton { animation: none; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* Recharts: sembunyikan garis fokus bawaan pada permukaan grafik */
+.recharts-wrapper, .recharts-surface { outline: none; }
 
 /* ---------- Cetak ---------- */
 @media print {

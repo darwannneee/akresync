@@ -4,7 +4,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Circle, Clock, Copy, HelpCircle, Home, Info, Link2, Loader2, Lock, X, XCircle } from 'lucide-react';
+import { AlertTriangle, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Circle, Clock, Copy, FileText, HelpCircle, Home, Info, Link2, Loader2, Lock, Search, UploadCloud, X, XCircle } from 'lucide-react';
 import { ROLE_HOME, type AuditStatus } from '@akreditasi/shared';
 import { useAuth } from '../auth/AuthContext';
 import { AUDIT_STATUS_LABEL } from '../lib/labels';
@@ -16,17 +16,17 @@ export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Bool
 /* ---------- Button ---------- */
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
 const VARIANTS: Record<Variant, string> = {
-  primary: 'border border-navy-700 bg-navy-700 text-white hover:bg-navy-800 hover:border-navy-800 active:bg-navy-900',
-  secondary: 'border border-slate-300 bg-white text-ink hover:bg-slate-50 hover:border-slate-400',
-  danger: 'border border-bad bg-bad text-white hover:bg-red-800 hover:border-red-800',
+  primary: 'border border-navy-700 bg-navy-700 text-white shadow-sm hover:bg-navy-800 hover:border-navy-800 active:bg-navy-900',
+  secondary: 'border border-slate-300 bg-white text-ink shadow-sm hover:bg-slate-50 hover:border-slate-400',
+  danger: 'border border-bad bg-bad text-white shadow-sm hover:bg-red-800 hover:border-red-800',
   ghost: 'border border-transparent text-navy-700 hover:bg-navy-50',
 };
 export function Button({ variant = 'primary', size = 'md', loading, className, children, disabled, icon, ...rest }:
   ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: 'sm' | 'md'; loading?: boolean; icon?: ReactNode }) {
   return (
     <button type="button" {...rest} disabled={disabled || loading} aria-busy={loading || undefined}
-      className={cx('inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60',
-        size === 'sm' ? 'min-h-[36px] px-3 py-1' : 'min-h-[38px] px-4 py-1.5', VARIANTS[variant], className)}>
+      className={cx('inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60',
+        size === 'sm' ? 'min-h-[36px] px-3.5 py-1' : 'min-h-[42px] px-4 py-2', VARIANTS[variant], className)}>
       {loading ? <Loader2 size={15} className="animate-spin" aria-hidden /> : icon}
       {children}
     </button>
@@ -41,9 +41,9 @@ export function Card({ title, description, actions, children, className, flush, 
   return (
     <section id={id} className={cx('card', className)}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-4">
           <div className="min-w-0">
-            {title && <h2 className="text-[15px] font-medium leading-snug text-ink">{title}</h2>}
+            {title && <h2 className="text-base font-semibold leading-snug text-ink">{title}</h2>}
             {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -57,16 +57,20 @@ export function Card({ title, description, actions, children, className, flush, 
 /* ---------- Badge & pills (badge lembut ala Bootstrap) ---------- */
 export type Tone = 'neutral' | 'info' | 'success' | 'warn' | 'danger' | 'chain' | 'gold';
 const TONES: Record<Tone, string> = {
-  neutral: 'bg-slate-100 text-slate-700 border-slate-200',
-  info: 'bg-info-bg text-info border-info-line',
-  success: 'bg-ok-bg text-ok border-ok-line',
-  warn: 'bg-wait-bg text-wait border-wait-line',
-  danger: 'bg-bad-bg text-bad border-bad-line',
-  chain: 'bg-chain-bg text-chain border-chain-line',
-  gold: 'bg-[#FBF5DC] text-[#7A5F00] border-[#E8D58A]',
+  neutral: 'bg-slate-100 text-slate-700 ring-slate-200',
+  info: 'bg-info-bg text-info ring-info-line',
+  success: 'bg-ok-bg text-ok ring-ok-line',
+  warn: 'bg-wait-bg text-wait ring-wait-line',
+  danger: 'bg-bad-bg text-bad ring-bad-line',
+  chain: 'bg-chain-bg text-chain ring-chain-line',
+  gold: 'bg-[#FBF5DC] text-[#7A5F00] ring-[#E8D58A]',
 };
 export function Badge({ tone = 'neutral', children, title, icon, className }: { tone?: Tone; children: ReactNode; title?: string; icon?: ReactNode; className?: string }) {
-  return <span title={title} className={cx('inline-flex items-center gap-1 whitespace-nowrap rounded border px-2 py-0.5 text-xs font-medium', TONES[tone], className)}>{icon}{children}</span>;
+  return (
+    <span title={title} className={cx('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset', TONES[tone], className)}>
+      {icon ?? <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />}{children}
+    </span>
+  );
 }
 const STEP_TONE: Record<StepStatus, Tone> = { selesai: 'success', aktif: 'info', menunggu: 'warn', terkunci: 'neutral', ditolak: 'danger' };
 export function StatusPill({ status, label }: { status: StepStatus; label?: string }) {
@@ -94,8 +98,8 @@ const NOTICE: Record<'info' | 'warn' | 'danger' | 'success' | 'chain', { cls: st
 export function Notice({ tone = 'info', title, children, className }: { tone?: keyof typeof NOTICE; title?: string; children?: ReactNode; className?: string }) {
   const { cls, Icon, color } = NOTICE[tone];
   return (
-    <div role={tone === 'danger' ? 'alert' : undefined} className={cx('flex gap-2.5 rounded border px-3 py-2.5 text-sm text-slate-800', cls, className)}>
-      <Icon size={17} className={cx('mt-0.5 shrink-0', color)} aria-hidden />
+    <div role={tone === 'danger' ? 'alert' : undefined} className={cx('flex gap-3 rounded-xl border px-4 py-3 text-sm text-slate-800', cls, className)}>
+      <Icon size={18} className={cx('mt-0.5 shrink-0', color)} aria-hidden />
       <div className="min-w-0">{title && <p className="font-medium text-ink">{title}</p>}{children && <div className={title ? 'mt-0.5' : ''}>{children}</div>}</div>
     </div>
   );
@@ -145,31 +149,33 @@ export function DataTable<T>({ columns, rows, rowKey, caption, onRowClick, toolb
       {toolbar && (
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-sm">
           <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2" htmlFor={`${id}-size`}>Tampilkan
-              <select id={`${id}-size`} value={size} onChange={(e) => { setSize(Number(e.target.value)); setPage(1); }} className="input !w-auto !py-1">
+            <label className="flex items-center gap-2 text-muted" htmlFor={`${id}-size`}>Tampilkan
+              <select id={`${id}-size`} value={size} onChange={(e) => { setSize(Number(e.target.value)); setPage(1); }} className="input !w-auto !min-h-[40px] !py-1">
                 {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
               </select>entri
             </label>
             {toolbarExtra}
           </div>
           {search && (
-            <label className="flex items-center gap-2" htmlFor={`${id}-q`}>Cari:
-              <input id={`${id}-q`} type="search" value={q} onChange={(e) => setQ(e.target.value)} className="input !w-56" />
+            <label className="relative block w-full sm:w-72" htmlFor={`${id}-q`}>
+              <span className="sr-only">Cari</span>
+              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint" aria-hidden />
+              <input id={`${id}-q`} type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari di tabel ini" className="input !min-h-[40px] pl-9" />
             </label>
           )}
         </div>
       )}
-      <div className="overflow-x-auto rounded border border-line">
+      <div className="max-h-[75vh] overflow-auto rounded-xl border border-slate-200">
         <table className="min-w-full text-sm">
           {caption && <caption className="sr-only">{caption}</caption>}
-          <thead className="bg-slate-100 text-left text-slate-800">
-            <tr>{columns.map((c) => <th key={c.key} scope="col" className={cx('whitespace-nowrap border-b border-line px-3 py-2.5 font-medium', c.align === 'right' && 'text-right')}>{c.header}</th>)}</tr>
+          <thead className="sticky top-0 z-10 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 shadow-[0_1px_0_#e2e8f0]">
+            <tr>{columns.map((c) => <th key={c.key} scope="col" className={cx('whitespace-nowrap px-4 py-3', c.align === 'right' && 'text-right')}>{c.header}</th>)}</tr>
           </thead>
           <tbody className="bg-white">
-            {visible.length === 0 && <tr><td colSpan={columns.length} className="px-3 py-6 text-center text-muted">{emptyText}</td></tr>}
+            {visible.length === 0 && <tr><td colSpan={columns.length} className="px-4 py-8 text-center text-muted">{emptyText}</td></tr>}
             {visible.map((r) => (
-              <tr key={rowKey(r)} className={cx('border-b border-line last:border-b-0 hover:bg-slate-50', onRowClick && 'cursor-pointer')} onClick={onRowClick ? () => onRowClick(r) : undefined}>
-                {columns.map((c) => <td key={c.key} className={cx('px-3 py-2.5 align-top', c.align === 'right' && 'text-right tabular-nums', c.className)}>{c.cell(r)}</td>)}
+              <tr key={rowKey(r)} className={cx('border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50/80', onRowClick && 'cursor-pointer')} onClick={onRowClick ? () => onRowClick(r) : undefined}>
+                {columns.map((c) => <td key={c.key} className={cx('px-4 py-3 align-top', c.align === 'right' && 'text-right tabular-nums', c.className)}>{c.cell(r)}</td>)}
               </tr>
             ))}
           </tbody>
@@ -181,11 +187,11 @@ export function DataTable<T>({ columns, rows, rowKey, caption, onRowClick, toolb
           {pages > 1 && (
             <nav aria-label="Halaman tabel">
               <ul className="flex flex-wrap items-center gap-1">
-                <li><button type="button" disabled={cur === 1} onClick={() => setPage(cur - 1)} className="inline-flex min-h-[36px] items-center gap-1 rounded border border-slate-300 bg-white px-2.5 text-ink hover:bg-slate-50 disabled:opacity-50"><ChevronLeft size={14} aria-hidden />Sebelumnya</button></li>
+                <li><button type="button" disabled={cur === 1} onClick={() => setPage(cur - 1)} className="inline-flex min-h-[40px] items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 text-ink hover:bg-slate-50 disabled:opacity-50"><ChevronLeft size={14} aria-hidden />Sebelumnya</button></li>
                 {pageList(cur, pages).map((p, i) => p === '…'
                   ? <li key={`e${i}`} className="px-1" aria-hidden>…</li>
-                  : <li key={p}><button type="button" aria-current={p === cur ? 'page' : undefined} onClick={() => setPage(p)} className={cx('min-h-[36px] min-w-[36px] rounded border px-2', p === cur ? 'border-navy-700 bg-navy-700 text-white' : 'border-slate-300 bg-white text-ink hover:bg-slate-50')}>{p}</button></li>)}
-                <li><button type="button" disabled={cur === pages} onClick={() => setPage(cur + 1)} className="inline-flex min-h-[36px] items-center gap-1 rounded border border-slate-300 bg-white px-2.5 text-ink hover:bg-slate-50 disabled:opacity-50">Berikutnya<ChevronRight size={14} aria-hidden /></button></li>
+                  : <li key={p}><button type="button" aria-current={p === cur ? 'page' : undefined} onClick={() => setPage(p)} className={cx('min-h-[40px] min-w-[40px] rounded-lg border px-2', p === cur ? 'border-navy-700 bg-navy-700 text-white' : 'border-slate-300 bg-white text-ink hover:bg-slate-50')}>{p}</button></li>)}
+                <li><button type="button" disabled={cur === pages} onClick={() => setPage(cur + 1)} className="inline-flex min-h-[40px] items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 text-ink hover:bg-slate-50 disabled:opacity-50">Berikutnya<ChevronRight size={14} aria-hidden /></button></li>
               </ul>
             </nav>
           )}
@@ -205,13 +211,13 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: { tabs:
     document.getElementById(`tab-${n.id}`)?.focus();
   };
   return (
-    <div role="tablist" aria-label={label} className="no-print flex gap-0.5 overflow-x-auto border-b border-line">
+    <div role="tablist" aria-label={label} className="no-print flex gap-1 overflow-x-auto border-b border-slate-200">
       {tabs.map((t, i) => (
         <button key={t.id} id={`tab-${t.id}`} role="tab" type="button" aria-selected={t.id === value} aria-controls={`panel-${t.id}`} tabIndex={t.id === value ? 0 : -1}
           onClick={() => onChange(t.id)} onKeyDown={(e) => onKey(e, i)}
-          className={cx('-mb-px min-h-[40px] whitespace-nowrap rounded-t border px-4 py-2 text-sm transition-colors',
-            t.id === value ? 'border-line border-b-white bg-white font-medium text-navy-700' : 'border-transparent text-muted hover:border-slate-200 hover:text-ink')}>
-          {t.label}{t.count !== undefined && <span className={cx('ml-1.5 rounded px-1.5 py-0.5 text-xs', t.id === value ? 'bg-navy-50 text-navy-700' : 'bg-slate-100 text-muted')}>{t.count}</span>}
+          className={cx('-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-4 py-2.5 text-sm transition-colors',
+            t.id === value ? 'border-navy-700 font-semibold text-navy-700' : 'border-transparent font-medium text-muted hover:border-slate-300 hover:text-ink')}>
+          {t.label}{t.count !== undefined && <span className={cx('ml-2 rounded-full px-2 py-0.5 text-xs tabular-nums', t.id === value ? 'bg-navy-50 text-navy-700' : 'bg-slate-100 text-muted')}>{t.count}</span>}
         </button>
       ))}
     </div>
@@ -280,14 +286,14 @@ export function Modal({ open, onClose, title, children, footer, wide }: { open: 
   return createPortal(
     <div className="no-print fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-slate-900/50 p-3 sm:p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={id}
-        className={cx('my-0 flex max-h-[calc(100vh-1.5rem)] w-full flex-col rounded-md border border-line bg-white shadow-xl outline-none sm:my-6 sm:max-h-[calc(100vh-3rem)]', wide ? 'max-w-3xl' : 'max-w-xl')}>
-        <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-          <h2 id={id} className="text-base font-medium">{title}</h2>
-          <button type="button" aria-label="Tutup" onClick={onClose} className="grid h-9 w-9 place-items-center rounded text-faint hover:bg-slate-100 hover:text-ink"><X size={18} /></button>
+        className={cx('my-0 flex max-h-[calc(100vh-1.5rem)] w-full flex-col rounded-2xl border border-slate-200 bg-white shadow-pop outline-none sm:my-6 sm:max-h-[calc(100vh-3rem)]', wide ? 'max-w-3xl' : 'max-w-xl')}>
+        <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+          <h2 id={id} className="text-lg font-semibold">{title}</h2>
+          <button type="button" aria-label="Tutup" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-lg text-faint hover:bg-slate-100 hover:text-ink"><X size={19} /></button>
         </header>
         <ModalCtx.Provider value={ctx}>
-          <FormLayoutCtx.Provider value="horizontal"><div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">{children}</div></FormLayoutCtx.Provider>
-          <footer className="flex flex-wrap items-center justify-end gap-2 rounded-b-md border-t border-line bg-slate-50 px-4 py-3 [&:not(:has(button))]:hidden">
+          <FormLayoutCtx.Provider value="horizontal"><div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div></FormLayoutCtx.Provider>
+          <footer className="flex flex-wrap items-center justify-end gap-2 rounded-b-2xl border-t border-slate-100 bg-slate-50 px-5 py-4 [&:not(:has(button))]:hidden">
             {footer}
             <div ref={setSlot} className="contents" />
           </footer>
@@ -301,7 +307,7 @@ export function Modal({ open, onClose, title, children, footer, wide }: { open: 
 /* ---------- Dialog gaya SweetAlert: ikon besar, judul, teks, tombol di tengah ---------- */
 type AlertKind = 'question' | 'warning' | 'success' | 'error';
 const ALERT_ICON: Record<AlertKind, { Icon: typeof Info; cls: string }> = {
-  question: { Icon: HelpCircle, cls: 'border-navy-200 text-navy-700' },
+  question: { Icon: HelpCircle, cls: 'border-navy-100 bg-navy-50 text-navy-700' },
   warning: { Icon: AlertTriangle, cls: 'border-wait-line text-wait' },
   success: { Icon: CheckCircle2, cls: 'border-ok-line text-ok' },
   error: { Icon: XCircle, cls: 'border-bad-line text-bad' },
@@ -313,9 +319,9 @@ export function AlertDialog({ open, onClose, kind, title, text, children, action
   const { Icon, cls } = ALERT_ICON[kind];
   return createPortal(
     <div className="no-print fixed inset-0 z-[65] flex items-start justify-center overflow-y-auto bg-slate-900/50 p-3 sm:items-center sm:p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={ref} tabIndex={-1} role="alertdialog" aria-modal="true" aria-labelledby={id} className="my-4 w-full max-w-md rounded-md border border-line bg-white px-5 pb-5 pt-7 text-center shadow-xl outline-none">
+      <div ref={ref} tabIndex={-1} role="alertdialog" aria-modal="true" aria-labelledby={id} className="my-4 w-full max-w-md rounded-2xl border border-slate-200 bg-white px-6 pb-6 pt-8 text-center shadow-pop outline-none">
         <span className={cx('mx-auto grid h-16 w-16 place-items-center rounded-full border-4', cls)}><Icon size={32} aria-hidden /></span>
-        <h2 id={id} className="mt-4 text-xl font-medium text-ink">{title}</h2>
+        <h2 id={id} className="mt-4 text-xl font-semibold text-ink">{title}</h2>
         {text && <p className="mt-1.5 text-sm text-muted">{text}</p>}
         {children && <div className="mt-4 text-left">{children}</div>}
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">{actions}</div>
@@ -368,19 +374,35 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
 export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>((p, r) => <select ref={r} {...p} className={cx('input pr-8', p.className)} />);
 Input.displayName = 'Input'; Textarea.displayName = 'Textarea'; Select.displayName = 'Select';
 
-/* ---------- FileInput gaya Bootstrap: [Pilih File | Tidak ada file yang dipilih] ---------- */
+/* ---------- FileInput: dropzone (seret dan lepas + tombol Pilih File) ---------- */
+const fmtSize = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1).replace('.', ',')} MB` : `${(n / 1024).toFixed(1).replace('.', ',')} KB`);
 export function FileInput({ label, accept, onChange, file, hint, disabled, required, error }: { label: ReactNode; accept?: string; file: File | null; onChange: (f: File | null) => void; hint?: ReactNode; disabled?: boolean; required?: boolean; error?: string | null }) {
+  const [drag, setDrag] = useState(false);
   return (
     <Field label={label} required={required} hint={hint} error={error ?? undefined}>
       {(p) => (
-        <div className={cx('flex min-h-[38px] items-stretch overflow-hidden rounded border bg-white text-sm focus-within:ring-2 focus-within:ring-navy-700/20', error ? 'border-bad' : 'border-slate-300 focus-within:border-navy-700', disabled && 'pointer-events-none opacity-50')}>
-          <label htmlFor={p.id} className="flex cursor-pointer items-center border-r border-slate-300 bg-slate-100 px-3 font-medium text-ink hover:bg-slate-200">Pilih File</label>
-          <span className="flex min-w-0 flex-1 items-center gap-2 px-3 py-1.5">
-            <span className={cx('truncate', file ? 'text-ink' : 'text-slate-500')} title={file?.name}>{file ? file.name : 'Tidak ada file yang dipilih'}</span>
-            {file && <span className="shrink-0 text-xs text-faint">{(file.size / 1024).toFixed(1).replace('.', ',')} KB</span>}
-            {file && <button type="button" onClick={() => onChange(null)} aria-label="Hapus berkas terpilih" className="ml-auto grid h-6 w-6 shrink-0 place-items-center rounded text-faint hover:bg-slate-100 hover:text-ink"><X size={14} /></button>}
-          </span>
+        <div
+          onDragOver={(e) => { if (disabled) return; e.preventDefault(); setDrag(true); }}
+          onDragLeave={() => setDrag(false)}
+          onDrop={(e) => { e.preventDefault(); setDrag(false); if (!disabled) onChange(e.dataTransfer.files?.[0] ?? null); }}
+          className={cx('relative rounded-xl border-2 border-dashed bg-slate-50/60 px-4 py-4 text-sm transition-colors focus-within:ring-2 focus-within:ring-navy-700/30',
+            drag ? 'border-navy-700 bg-navy-50' : error ? 'border-bad' : 'border-slate-300 hover:border-slate-400', disabled && 'pointer-events-none opacity-50')}>
+          {file ? (
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-navy-50 text-navy-700" aria-hidden><FileText size={20} /></span>
+              <span className="min-w-0 flex-1"><span className="block truncate font-medium text-ink" title={file.name}>{file.name}</span><span className="block text-xs text-faint">{fmtSize(file.size)}</span></span>
+              <label htmlFor={p.id} className="cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-medium text-ink shadow-sm hover:bg-slate-50">Ganti</label>
+              <button type="button" onClick={() => onChange(null)} aria-label="Hapus berkas terpilih" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-faint hover:bg-slate-100 hover:text-ink"><X size={16} /></button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-1.5 text-center sm:flex-row sm:gap-3 sm:text-left">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-navy-700 shadow-sm ring-1 ring-slate-200" aria-hidden><UploadCloud size={20} /></span>
+              <span className="min-w-0 flex-1 text-muted">Seret dan lepas berkas di sini, atau</span>
+              <label htmlFor={p.id} className="inline-flex min-h-[40px] cursor-pointer items-center rounded-lg border border-navy-700 bg-navy-700 px-4 font-medium text-white shadow-sm hover:bg-navy-800">Pilih File</label>
+            </div>
+          )}
           <input {...p} type="file" accept={accept} disabled={disabled} className="sr-only" onChange={(e) => { onChange(e.target.files?.[0] ?? null); e.target.value = ''; }} />
+          {!file && <span className="sr-only">Tidak ada file yang dipilih</span>}
         </div>
       )}
     </Field>
@@ -388,7 +410,7 @@ export function FileInput({ label, accept, onChange, file, hint, disabled, requi
 }
 
 /* ---------- Skeleton, EmptyState ---------- */
-export const Skeleton = ({ className }: { className?: string }) => <div aria-hidden className={cx('skeleton rounded', className ?? 'h-4 w-full')} />;
+export const Skeleton = ({ className }: { className?: string }) => <div aria-hidden className={cx('skeleton rounded-lg', className ?? 'h-4 w-full')} />;
 export function PageSkeleton() {
   return (
     <div className="space-y-4" role="status" aria-label="Memuat halaman">
@@ -400,8 +422,8 @@ export function PageSkeleton() {
 }
 export function EmptyState({ title, children, icon, action }: { title: string; children?: ReactNode; icon?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="rounded border border-dashed border-slate-300 bg-white px-6 py-8 text-center">
-      {icon && <div className="mx-auto mb-2 text-slate-400">{icon}</div>}
+    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+      {icon && <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-500">{icon}</div>}
       <p className="font-medium text-ink">{title}</p>
       {children && <div className="mx-auto mt-1 max-w-md text-sm text-muted">{children}</div>}
       {action && <div className="mt-3">{action}</div>}
@@ -422,7 +444,7 @@ export function CopyableMono({ value, head = 8, tail = 6, full }: { value?: stri
   if (!value) return <span className="text-faint">—</span>;
   const text = full || value.length <= head + tail + 1 ? value : `${value.slice(0, head)}…${value.slice(-tail)}`;
   return (
-    <span className="inline-flex max-w-full items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 align-middle">
+    <span className="inline-flex max-w-full items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 align-middle">
       <code title={value} className={cx('font-mono text-xs text-slate-800', full && 'break-all')}>{text}</code>
       <button type="button" onClick={() => void copy()} aria-label={ok ? 'Tersalin' : `Salin ${value}`} title={ok ? 'Tersalin' : 'Salin'} className="grid h-6 w-6 place-items-center rounded text-faint hover:bg-white hover:text-navy-700">
         {ok ? <Check size={13} className="text-ok" /> : <Copy size={13} />}
@@ -434,7 +456,7 @@ export function TechnicalDetails({ items, title = 'Rincian teknis', defaultOpen 
   const visible = items.filter(([, v]) => v !== undefined && v !== null && v !== '');
   if (!visible.length) return null;
   return (
-    <details open={defaultOpen} className="group rounded border border-line bg-slate-50">
+    <details open={defaultOpen} className="group rounded-lg border border-slate-200 bg-slate-50">
       <summary className="flex min-h-[36px] cursor-pointer list-none items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-navy-700 [&::-webkit-details-marker]:hidden">
         <ChevronDown size={15} className="transition-transform group-open:rotate-180" aria-hidden />{title}
       </summary>
@@ -445,17 +467,20 @@ export function TechnicalDetails({ items, title = 'Rincian teknis', defaultOpen 
   );
 }
 
-/* ---------- Stepper horizontal ala smart-wizard: titik pada garis, label di bawah ---------- */
+/* ---------- Stepper modern: lingkaran bernomor + garis progres ---------- */
 export interface StepItem { label: string; state: 'done' | 'current' | 'todo'; hint?: ReactNode }
 export function StepIndicator({ steps, className }: { steps: StepItem[]; className?: string }) {
   return (
-    <ol className={cx('relative flex', className)} aria-label="Langkah">
-      <span aria-hidden className="absolute left-0 right-0 top-[7px] h-[3px] rounded bg-slate-200" />
+    <ol className={cx('flex', className)} aria-label="Langkah">
       {steps.map((s, i) => (
         <li key={i} className="relative flex-1 px-1 text-center" aria-current={s.state === 'current' ? 'step' : undefined}>
-          <span className={cx('relative mx-auto block h-[17px] w-[17px] rounded-full border-[3px] border-white ring-0', s.state === 'current' ? 'bg-navy-700' : s.state === 'done' ? 'bg-ok' : 'bg-slate-400')} />
-          <span className={cx('mt-2 block text-sm leading-snug', s.state === 'current' ? 'font-medium text-navy-700' : s.state === 'done' ? 'text-navy-700' : 'text-slate-600')}>
-            <span className="block">Langkah {i + 1}</span>{s.label}
+          {i > 0 && <span aria-hidden className={cx('absolute right-1/2 top-[17px] h-0.5 w-full -translate-y-1/2 rounded', steps[i - 1]!.state === 'done' ? 'bg-navy-700' : 'bg-slate-200')} />}
+          <span className={cx('relative z-[1] mx-auto grid h-9 w-9 place-items-center rounded-full text-sm font-semibold ring-4 ring-white',
+            s.state === 'current' ? 'bg-navy-700 text-white shadow-sm' : s.state === 'done' ? 'bg-navy-700 text-white' : 'border-2 border-slate-300 bg-white text-slate-500')}>
+            {s.state === 'done' ? <Check size={17} aria-hidden /> : i + 1}
+          </span>
+          <span className={cx('mt-2 block text-sm leading-snug', s.state === 'current' ? 'font-semibold text-navy-700' : s.state === 'done' ? 'font-medium text-ink' : 'text-slate-600')}>
+            <span className="sr-only">Langkah {i + 1}: </span>{s.label}
           </span>
           {s.hint && <span className="block text-xs text-faint">{s.hint}</span>}
         </li>
@@ -467,8 +492,8 @@ export function StepIndicator({ steps, className }: { steps: StepItem[]; classNa
 export function StepSection({ n, title, done, children, hint }: { n: number; title: string; done?: boolean; hint?: ReactNode; children?: ReactNode }) {
   return (
     <section>
-      <h3 className="flex items-center gap-2 border-b border-line pb-1.5 text-[15px] font-medium">
-        <span className={cx('grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-medium text-white', done ? 'bg-ok' : 'bg-navy-700')}>{done ? <Check size={13} aria-hidden /> : n}</span>{title}
+      <h3 className="flex items-center gap-2.5 border-b border-slate-100 pb-2 text-base font-semibold">
+        <span className={cx('grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-semibold text-white', done ? 'bg-ok' : 'bg-navy-700')}>{done ? <Check size={13} aria-hidden /> : n}</span>{title}
       </h3>
       {hint && <p className="mt-1.5 text-sm text-muted">{hint}</p>}
       {children && <div className="mt-3">{children}</div>}
@@ -478,26 +503,26 @@ export function StepSection({ n, title, done, children, hint }: { n: number; tit
 
 /* ---------- Tata letak halaman ---------- */
 export interface Crumb { label: string; to?: string }
-/** Baris judul ala Rocker: "Judul | rumah / Bagian / Halaman" di kiri, aksi utama di kanan. */
-export function PageHeader({ title, crumbs = [], actions }: { title: ReactNode; crumbs?: Crumb[]; actions?: ReactNode }) {
+/** Judul halaman: jejak halaman kecil di atas, judul 24px, aksi utama di kanan. */
+export function PageHeader({ title, crumbs = [], actions, description }: { title: ReactNode; crumbs?: Crumb[]; actions?: ReactNode; description?: ReactNode }) {
   const { user } = useAuth();
   const home = user ? ROLE_HOME[user.role] : '/';
   return (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-        <h1 className="text-lg font-medium leading-snug sm:text-xl">{title}</h1>
-        <span aria-hidden className="hidden h-5 w-px bg-slate-300 sm:block" />
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+      <div className="min-w-0">
         <nav aria-label="Jejak halaman" className="min-w-0">
           <ol className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm text-muted">
-            <li><Link to={home} aria-label="Beranda" className="inline-flex items-center text-navy-700 hover:text-navy-900"><Home size={15} aria-hidden /></Link></li>
+            <li><Link to={home} aria-label="Beranda" className="inline-flex items-center text-slate-500 hover:text-navy-700"><Home size={15} aria-hidden /></Link></li>
             {crumbs.map((c, i) => (
               <li key={i} className="flex min-w-0 items-center gap-1.5">
-                <span aria-hidden className="text-slate-400">/</span>
-                {c.to && i < crumbs.length - 1 ? <Link to={c.to} className="truncate text-navy-700 hover:underline">{c.label}</Link> : <span className="max-w-[20rem] truncate" aria-current={i === crumbs.length - 1 ? 'page' : undefined}>{c.label}</span>}
+                <ChevronRight size={14} aria-hidden className="text-slate-400" />
+                {c.to && i < crumbs.length - 1 ? <Link to={c.to} className="truncate hover:text-navy-700 hover:underline">{c.label}</Link> : <span className="max-w-[20rem] truncate" aria-current={i === crumbs.length - 1 ? 'page' : undefined}>{c.label}</span>}
               </li>
             ))}
           </ol>
         </nav>
+        <h1 className="mt-1 text-[1.375rem] font-semibold leading-tight tracking-tight sm:text-2xl">{title}</h1>
+        {description && <p className="mt-1 text-sm text-muted">{description}</p>}
       </div>
       {actions && <div className="no-print flex flex-wrap gap-2">{actions}</div>}
     </div>
@@ -513,13 +538,13 @@ export function DL({ items, cols = 2 }: { items: [string, ReactNode][]; cols?: 1
 /** Tabel dua kolom "label : nilai" (ringkasan data). */
 export function InfoTable({ items }: { items: [string, ReactNode][] }) {
   return (
-    <div className="overflow-x-auto rounded border border-line">
+    <div className="overflow-x-auto rounded-xl border border-slate-200">
       <table className="min-w-full text-sm">
         <tbody>
           {items.map(([k, v]) => (
-            <tr key={k} className="border-b border-line last:border-b-0">
-              <th scope="row" className="w-2/5 min-w-[9rem] bg-slate-50 px-3 py-2 text-left align-top font-medium text-slate-700 sm:w-1/3">{k}</th>
-              <td className="break-words px-3 py-2 align-top text-ink">{v ?? '—'}</td>
+            <tr key={k} className="border-b border-slate-100 last:border-b-0">
+              <th scope="row" className="w-2/5 min-w-[9rem] bg-slate-50 px-4 py-2.5 text-left align-top font-medium text-slate-600 sm:w-1/3">{k}</th>
+              <td className="break-words px-4 py-2.5 align-top text-ink">{v ?? '—'}</td>
             </tr>
           ))}
         </tbody>
@@ -527,22 +552,25 @@ export function InfoTable({ items }: { items: [string, ReactNode][] }) {
     </div>
   );
 }
-/** Widget statistik: label kecil, angka besar, ikon pada kotak lembut di kanan, garis aksen kiri. */
-const STAT_TONE = { primary: ['border-l-navy-700', 'bg-navy-50 text-navy-700'], warn: ['border-l-wait', 'bg-wait-bg text-wait'], success: ['border-l-ok', 'bg-ok-bg text-ok'], neutral: ['border-l-slate-400', 'bg-slate-100 text-slate-600'] } as const;
-export function StatWidget({ label, value, hint, tone = 'primary', icon }: { label: string; value: ReactNode; hint?: string; tone?: keyof typeof STAT_TONE; icon?: ReactNode }) {
-  const [border, box] = STAT_TONE[tone];
-  return (
-    <div className={cx('card flex items-center justify-between gap-3 border-l-4 px-4 py-3.5', border)}>
-      <div className="min-w-0">
-        <div className="text-sm text-muted">{label}</div>
-        <div className="text-2xl font-medium leading-tight text-ink tabular-nums">{value}</div>
-        {hint && <div className="text-xs text-faint">{hint}</div>}
+/** Kartu KPI: label, angka besar 30px, keterangan kecil, ikon pada kotak lembut. */
+const STAT_TONE = { primary: 'bg-navy-50 text-navy-700', warn: 'bg-wait-bg text-wait', success: 'bg-ok-bg text-ok', neutral: 'bg-slate-100 text-slate-600', chain: 'bg-chain-bg text-chain' } as const;
+export function StatWidget({ label, value, hint, tone = 'primary', icon, to }: { label: string; value: ReactNode; hint?: ReactNode; tone?: keyof typeof STAT_TONE; icon?: ReactNode; to?: string }) {
+  const body = (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <div className="text-sm font-medium text-muted">{label}</div>
+        <span className={cx('hidden h-10 w-10 shrink-0 place-items-center rounded-xl sm:grid', STAT_TONE[tone])} aria-hidden>{icon}</span>
       </div>
-      <span className={cx('grid h-11 w-11 shrink-0 place-items-center rounded', box)} aria-hidden>{icon}</span>
-    </div>
+      <div className="mt-2 text-[1.75rem] font-semibold sm:text-[1.875rem] leading-none tracking-tight text-ink tabular-nums">{value}</div>
+      {hint && <div className="mt-2 text-sm text-faint">{hint}</div>}
+    </>
   );
+  const cls = 'card block p-4 sm:p-5';
+  if (!to) return <div className={cls}>{body}</div>;
+  const linkCls = cx(cls, 'transition-shadow hover:shadow-md');
+  return to.startsWith('#') ? <a href={to} className={linkCls}>{body}</a> : <Link to={to} className={linkCls}>{body}</Link>;
 }
 export function ProgressBar({ value, max = 100, label }: { value: number; max?: number; label?: string }) {
   const pct = max ? Math.min(100, Math.round((value / max) * 100)) : 0;
-  return <div role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={max} aria-label={label} className="h-2 w-full overflow-hidden rounded bg-slate-200"><div className={cx('h-full rounded transition-all', pct === 100 ? 'bg-ok' : 'bg-navy-700')} style={{ width: `${pct}%` }} /></div>;
+  return <div role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={max} aria-label={label} className="h-2 w-full overflow-hidden rounded-full bg-slate-200"><div className={cx('h-full rounded-full transition-all duration-150', pct === 100 ? 'bg-ok' : 'bg-navy-700')} style={{ width: `${pct}%` }} /></div>;
 }

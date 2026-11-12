@@ -12,6 +12,7 @@ import { aiRoutes } from './modules/ai.js';
 import { assessmentRoutes } from './modules/assessments.js';
 import { assignmentRoutes } from './modules/assignments.js';
 import { auditRoutes } from './modules/audit.js';
+import { dashboardRoutes } from './modules/dashboard.js';
 import { authRoutes } from './modules/auth.js';
 import { finalizationRoutes } from './modules/finalization.js';
 import { masterRoutes } from './modules/master.js';
@@ -49,6 +50,7 @@ export function createApp(ctx: AppContext): Express {
   recordRoutes(ctx, router, auth);
   aiRoutes(ctx, router, auth);
   auditRoutes(ctx, router, auth);
+  dashboardRoutes(ctx, router, auth);
   systemRoutes(ctx, router, auth, authSse);
   app.use(API_PREFIX, router);
 

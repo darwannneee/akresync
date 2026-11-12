@@ -51,13 +51,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {items.map((t) => {
           const Icon = ICON[t.kind];
           return (
-            <div key={t.id} role={t.kind === 'error' ? 'alert' : 'status'} className={cx('pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded border border-l-4 border-line bg-white px-3 py-2.5 shadow-lg', BORDER[t.kind])}>
+            <div key={t.id} role={t.kind === 'error' ? 'alert' : 'status'} className={cx('pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-lg border border-l-4 border-line bg-white px-3 py-2.5 shadow-lg', BORDER[t.kind])}>
               <Icon size={18} className={cx('mt-0.5 shrink-0', COLOR[t.kind])} aria-hidden />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-ink">{t.title}</p>
                 {t.lines?.map((l, i) => <p key={i} className="text-sm text-muted">{l}</p>)}
               </div>
-              <button type="button" aria-label="Tutup pemberitahuan" className="grid h-7 w-7 place-items-center rounded text-faint hover:bg-slate-100" onClick={() => setItems((x) => x.filter((i) => i.id !== t.id))}><X size={16} /></button>
+              <button type="button" aria-label="Tutup pemberitahuan" className="grid h-7 w-7 place-items-center rounded-lg text-faint hover:bg-slate-100" onClick={() => setItems((x) => x.filter((i) => i.id !== t.id))}><X size={16} /></button>
             </div>
           );
         })}

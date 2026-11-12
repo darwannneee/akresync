@@ -39,7 +39,7 @@ export function ProofCard({ s, audit }: { s: SubmissionDetail; audit: AuditEvent
     <Card title="Bukti Pencatatan">
       <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded bg-chain-bg text-chain"><Link2 size={21} aria-hidden /></span>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-chain-bg text-chain"><Link2 size={21} aria-hidden /></span>
           <div><div className="text-2xl font-medium leading-none text-ink">{records.length}</div><p className="mt-0.5 text-sm text-muted">catatan resmi tercatat permanen</p></div>
         </div>
         <p className="text-sm"><span className="text-faint">Catatan terakhir: </span>{last ? <><b className="font-medium">{RECORD_LABEL[last.recordType] ?? last.recordType}</b>, {fmtDateTime(recordTime(last))}</> : 'belum ada'}</p>

@@ -22,7 +22,7 @@ export function RadioCards({ name, options, value, onChange, legend }: { name: s
       <span id={lid} className={cx('text-sm font-medium text-ink', horizontal ? 'sm:pt-2' : 'label')}>{legend}</span>
       <div className="space-y-1.5">
         {options.map((o) => (
-          <label key={o.value} className={cx('flex min-h-[36px] cursor-pointer items-start gap-2.5 rounded border px-3 py-2 text-sm transition-colors focus-within:ring-2 focus-within:ring-navy-700/30', value === o.value ? 'border-navy-700 bg-navy-50' : 'border-slate-300 bg-white hover:bg-slate-50')}>
+          <label key={o.value} className={cx('flex min-h-[36px] cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2 text-sm transition-colors focus-within:ring-2 focus-within:ring-navy-700/30', value === o.value ? 'border-navy-700 bg-navy-50' : 'border-slate-300 bg-white hover:bg-slate-50')}>
             <input type="radio" name={name} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} className="mt-0.5 h-4 w-4 accent-navy-700" />
             <span><span className="block font-medium text-ink">{o.label}</span>{o.hint && <span className="block text-xs text-muted">{o.hint}</span>}</span>
           </label>

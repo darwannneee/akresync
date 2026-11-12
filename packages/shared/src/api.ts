@@ -102,6 +102,8 @@ export const API_ROUTES = {
   submissionAudit: { method: 'GET', path: '/submissions/:id/audit', roles: ALL, storage: 'O', description: 'Peristiwa audit + statusnya' },
   verifyAudit: { method: 'GET', path: '/audit/:eventId/verify', roles: ALL, storage: 'O', description: 'Hitung ulang hash snapshot vs ledger' },
   submissionMetrics: { method: 'GET', path: '/metrics/submissions/:id', roles: ['kea', 'majelis', 'sek_adm'], storage: 'O', description: 'Jumlah tx on-chain, ukuran payload, jeda audit' },
+  dashboardStats: { method: 'GET', path: '/dashboard/stats', roles: ALL, storage: 'O', description: 'Statistik dasbor (KPI, tahap, tren, peringkat, integritas chain, AI, aktivitas) sesuai visibilitas peran' },
+  publicStats: { method: 'GET', path: '/public/stats', roles: 'public', storage: 'O', description: 'Angka agregat publik untuk halaman masuk (jumlah pengajuan dan catatan on-chain), tanpa data pribadi' },
   eventStream: { method: 'GET', path: '/events/stream', roles: ALL, storage: 'O', description: 'SSE audit_status & record_committed' },
   // Modul AI pendukung keputusan (O/A)
   requestAiAnalysis: { method: 'POST', path: '/submissions/:id/ai-analyses', roles: ['asesor', 'kea'], storage: 'A', description: 'Analisis ulang AI manual {phase}; 202 + id (analisis awal berjalan otomatis saat LED+LKPS lengkap)' },
@@ -110,5 +112,51 @@ export const API_ROUTES = {
   reindexDocuments: { method: 'POST', path: '/submissions/:id/reindex', roles: ['kea', 'sek_adm'], storage: 'O', description: 'Indeks ulang dokumen LED/LKPS set terbaru' },
   health: { method: 'GET', path: '/health', roles: 'public', storage: 'O', description: 'Status DB, Fabric, IPFS, Kafka' },
 } as const satisfies Record<string, RouteSpec>;
+
+/** Respons GET /dashboard/stats. Seluruh angka dibatasi pada pengajuan yang boleh dilihat peran pemanggil. */
+export interface DashboardStats {
+  generatedAt: string;
+  scope: 'own' | 'assigned' | 'all';
+  kpis: {
+    total: number;
+    /** Perkiraan sisi server: pengajuan yang posisinya menunggu peran ini. Daftar tugas resmi memakai nextActions di klien. */
+    actionRequired: number;
+    inProgress: number;
+    completed: number;
+    /** Rerata hari dari pengajuan dibuat sampai keputusan tercatat; null bila belum ada keputusan. */
+    avgDecisionDays: number | null;
+  };
+  /** Sembilan tahap alur berurutan + "Selesai". */
+  byStage: { index: number; key: string; label: string; count: number }[];
+  /** 12 bulan terakhir, urut lama ke baru. month = 'YYYY-MM'. */
+  monthly: { month: string; submitted: number; decided: number }[];
+  ranks: { rank: 'UNGGUL' | 'BAIK_SEKALI' | 'BAIK' | 'TIDAK_TERAKREDITASI'; count: number }[];
+  chain: {
+    onChainTx: number;
+    corrections: number;
+    audit: { pending: number; committed: number; failed: number };
+    auditLagAvgSec: number | null;
+    auditLagP95Sec: number | null;
+    lastBlock: number | null;
+  };
+  ai: {
+    byStatus: { status: string; count: number }[];
+    avgLatencySec: number | null;
+    /** Analisis selesai yang total skor sarannya berada dalam 10% skor maksimum dari rerata skor akhir asesor. */
+    agreement: { compared: number; within: number; meanAbsDiffPct: number | null };
+  };
+  recent: {
+    kind: 'record' | 'audit';
+    type: string;
+    status: string;
+    at: string;
+    submissionId: string | null;
+    programName: string | null;
+    institutionName: string | null;
+  }[];
+}
+
+/** Respons GET /public/stats. */
+export interface PublicStats { submissions: number; onChainTx: number }
 
 export const API_PREFIX = '/api/v1';
