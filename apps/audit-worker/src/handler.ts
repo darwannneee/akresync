@@ -37,7 +37,8 @@ export function parseOutboxMessage(value: Buffer | string | null): OutboxPayload
     throw new InvalidMessageError('JSON tidak valid');
   }
   const eventIdGuess = (raw as { event?: { eventId?: unknown } } | null)?.event?.eventId;
-  const id = typeof eventIdGuess === 'string' ? eventIdGuess : null;
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const id = typeof eventIdGuess === 'string' && UUID.test(eventIdGuess) ? eventIdGuess : null;
   const parsed = payloadSchema.safeParse(raw);
   if (!parsed.success) throw new InvalidMessageError(`bentuk AuditEvent tidak valid: ${parsed.error.issues[0]?.path.join('.')}`, id);
   const p = parsed.data as OutboxPayload;
