@@ -45,8 +45,8 @@ export const API_ROUTES = {
   refresh: { method: 'POST', path: '/auth/refresh', roles: 'public', storage: 'O', description: 'Perbarui access token' },
   logout: { method: 'POST', path: '/auth/logout', roles: ALL, storage: 'O', description: 'Cabut refresh token' },
   me: { method: 'GET', path: '/auth/me', roles: ALL, storage: 'O', description: 'Profil pengguna aktif' },
-  institutions: { method: 'GET', path: '/institutions', roles: ALL, storage: 'O', description: 'Daftar institusi' },
-  programs: { method: 'GET', path: '/institutions/:institutionId/programs', roles: ALL, storage: 'O', description: 'Program studi per institusi' },
+  institutions: { method: 'GET', path: '/institutions', roles: 'public', storage: 'O', description: 'Daftar institusi' },
+  programs: { method: 'GET', path: '/institutions/:institutionId/programs', roles: 'public', storage: 'O', description: 'Program studi per institusi' },
   assessors: { method: 'GET', path: '/assessors', roles: ['kea'], storage: 'O', description: 'Daftar asesor aktif' },
 
   // Pengajuan & dokumen
