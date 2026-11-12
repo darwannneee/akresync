@@ -201,8 +201,11 @@ JSON
   cat > "$pkg/metadata.json" <<JSON
 { "type": "ccaas", "label": "${CC_NAME}_${CC_VERSION}" }
 JSON
-  (cd "$pkg/src" && COPYFILE_DISABLE=1 tar czf ../code.tar.gz connection.json)
-  (cd "$pkg" && COPYFILE_DISABLE=1 tar czf "$CC_NAME.tgz" metadata.json code.tar.gz)
+  # Paket deterministik: mtime/owner tetap + gzip tanpa timestamp, agar package ID tidak berubah tiap deploy.
+  touch -t 200001010000 "$pkg/src/connection.json" "$pkg/metadata.json"
+  (cd "$pkg/src" && COPYFILE_DISABLE=1 tar --uid 0 --gid 0 --uname root --gname root -cf - connection.json | gzip -n > ../code.tar.gz)
+  touch -t 200001010000 "$pkg/code.tar.gz"
+  (cd "$pkg" && COPYFILE_DISABLE=1 tar --uid 0 --gid 0 --uname root --gname root -cf - metadata.json code.tar.gz | gzip -n > "$CC_NAME.tgz")
   local PKG_ID
   PKG_ID="$(peer_cli upps lifecycle chaincode calculatepackageid "/fabric/chaincode/$CC_NAME.tgz")"
   [[ -n "$PKG_ID" ]] || die "gagal menghitung package id"
