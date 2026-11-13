@@ -77,3 +77,16 @@ CouchDB, chaincode (9999) dan swarm IPFS (4001) tidak dipublikasikan ke host.
 - Konektor Debezium `akresync-outbox` membaca `public.outbox` lewat publication `outbox_pub` dan mengirim ke topik `audit.<aggregatetype>` (payload JSON tanpa schema).
 - IPFS berjalan dengan `LIBP2P_FORCE_PNET=1`, tanpa bootstrap, relay, dan mDNS; `ipfs swarm peers` selalu kosong pada node tunggal.
 - `down` mempertahankan volume; `clean --yes` menghapus kontainer, volume, dan berkas runtime stack terkait.
+
+## Hyperledger Explorer (opsional, lokal)
+
+Penjelajah blok, transaksi, dan chaincode jaringan Fabric. Jalankan setelah jaringan Fabric hidup:
+
+```bash
+infra/explorer/explorer.sh up     # buka http://127.0.0.1:8090
+infra/explorer/explorer.sh down   # hentikan (data sinkronisasi disimpan)
+infra/explorer/explorer.sh clean  # hapus kontainer, volume, dan konfigurasi
+```
+
+Konfigurasi dan kata sandi basis data Explorer dibangkitkan ke `.runtime/explorer/` (tidak di-commit). Explorer membaca
+ledger memakai identitas admin UPPSMSP melalui `peer0.upps`.

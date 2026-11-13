@@ -1,0 +1,51 @@
+# Hyperledger Explorer untuk jaringan Fabric lokal (hanya pengembangan/demo).
+# Konfigurasi & kunci admin dibangkitkan ke .runtime/explorer oleh explorer.sh (tidak di-commit).
+name: akresync-explorer
+services:
+  explorer-db:
+    image: ghcr.io/hyperledger-labs/explorer-db:2.0.0
+    container_name: akresync-explorer-db
+    environment:
+      DATABASE_DATABASE: fabricexplorer
+      DATABASE_USERNAME: hppoc
+      DATABASE_PASSWORD: ${EXPLORER_DB_PASSWORD:?}
+    volumes:
+      - explorer-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hppoc -d fabricexplorer"]
+      interval: 5s
+      retries: 20
+    networks: [fabric]
+
+  explorer:
+    image: ghcr.io/hyperledger-labs/explorer:2.0.0
+    container_name: akresync-explorer
+    environment:
+      DATABASE_HOST: explorer-db
+      DATABASE_DATABASE: fabricexplorer
+      DATABASE_USERNAME: hppoc
+      DATABASE_PASSWD: ${EXPLORER_DB_PASSWORD:?}
+      LOG_LEVEL_APP: info
+      LOG_CONSOLE_STDOUT: "true"
+      DISCOVERY_AS_LOCALHOST: "false"
+      PORT: "8080"
+    volumes:
+      - ${RUNTIME_DIR:?}/explorer/config.json:/opt/explorer/app/platform/fabric/config.json:ro
+      - ${RUNTIME_DIR:?}/explorer/connection-profile:/opt/explorer/app/platform/fabric/connection-profile:ro
+      - ${RUNTIME_DIR:?}/fabric/orgs:/tmp/crypto:ro
+      - explorer-wallet:/opt/explorer/wallet
+    ports:
+      - "127.0.0.1:8090:8080"
+    depends_on:
+      explorer-db:
+        condition: service_healthy
+    networks: [fabric]
+
+volumes:
+  explorer-pgdata:
+  explorer-wallet:
+
+networks:
+  fabric:
+    name: akresync-fabric
+    external: true
