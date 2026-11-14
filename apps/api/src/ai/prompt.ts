@@ -27,7 +27,7 @@ POTONGAN DOKUMEN (format: [kode] jenis dokumen, lokasi)
 
 export const PROMPT_TEMPLATE_SHA256 = sha256Hex(PROMPT_TEMPLATE);
 
-/** Skema keluaran (subset OpenAPI yang diterima Gemini). */
+/** Skema keluaran (gaya Gemini; dikonversi ke JSON Schema ketat untuk OpenAI oleh openai-schema.ts). */
 export const RESPONSE_SCHEMA = {
   type: 'OBJECT',
   properties: {

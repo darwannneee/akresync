@@ -49,6 +49,11 @@ export class AiService {
   get enabled(): boolean {
     return !!this.d.provider;
   }
+  /** Tingkat penalaran bawaan yang dicatat pada baris analisis. */
+  private effortLabel(): string {
+    const c = this.d.config;
+    return c.AI_PROVIDER === 'gemini' ? c.GEMINI_THINKING_LEVEL : (c.OPENAI_REASONING_EFFORT ?? 'medium');
+  }
   get provider(): AiProvider | null {
     return this.d.provider;
   }
@@ -281,7 +286,7 @@ export class AiService {
     await this.d.pool.query(
       `INSERT INTO ai_analyses (submission_id, phase, status, trigger, set_version, requested_model, model, prompt_version, thinking_level)
        VALUES ($1,'AK','queued','auto',$2,$3,$3,$4,$5) ON CONFLICT DO NOTHING`,
-      [row.submission_id, row.set_version, this.d.provider?.model ?? null, PROMPT_VERSION, this.d.config.GEMINI_THINKING_LEVEL],
+      [row.submission_id, row.set_version, this.d.provider?.model ?? null, PROMPT_VERSION, this.effortLabel()],
     );
     return true;
   }
@@ -300,7 +305,7 @@ export class AiService {
       this.d.pool,
       `INSERT INTO ai_analyses (submission_id, phase, status, trigger, set_version, requested_by, requested_model, model, prompt_version, thinking_level)
        VALUES ($1,$2,'queued','manual',$3,$4,$5,$5,$6,$7) RETURNING *`,
-      [submissionId, phase, v, userId, this.d.provider?.model ?? null, PROMPT_VERSION, this.d.config.GEMINI_THINKING_LEVEL],
+      [submissionId, phase, v, userId, this.d.provider?.model ?? null, PROMPT_VERSION, this.effortLabel()],
     );
     this.kick();
     return { row, created: true };

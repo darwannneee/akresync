@@ -19,7 +19,7 @@ export interface GenerateResult {
   json: unknown;
   text: string;
   requestedModel: string;
-  /** Model yang benar-benar menjawab (dari modelVersion respons; Google dapat mengalihkan). */
+  /** Model yang benar-benar menjawab (dari field model respons / modelVersion). */
   usedModel: string;
   modelVersion: string | null;
   thinkingLevel: string | null;
@@ -103,6 +103,7 @@ export function friendlyAiError(err: unknown): string {
   if (err instanceof AiProviderError) {
     if (err.code === 'UNAVAILABLE' || err.status === 503) return 'Layanan AI sedang sibuk. Sistem sudah mencoba beberapa kali; silakan coba lagi beberapa menit lagi.';
     if (err.code === 'DAILY_QUOTA') return 'Kuota harian layanan AI telah habis. Analisis dapat dicoba lagi besok; penilaian manual tetap dapat dilakukan.';
+    if (err.code === 'INSUFFICIENT_QUOTA') return 'Kuota layanan AI habis. Hubungi administrator sistem; penilaian manual tetap dapat dilakukan.';
     if (err.code === 'RESOURCE_EXHAUSTED' || err.status === 429) return 'Batas pemakaian layanan AI sedang tercapai. Silakan coba lagi beberapa menit lagi.';
     if (err.code === 'NOT_CONFIGURED') return 'Layanan AI belum dikonfigurasi pada server ini.';
     if (err.code === 'INVALID_OUTPUT') return 'Keluaran AI tidak dapat dipakai. Silakan minta analisis ulang.';

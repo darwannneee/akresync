@@ -40,6 +40,13 @@ const schema = z.object({
   SEED_ACCOUNTS_FILE: z.string().default('../../.runtime/seed-accounts.json'),
   MIGRATIONS_DIR: z.string().default('../../db/migrations'),
   // Modul AI pendukung keputusan
+  AI_PROVIDER: z.enum(['openai', 'gemini']).default('openai'),
+  OPENAI_API_KEY: z.string().optional().transform((v) => v?.trim() || undefined),
+  OPENAI_MODEL: z.string().min(1).default('gpt-6-luna'),
+  OPENAI_REASONING_EFFORT: z
+    .enum(['none', 'low', 'medium', 'high', 'xhigh', 'max'])
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
   GEMINI_API_KEY: z.string().optional().transform((v) => v?.trim() || undefined),
   GEMINI_MODEL: z.string().min(1).default('gemini-3.6-flash'),
   GEMINI_FALLBACK_MODELS: z
