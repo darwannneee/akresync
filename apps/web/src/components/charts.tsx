@@ -1,23 +1,23 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Table2, BarChart3 } from 'lucide-react';
-import { fmtMonth, fmtNumber } from '../lib/labels';
+import { fmtDate, fmtMonth, fmtNumber } from '../lib/labels';
 import { cx } from './ui';
 
 /**
  * Palet grafik (kategori, mode terang) tervalidasi dengan validate_palette.js, urutan slot mengikuti referensi:
  * biru #2a78d6, oranye #eb6834, aqua #1baf7a. Peringkat memakai satu rampa biru (ordinal), bukan warna kategori.
  */
-export const SERIES = { blue: '#2a78d6', orange: '#eb6834', aqua: '#1baf7a' } as const;
-export const RANK_COLORS: Record<string, string> = { UNGGUL: '#184f95', BAIK_SEKALI: '#3987e5', BAIK: '#86b6ef', TIDAK_TERAKREDITASI: '#64748b' };
+export const SERIES = { blue: '#1E4D8C', orange: '#8FB0DE', aqua: '#13315C' } as const;
+export const RANK_COLORS: Record<string, string> = { UNGGUL: '#0B1F3A', BAIK_SEKALI: '#1E4D8C', BAIK: '#6A93C9', TIDAK_TERAKREDITASI: '#94A3B8' };
 const INK = '#475569';
 const GRID = '#e2e8f0';
 
 export interface TableData { columns: string[]; rows: (string | number)[][] }
 
 /** Kartu grafik: judul, tombol "Lihat tabel", grafik berlabel aksesibilitas, tabel sr-only atau tabel terlihat. */
-export function ChartCard({ title, description, ariaLabel, table, legend, children, className, empty }: {
-  title: string; description?: string; ariaLabel: string; table: TableData; legend?: { label: string; color: string }[]; children: ReactNode; className?: string; empty?: ReactNode;
+export function ChartCard({ title, description, ariaLabel, table, legend, children, className, empty, fill }: {
+  fill?: boolean; title: string; description?: string; ariaLabel: string; table: TableData; legend?: { label: string; color: string }[]; children: ReactNode; className?: string; empty?: ReactNode;
 }) {
   const [asTable, setAsTable] = useState(false);
   const id = useId();
@@ -35,7 +35,7 @@ export function ChartCard({ title, description, ariaLabel, table, legend, childr
           </button>
         )}
       </header>
-      <div className="flex-1 px-5 pb-5 pt-3">
+      <div className={cx('flex flex-1 flex-col px-5 pb-5 pt-3', fill && 'justify-center')}>
         {empty ?? (asTable ? (
           <div className="max-h-[320px] overflow-auto rounded-lg border border-slate-200">
             <table className="min-w-full text-sm">
@@ -51,7 +51,7 @@ export function ChartCard({ title, description, ariaLabel, table, legend, childr
                 {legend.map((l) => <li key={l.label} className="flex items-center gap-2"><span aria-hidden className="h-2.5 w-2.5 rounded-sm" style={{ background: l.color }} />{l.label}</li>)}
               </ul>
             )}
-            <div role="img" aria-label={ariaLabel}>{children}</div>
+            <div role="img" aria-label={ariaLabel} className={cx(fill && 'min-h-[260px] flex-1')}>{children}</div>
             <div className="sr-only"><table>
               <caption>{ariaLabel}</caption>
               <thead><tr>{table.columns.map((c) => <th key={c} scope="col">{c}</th>)}</tr></thead>
@@ -109,22 +109,30 @@ export function HBars({ data, color = SERIES.blue, seriesName = 'Pengajuan', row
   );
 }
 
-/** Tren bulanan dua seri pada satu sumbu. */
-export function TrendArea({ data, height = 260 }: { data: { month: string; submitted: number; decided: number }[]; height?: number }) {
-  const rows = data.map((d) => ({ ...d, label: fmtMonth(d.month) }));
+export type TrendPoint = { key: string; submitted: number; decided: number };
+const dayLabel = (k: string) => fmtDate(k).replace(/ \d{4}$/, '');
+export function trendLabel(k: string, g: 'day' | 'week' | 'month'): string {
+  if (g === 'month') return fmtMonth(k.slice(0, 7));
+  if (g === 'week') return `Minggu ${dayLabel(k)}`;
+  return dayLabel(k);
+}
+
+/** Tren dua seri pada satu sumbu; granularitas (harian, mingguan, bulanan) ditentukan server menurut sebaran data. */
+export function TrendArea({ data, granularity = 'month', height = '100%' }: { data: TrendPoint[]; granularity?: 'day' | 'week' | 'month'; height?: number | string }) {
+  const rows = data.map((d) => ({ ...d, label: trendLabel(d.key, granularity) }));
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ResponsiveContainer width="100%" height={height as number}>
       <AreaChart data={rows} margin={{ top: 8, right: 12, bottom: 0, left: -8 }}>
         <defs>
           <linearGradient id="g-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={SERIES.blue} stopOpacity={0.22} /><stop offset="100%" stopColor={SERIES.blue} stopOpacity={0.02} /></linearGradient>
-          <linearGradient id="g-orange" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={SERIES.orange} stopOpacity={0.2} /><stop offset="100%" stopColor={SERIES.orange} stopOpacity={0.02} /></linearGradient>
+          <linearGradient id="g-orange" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={SERIES.orange} stopOpacity={0.3} /><stop offset="100%" stopColor={SERIES.orange} stopOpacity={0.02} /></linearGradient>
         </defs>
         <CartesianGrid vertical={false} stroke={GRID} strokeDasharray="3 4" />
-        <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: GRID }} tick={{ fill: INK, fontSize: 12 }} interval="preserveStartEnd" minTickGap={18} />
+        <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: GRID }} tick={{ fill: INK, fontSize: 12 }} interval="preserveStartEnd" minTickGap={24} />
         <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={40} tick={{ fill: INK, fontSize: 12 }} tickFormatter={(v: number) => fmtNumber(v, 0)} />
         <Tooltip content={<Tip />} cursor={{ stroke: '#94a3b8', strokeDasharray: '3 3' }} />
         <Area type="monotone" dataKey="submitted" name="Pengajuan masuk" stroke={SERIES.blue} strokeWidth={2} fill="url(#g-blue)" dot={false} activeDot={{ r: 4 }} isAnimationActive={false} />
-        <Area type="monotone" dataKey="decided" name="Keputusan terbit" stroke={SERIES.orange} strokeWidth={2} fill="url(#g-orange)" dot={false} activeDot={{ r: 4 }} isAnimationActive={false} />
+        <Area type="monotone" dataKey="decided" name="Keputusan terbit" stroke={SERIES.orange} strokeWidth={2} strokeDasharray="5 3" fill="url(#g-orange)" dot={false} activeDot={{ r: 4 }} isAnimationActive={false} />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -146,11 +154,11 @@ export function Donut({ data, centerLabel }: { data: { key: string; label: strin
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 grid place-items-center text-center"><div><div className="text-2xl font-semibold tabular-nums text-ink">{fmtNumber(total, 0)}</div><div className="text-xs text-muted">{centerLabel}</div></div></div>
       </div>
-      <ul className="min-w-[10rem] flex-1 space-y-2 text-sm">
+      <ul className="min-w-[13rem] flex-1 space-y-2 text-sm">
         {data.map((d) => (
           <li key={d.key} className="flex items-center gap-2.5">
             <span aria-hidden className="h-3 w-3 shrink-0 rounded-sm" style={{ background: d.color }} />
-            <span className="min-w-0 flex-1 text-slate-700">{d.label}</span>
+            <span className="min-w-0 flex-1 break-words text-slate-700">{d.label}</span>
             <b className="tabular-nums text-ink">{fmtNumber(d.value, 0)}</b>
             <span className="w-12 text-right tabular-nums text-faint">{total ? `${fmtNumber((d.value / total) * 100, 0)}%` : '0%'}</span>
           </li>

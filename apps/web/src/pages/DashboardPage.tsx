@@ -37,6 +37,8 @@ export function DashboardPage() {
   useEffect(() => { const q = params.get('q'); if (q !== null) setText(q); }, [params]);
   const filtered = useMemo(() => rows.filter((s) => stage === '' || String(currentIndex(s)) === stage), [rows, stage]);
   if (!user) return null;
+  // Metrik teknis (blok, jeda audit, AI) hanya untuk peran yang memerlukannya.
+  const technical = ['kea', 'majelis', 'sek_adm'].includes(user.role);
   const detail = (s: SubmissionSummary) => `/pengajuan/${s.id}`;
   const prog = (s: SubmissionSummary) => <div><div className="font-medium text-ink">{s.programName ?? shortId(s.id)}{s.programLevel ? ` (${s.programLevel})` : ''}</div><div className="text-muted">{s.institutionName}</div><div className="mt-0.5 text-xs text-faint">Nomor pengajuan <span className="font-mono" title={s.id}>{shortId(s.id)}</span></div></div>;
   return (
@@ -71,13 +73,13 @@ export function DashboardPage() {
             ) : <EmptyState icon={<CheckCircle2 size={24} />} title="Tidak ada tugas saat ini">Seluruh tugas Bapak/Ibu telah selesai. Daftar terisi otomatis bila ada pengajuan yang memerlukan tindakan.</EmptyState>}
         </Card>
         {stats && (
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2"><StagesCard stats={stats} title={user.role === 'upps' ? 'Pengajuan saya per tahap' : 'Pengajuan per tahap'} /></div>
+          <div className="grid items-stretch gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2 [&>section]:h-full"><StagesCard stats={stats} title={user.role === 'upps' ? 'Pengajuan saya per tahap' : 'Pengajuan per tahap'} /></div>
             <RanksCard stats={stats} />
-            <div className="lg:col-span-2"><TrendCard stats={stats} /></div>
-            <IntegrityCard stats={stats} />
-            {['asesor', 'kea', 'majelis'].includes(user.role) && <AiCard stats={stats} />}
-            <div className={['asesor', 'kea', 'majelis'].includes(user.role) ? 'lg:col-span-2' : 'lg:col-span-3'}><ActivityCard stats={stats} wide={!['asesor', 'kea', 'majelis'].includes(user.role)} /></div>
+            <div className="lg:col-span-2 [&>section]:h-full"><TrendCard stats={stats} /></div>
+            <IntegrityCard stats={stats} detailed={technical} />
+            {technical && ['kea', 'majelis', 'sek_adm'].includes(user.role) && <AiCard stats={stats} />}
+            <div className={technical ? 'lg:col-span-2 [&>section]:h-full' : 'lg:col-span-3 [&>section]:h-full'}><ActivityCard stats={stats} wide={!technical} /></div>
           </div>
         )}
         {statsQ.isLoading && <div className="grid gap-6 lg:grid-cols-3"><Skeleton className="h-72 !rounded-xl lg:col-span-2" /><Skeleton className="h-72 !rounded-xl" /></div>}

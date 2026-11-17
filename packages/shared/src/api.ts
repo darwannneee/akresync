@@ -128,8 +128,10 @@ export interface DashboardStats {
   };
   /** Sembilan tahap alur berurutan + "Selesai". */
   byStage: { index: number; key: string; label: string; count: number }[];
-  /** 12 bulan terakhir, urut lama ke baru. month = 'YYYY-MM'. */
+  /** 12 bulan terakhir, urut lama ke baru. month = 'YYYY-MM'. Dipertahankan untuk kompatibilitas; tampilan memakai `trend`. */
   monthly: { month: string; submitted: number; decided: number }[];
+  /** Tren dengan granularitas menurut sebaran data: harian (data <= 5 minggu), mingguan (<= 4 bulan), selain itu bulanan. key = 'YYYY-MM-DD' awal periode. */
+  trend: { granularity: 'day' | 'week' | 'month'; points: { key: string; submitted: number; decided: number }[] };
   ranks: { rank: 'UNGGUL' | 'BAIK_SEKALI' | 'BAIK' | 'TIDAK_TERAKREDITASI'; count: number }[];
   chain: {
     onChainTx: number;
@@ -140,6 +142,8 @@ export interface DashboardStats {
     lastBlock: number | null;
   };
   ai: {
+    /** false bila layanan AI belum dikonfigurasi atau nonaktif pada server. */
+    enabled: boolean;
     byStatus: { status: string; count: number }[];
     avgLatencySec: number | null;
     /** Analisis selesai yang total skor sarannya berada dalam 10% skor maksimum dari rerata skor akhir asesor. */

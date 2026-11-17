@@ -11,7 +11,10 @@ export class ApiRequestError extends Error {
 let accessToken: string | null = null;
 let onAuthLost: (() => void) | null = null;
 export const getAccessToken = () => accessToken;
-export const setAccessToken = (t: string | null) => { accessToken = t; if (!t) clearPendingKeys(); };
+const tokenListeners = new Set<(t: string | null) => void>();
+/** Berlangganan perubahan token akses (mis. untuk menyambung ulang SSE setelah token diperbarui). */
+export const onAccessTokenChange = (f: (t: string | null) => void) => { tokenListeners.add(f); return () => { tokenListeners.delete(f); }; };
+export const setAccessToken = (t: string | null) => { const changed = t !== accessToken; accessToken = t; if (!t) clearPendingKeys(); if (changed) tokenListeners.forEach((f) => f(t)); };
 export const setAuthLostHandler = (fn: (() => void) | null) => { onAuthLost = fn; };
 
 export function uuid(): string {
@@ -48,7 +51,7 @@ export function refreshSession(): Promise<boolean> {
       });
       if (!res.ok) return false;
       const body = (await res.json()) as ApiEnvelope<{ accessToken: string }>;
-      accessToken = body.data.accessToken;
+      setAccessToken(body.data.accessToken);
       return true;
     } catch {
       return false;

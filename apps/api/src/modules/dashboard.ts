@@ -92,13 +92,13 @@ export function dashboardRoutes(ctx: AppContext, router: Router, auth: RequestHa
       q(db, `WITH sc AS (${SCOPE}),
         ev AS (
           (SELECT 'record'::text AS kind, f.record_type AS type, f.status, coalesce(f.committed_at, f.created_at) AS at, f.submission_id
-             FROM formal_records f JOIN sc ON sc.id = f.submission_id ORDER BY coalesce(f.committed_at, f.created_at) DESC LIMIT 8)
+             FROM formal_records f JOIN sc ON sc.id = f.submission_id ORDER BY coalesce(f.committed_at, f.created_at) DESC LIMIT 40)
           UNION ALL
           (SELECT 'audit'::text, o.type, a.status, o.created_at, o.submission_id
-             FROM outbox o JOIN sc ON sc.id = o.submission_id JOIN audit_status a ON a.event_id = o.id ORDER BY o.created_at DESC LIMIT 8))
+             FROM outbox o JOIN sc ON sc.id = o.submission_id JOIN audit_status a ON a.event_id = o.id ORDER BY o.created_at DESC LIMIT 40))
         SELECT ev.*, pr.name AS program_name, i.name AS institution_name FROM ev
           JOIN submissions s ON s.id = ev.submission_id JOIN study_programs pr ON pr.id = s.program_id JOIN institutions i ON i.id = s.institution_id
-        ORDER BY ev.at DESC LIMIT 8`, p),
+        ORDER BY ev.at DESC LIMIT 40`, p),
       q1(db, `WITH sc AS (${SCOPE})
         SELECT count(*) FILTER (WHERE
           CASE $3::text
@@ -111,6 +111,21 @@ export function dashboardRoutes(ctx: AppContext, router: Router, auth: RequestHa
             WHEN 'majelis' THEN sc.stage = 'final_verified'
             ELSE false END)::int AS action FROM sc`, [...p, user.role]),
     ]);
+
+    // Granularitas tren mengikuti sebaran data: harian bila hanya mencakup beberapa minggu, mingguan hingga 4 bulan, selain itu bulanan.
+    const firstRow = await q1(db, `WITH sc AS (${SCOPE}) SELECT least(
+        (SELECT min(sc.created_at) FROM sc),
+        (SELECT min(f.committed_at) FROM formal_records f JOIN sc ON sc.id = f.submission_id WHERE f.record_type = 'DECISION' AND f.status = 'committed')) AS first`, p);
+    const spanDays = firstRow?.first ? Math.max(0, (Date.now() - new Date(firstRow.first).getTime()) / 86_400_000) : 0;
+    const granularity: 'day' | 'week' | 'month' = spanDays <= 35 ? 'day' : spanDays <= 120 ? 'week' : 'month';
+    const buckets = granularity === 'day' ? Math.min(30, Math.max(14, Math.ceil(spanDays) + 2)) : granularity === 'week' ? Math.min(17, Math.max(6, Math.ceil(spanDays / 7) + 1)) : 12;
+    const trendRows = await q(db, `WITH sc AS (${SCOPE}),
+        b AS (SELECT date_trunc($3::text, now()) - (g * ('1 ' || $3::text)::interval) AS m FROM generate_series($4::int - 1, 0, -1) g)
+        SELECT to_char(b.m, 'YYYY-MM-DD') AS key,
+          (SELECT count(*)::int FROM sc WHERE date_trunc($3::text, sc.created_at) = b.m) AS submitted,
+          (SELECT count(*)::int FROM formal_records f JOIN sc ON sc.id = f.submission_id
+            WHERE f.record_type = 'DECISION' AND f.status = 'committed' AND f.version = 1 AND date_trunc($3::text, f.committed_at) = b.m) AS decided
+        FROM b ORDER BY b.m`, [...p, granularity, buckets]);
 
     const counts = new Array<number>(STAGES.length).fill(0);
     for (const r of stageRows) counts[r.idx] = r.n;
@@ -139,6 +154,7 @@ export function dashboardRoutes(ctx: AppContext, router: Router, auth: RequestHa
         avgDecisionDays: round(num(avgDec?.days)),
       },
       byStage: STAGES.map((s, i) => ({ index: i, key: s.key, label: s.label, count: counts[i]! })),
+      trend: { granularity, points: trendRows.map((t) => ({ key: t.key, submitted: t.submitted, decided: t.decided })) },
       monthly: monthly.map((m) => ({ month: m.month, submitted: m.submitted, decided: m.decided })),
       ranks: ACCREDITATION_RANKS.map((rank) => ({ rank, count: rankMap.get(rank) ?? 0 })),
       chain: {
@@ -150,6 +166,7 @@ export function dashboardRoutes(ctx: AppContext, router: Router, auth: RequestHa
         lastBlock: num(lastBlock?.block),
       },
       ai: {
+        enabled: ctx.ai.enabled,
         byStatus: aiStatus.map((r) => ({ status: r.status, count: r.n })),
         avgLatencySec: round(num(aiLatency?.ms) === null ? null : num(aiLatency?.ms)! / 1000),
         agreement: { compared, within, meanAbsDiffPct: compared ? round(diffSum / compared) : null },

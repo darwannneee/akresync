@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { API_URL, getAccessToken } from './client';
+import { API_URL, getAccessToken, onAccessTokenChange, refreshSession } from './client';
 import { AUDIT_KIND_LABEL, RECORD_LABEL } from '../lib/labels';
 
 export interface Notification { id: number; title: string; detail?: string; submissionId?: string; at: string; unread: boolean; tone: 'chain' | 'audit' | 'warn' }
@@ -36,9 +36,11 @@ function toNotification(type: 'audit_status' | 'record_committed', d: Record<str
 export function useEventStream(enabled: boolean): void {
   const qc = useQueryClient();
   useEffect(() => {
-    const token = getAccessToken();
-    if (!enabled || !token) return;
-    const es = new EventSource(`${API_URL}/events/stream?token=${encodeURIComponent(token)}`);
+    if (!enabled) return;
+    let es: EventSource | null = null;
+    let retry: ReturnType<typeof setTimeout> | null = null;
+    let delay = 2000;
+    let stopped = false;
     const handler = (type: 'audit_status' | 'record_committed') => (ev: MessageEvent<string>) => {
       let data: Record<string, unknown> = {};
       try { data = JSON.parse(ev.data) as Record<string, unknown>; } catch { /* abaikan */ }
@@ -52,9 +54,26 @@ export function useEventStream(enabled: boolean): void {
       list = [{ id: ++nid, at: new Date().toISOString(), unread: true, ...toNotification(type, data) }, ...list].slice(0, 20);
       emit();
     };
-    const a = handler('audit_status'); const r = handler('record_committed');
-    es.addEventListener('audit_status', a as EventListener);
-    es.addEventListener('record_committed', r as EventListener);
-    return () => es.close();
+    const open = () => {
+      if (stopped) return;
+      const token = getAccessToken();
+      if (!token) return;
+      es?.close();
+      es = new EventSource(`${API_URL}/events/stream?token=${encodeURIComponent(token)}`);
+      es.onopen = () => { delay = 2000; };
+      es.addEventListener('audit_status', handler('audit_status') as EventListener);
+      es.addEventListener('record_committed', handler('record_committed') as EventListener);
+      // Token akses kedaluwarsa membuat sambungan ditolak: perbarui sesi lalu sambung ulang dengan token baru (jeda bertahap).
+      es.onerror = () => {
+        if (es?.readyState !== EventSource.CLOSED) return;
+        es.close();
+        if (retry) clearTimeout(retry);
+        retry = setTimeout(() => { void refreshSession().then(() => { delay = Math.min(delay * 2, 60_000); open(); }); }, delay);
+      };
+    };
+    open();
+    // Token diperbarui di tempat lain (refresh otomatis): sambung ulang agar memakai token yang sah.
+    const off = onAccessTokenChange((t) => { if (t) { if (retry) clearTimeout(retry); open(); } else { es?.close(); } });
+    return () => { stopped = true; off(); if (retry) clearTimeout(retry); es?.close(); };
   }, [enabled, qc]);
 }
