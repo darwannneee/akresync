@@ -286,8 +286,9 @@ function latestAudit(d: Detail, kind: string): { status?: string | null; attempt
   const list = d.audit ?? d.gateAudit ?? [];
   const same = list.filter((e) => e.kind === kind);
   if (!same.length) return undefined;
-  const committed = same.find((e) => e.status === 'committed');
-  return committed ?? same[same.length - 1];
+  // Yang menentukan adalah peristiwa TERBARU per jenis (selaras dengan penjagaan di server), bukan peristiwa committed mana pun.
+  const at = (e: unknown) => Date.parse(String((e as { createdAt?: string }).createdAt ?? '')) || 0;
+  return same.reduce((m, e, i) => (i === 0 || at(e) >= at(m) ? e : m));
 }
 function auditCommitted(d: Detail, kind: string): boolean {
   return latestAudit(d, kind)?.status === 'committed';
