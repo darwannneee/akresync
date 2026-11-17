@@ -46,9 +46,29 @@ export function renderCertificatePdf(d: {
     doc.moveDown(1.5).fontSize(10).text('Bukti on-chain', { underline: true }).moveDown(0.3);
     doc.text(`ID transaksi penetapan: ${d.txId}`);
     doc.text(`Kunci catatan: ${d.recordKey.split('\u0000').join('~')}`).moveDown(0.8);
-    doc.text(`Verifikasi: unduh sertifikat melalui API (/api/v1/certificates/${d.certificateId}/download) untuk memvalidasi isi terhadap catatan penetapan di ledger.`);
+    doc.text(`Verifikasi: unduh sertifikat melalui API (/api/v1/certificates/${d.certificateId}/download) untuk mencocokkan data keputusan dengan catatan penetapan yang tersimpan permanen.`);
     doc.end();
   });
+}
+
+const DECISION_KEYS = ['rank', 'decreeNumber', 'totalScore', 'validFrom', 'validUntil'] as const;
+export const sameDecisionContent = (a: Partial<DecisionPayload> | undefined, b: Partial<DecisionPayload> | undefined): boolean =>
+  !!a && !!b && DECISION_KEYS.every((k) => (k === 'totalScore' ? Number(a[k]) === Number(b[k]) : (a[k] ?? null) === (b[k] ?? null)));
+
+/** Cocokkan keputusan pada sertifikat dengan riwayat catatan permanen. Murni agar mudah diuji. */
+export function checkCertificateAgainstHistory(
+  certPayload: DecisionPayload,
+  certVersion: number,
+  certTxId: string | null,
+  history: { value: { version?: number; txId?: string; payload?: DecisionPayload } | null }[] | null | undefined,
+): { verified: 'true' | 'false' | 'outdated' | 'unavailable'; currentVersion: number | null } {
+  const recs = (history ?? []).map((h) => h.value).filter((v): v is NonNullable<typeof v> => !!v && typeof v.version === 'number');
+  if (!recs.length) return { verified: 'unavailable', currentVersion: null };
+  const latest = recs.reduce((m, v) => (v.version! > m.version! ? v : m));
+  const same = recs.find((v) => v.version === certVersion);
+  if (!same || !sameDecisionContent(same.payload, certPayload) || (certTxId && same.txId && same.txId !== certTxId)) return { verified: 'false', currentVersion: latest.version! };
+  if (latest.version! > certVersion && !sameDecisionContent(latest.payload, certPayload)) return { verified: 'outdated', currentVersion: latest.version! };
+  return { verified: 'true', currentVersion: latest.version! };
 }
 
 export function finalizationRoutes(ctx: AppContext, router: Router, auth: RequestHandler) {
@@ -144,18 +164,16 @@ export function finalizationRoutes(ctx: AppContext, router: Router, auth: Reques
     const dec = await q1(ctx.pool, 'SELECT * FROM formal_records WHERE id=$1', [cert.decision_record_id]);
     if (!doc || !dec) throw notFound('Dokumen sertifikat tidak lengkap');
     const plain = await fetchAndDecrypt(ctx, doc);
-    // Validasi ke keputusan di ledger: isi keputusan yang tercetak pada sertifikat (catatan yang dipakai saat terbit)
-    // dibandingkan dengan versi TERKINI catatan tersebut di ledger. Koreksi yang tidak mengubah isi tidak membatalkan sertifikat;
-    // koreksi yang mengubah isi menandai sertifikat usang ('outdated') dan perlu diterbitkan ulang.
+    // Validasi: data keputusan yang dipakai saat sertifikat terbit (catatan DB untuk versi `dec.version`) dibandingkan dengan
+    // entri riwayat pencatatan permanen untuk versi yang sama (bukan isi berkas PDF). 'false' bila tidak cocok;
+    // 'outdated' hanya bila cocok dan versi terkini berbeda isi; 'true' bila cocok dan tidak ada versi lebih baru yang berbeda.
     let verified: 'true' | 'false' | 'outdated' | 'unavailable' = 'unavailable';
     let currentVersion = Number(dec.version);
     try {
-      const onChain = await ctx.chain.evaluate<{ payload: DecisionPayload; txId: string; version: number }>(user.id, CHAIN_FUNCTIONS.GetRecord, [fromDbKey(dec.record_key)]);
-      const a = onChain?.payload;
-      const b = dec.payload as DecisionPayload;
-      currentVersion = Number(onChain?.version ?? currentVersion);
-      const same = !!a && a.rank === b.rank && a.decreeNumber === b.decreeNumber && Number(a.totalScore) === Number(b.totalScore) && (a.validFrom ?? null) === (b.validFrom ?? null) && (a.validUntil ?? null) === (b.validUntil ?? null);
-      verified = same ? (currentVersion === Number(dec.version) && onChain.txId !== dec.tx_id ? 'false' : 'true') : currentVersion > Number(dec.version) ? 'outdated' : 'false';
+      const history = await ctx.chain.evaluate<{ value: { version?: number; txId?: string; payload?: DecisionPayload } | null }[]>(user.id, CHAIN_FUNCTIONS.GetRecordHistory, [fromDbKey(dec.record_key)]);
+      const r = checkCertificateAgainstHistory(dec.payload as DecisionPayload, Number(dec.version), dec.tx_id ?? null, history);
+      verified = r.verified;
+      currentVersion = r.currentVersion ?? currentVersion;
     } catch {
       verified = 'unavailable';
     }

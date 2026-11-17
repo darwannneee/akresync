@@ -52,10 +52,10 @@ export function DecisionSummary({ s }: { s: SubmissionDetail }) {
         {s.certificate
           ? <Button icon={<Download size={16} />} loading={busy} onClick={() => void download()}>Unduh sertifikat ({s.certificate.certificateNo})</Button>
           : <Notice tone="info">Sertifikat belum diterbitkan oleh Sekretariat Administrasi.</Notice>}
-        {check === 'true' && <Notice tone="success" title="Sertifikat sesuai dengan keputusan di ledger">Isi sertifikat yang diunduh cocok dengan catatan penetapan yang tersimpan permanen.</Notice>}
+        {check === 'true' && <Notice tone="success" title="Data keputusan pada sertifikat sesuai dengan catatan permanen">Peringkat, nomor Surat Keputusan, skor, dan masa berlaku yang tercantum pada sertifikat cocok dengan catatan penetapan yang tersimpan permanen. Pemeriksaan ini mencocokkan data keputusan, bukan isi berkas PDF.</Notice>}
         {check === 'outdated' && <Notice tone="warn" title="Sertifikat tidak lagi sesuai dengan keputusan terkini">Keputusan telah dikoreksi setelah sertifikat terbit. Sertifikat perlu diterbitkan ulang oleh Sekretariat Administrasi.</Notice>}
-        {check === 'false' && <Notice tone="danger" title="Sertifikat tidak sesuai dengan catatan di ledger">Isi sertifikat berbeda dari catatan penetapan. Jangan gunakan sertifikat ini dan hubungi administrator.</Notice>}
-        {check === 'unavailable' && <Notice tone="info" title="Validasi ke ledger belum dapat dilakukan">Berkas berhasil diunduh, tetapi layanan pencatatan permanen tidak dapat dihubungi untuk mencocokkan isinya. Coba unduh lagi nanti.</Notice>}
+        {check === 'false' && <Notice tone="danger" title="Data keputusan pada sertifikat tidak sesuai dengan catatan permanen">Data keputusan yang dipakai untuk sertifikat ini berbeda dari catatan penetapan yang tersimpan permanen. Jangan gunakan sertifikat ini dan hubungi administrator.</Notice>}
+        {check === 'unavailable' && <Notice tone="info" title="Pencocokan dengan catatan permanen belum dapat dilakukan">Berkas berhasil diunduh, tetapi layanan pencatatan permanen tidak dapat dihubungi untuk mencocokkan data keputusan. Coba unduh lagi nanti.</Notice>}
       </div>
     </Card>
   );

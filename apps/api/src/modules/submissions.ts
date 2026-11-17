@@ -137,7 +137,7 @@ export async function buildDetail(ctx: AppContext, user: AuthUser, id: string) {
        FROM outbox o JOIN audit_status a ON a.event_id = o.id WHERE o.submission_id=$1 ORDER BY o.created_at`,
       [id],
     ),
-    q1(ctx.pool, `SELECT id, certificate_no, document_id, issued_at FROM certificates WHERE submission_id=$1`, [id]),
+    q1(ctx.pool, `SELECT id, certificate_no, document_id, decision_record_id, issued_at FROM certificates WHERE submission_id=$1`, [id]),
     user.role === 'upps'
       ? q(ctx.pool, `SELECT a.id, a.offer_id, a.assessor_id, u.full_name AS assessor_name, a.phase, a.status, a.total_score, a.minutes_document_id, a.submitted_at FROM assessments a JOIN users u ON u.id=a.assessor_id WHERE a.submission_id=$1 AND a.phase='AL' AND a.status='submitted'`, [id])
       : q(ctx.pool, `SELECT a.id, a.offer_id, a.assessor_id, u.full_name AS assessor_name, a.phase, a.version, a.status, a.scores, a.total_score, ${user.role === 'asesor' ? 'a.draft_scores, a.draft_total_score, ' : ''}a.score_summary_sha256, a.minutes_document_id, a.chain_record_key, a.submitted_at FROM assessments a JOIN users u ON u.id=a.assessor_id WHERE a.submission_id=$1 ${user.role === 'asesor' ? 'AND a.assessor_id = $2' : ''}`, user.role === 'asesor' ? [id, user.id] : [id]),
