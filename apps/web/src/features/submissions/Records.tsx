@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { History, PencilLine } from 'lucide-react';
-import { INDIVIDUAL_RECORD_TYPES, NON_CORRECTABLE_RECORD_TYPES } from '@akreditasi/shared';
+import { ACCREDITATION_RANKS, INDIVIDUAL_RECORD_TYPES, NON_CORRECTABLE_RECORD_TYPES } from '@akreditasi/shared';
 import { z } from 'zod';
 import { api, errorMessage } from '../../api/client';
 import type { FormalRecordView, RecordHistoryItem, User } from '../../api/types';
-import { Badge, Button, CopyableMono, DataTable, EmptyState, Field, FormError, Input, Modal, Notice, ProofBadge, Spinner, TechnicalDetails, Textarea } from '../../components/ui';
-import { PAYLOAD_FIELD_LABEL, RANK_LABEL, RECORD_LABEL, RESULT_LABEL, fmtDateTime, roleName } from '../../lib/labels';
+import { Badge, Button, CopyableMono, DataTable, EmptyState, Field, FormError, Input, Modal, Notice, ProofBadge, Select, Spinner, TechnicalDetails, Textarea } from '../../components/ui';
+import { PAYLOAD_FIELD_LABEL, RANK_LABEL, RECORD_LABEL, RESULT_LABEL, fmtDate, fmtDateTime, roleName } from '../../lib/labels';
 import { recordTime } from '../../lib/workflow';
 import { useConfirmed } from '../common/forms';
 import { useAction } from '../common/useAction';
@@ -14,6 +14,8 @@ import { useAction } from '../common/useAction';
 export function canCorrect(r: FormalRecordView, user: User, records: FormalRecordView[] = [r]): boolean {
   if (records.some((o) => o.recordKey === r.recordKey && o.version > r.version)) return false;
   if (NON_CORRECTABLE_RECORD_TYPES.includes(r.recordType)) return false;
+  // Hasil asesmen diperbaiki lewat halaman penilaian (skor rinci diubah, ringkasan dihitung ulang), bukan lewat isian catatan.
+  if (r.recordType === 'ASSESSMENT_RESULT') return false;
   if (r.actorRole !== user.role) return false;
   if (INDIVIDUAL_RECORD_TYPES.includes(r.recordType)) return (r.actorUid ?? r.actorUserId) === user.id;
   return true;
@@ -88,79 +90,139 @@ function HistoryModal({ record, onClose }: { record: FormalRecordView | null; on
   );
 }
 
-const LOCKED = new Set(['submissionId', 'phase', 'offerSeq', 'responderRole']);
+/** Isian yang boleh dikoreksi per jenis catatan; selain itu terkunci oleh chaincode dan hanya ditampilkan. */
+const LOCKED_FIELDS: Record<string, string[]> = {
+  ADMIN_VERIFICATION: ['documentSetVersion', 'result'],
+  ASSIGNMENT_RESPONSE: ['offerSeq', 'responderRole'],
+  FINAL_VERIFICATION: ['alRecordKey', 'akRecordKeys'],
+  DECISION: ['totalScore', 'finalVerificationKey'],
+};
+const lockedText = (k: string, v: unknown): string => {
+  if (k === 'akRecordKeys') return `${Array.isArray(v) ? v.length : 0} catatan hasil AK`;
+  if (k === 'alRecordKey') return 'Catatan hasil AL';
+  if (k === 'finalVerificationKey') return 'Catatan verifikasi akhir pengajuan ini';
+  if (k === 'responderRole') return v === 'upps' ? 'UPPS' : 'Asesor';
+  if (k === 'offerSeq') return `Penawaran urutan ${String(v)}`;
+  return fmtVal(k, v);
+};
+
 const metaSchema = z.object({
   reason: z.string().trim().min(5, 'Alasan koreksi wajib diisi (minimal 5 huruf)'),
   evidenceRef: z.string().trim().min(3, 'Rujukan bukti wajib diisi'),
-  expectedVersion: z.number().int().min(1),
 });
 
+/** Teks catatan yang tersimpan off-chain (catatan verifikasi, alasan tanggapan); null bila tidak tersedia bagi pengguna. */
+const originalText = (r: FormalRecordView): string | null => {
+  const oc = r.offChain;
+  if (!oc) return null;
+  if (r.recordType === 'ASSIGNMENT_RESPONSE') return (r.version > 1 ? oc.responseReason : oc.reason) ?? '';
+  return oc.notes ?? '';
+};
+
 function CorrectionModal({ record, submissionId, onClose }: { record: FormalRecordView; submissionId: string; onClose: () => void }) {
-  const [vals, setVals] = useState<Record<string, string | boolean>>(() => {
-    const o: Record<string, string | boolean> = {};
-    for (const [k, v] of Object.entries(record.payload ?? {})) o[k] = typeof v === 'boolean' ? v : v !== null && typeof v === 'object' ? JSON.stringify(v, null, 2) : v === null ? '' : String(v);
-    return o;
-  });
+  const type = record.recordType;
+  const p = record.payload as Record<string, any>;
+  const locked = LOCKED_FIELDS[type] ?? [];
+  const textKnown = originalText(record) !== null;
+  const [text, setText] = useState(originalText(record) ?? '');
+  const [textTouched, setTextTouched] = useState(false);
+  const [rank, setRank] = useState<string>(String(p.rank ?? 'BAIK'));
+  const [decree, setDecree] = useState<string>(String(p.decreeNumber ?? ''));
+  const [validFrom, setValidFrom] = useState<string>(p.validFrom ?? '');
+  const [validUntil, setValidUntil] = useState<string>(p.validUntil ?? '');
+  const [response, setResponse] = useState<string>(String(p.response ?? 'ACCEPT'));
   const [reason, setReason] = useState('');
   const [evidenceRef, setEvidenceRef] = useState('');
-  const [expectedVersion, setExpectedVersion] = useState(record.version);
   const [errs, setErrs] = useState<Record<string, string>>({});
   const [formErr, setFormErr] = useState<string | null>(null);
 
   const mut = useAction((body: unknown) => api.post(`/formal-records/${record.id}/corrections`, body), { title: 'Koreksi catatan telah dikirim', submissionId, onDone: onClose });
-  const confirm = useConfirmed<{ payload: Record<string, unknown> }>({
-    run: (v) => mut.mutate({ payload: v.payload, reason: reason.trim(), evidenceRef: evidenceRef.trim(), expectedVersion }), pending: mut.isPending,
+  const confirm = useConfirmed<{ body: Record<string, unknown>; changes: [string, string][] }>({
+    run: (v) => mut.mutate(v.body), pending: mut.isPending,
     title: 'Kirim koreksi catatan resmi?', confirmLabel: 'Ya, kirim koreksi',
-    summary: () => [['Catatan', RECORD_LABEL[record.recordType] ?? record.recordType], ['Menjadi versi', expectedVersion + 1], ['Alasan koreksi', reason], ['Rujukan bukti', evidenceRef]],
+    summary: (v) => [['Catatan', RECORD_LABEL[type] ?? type], ['Menjadi versi', record.version + 1], ...v.changes, ['Alasan koreksi', reason], ['Rujukan bukti', evidenceRef]],
   });
+
+  const textLabel = type === 'ASSIGNMENT_RESPONSE' ? 'Alasan tanggapan' : type === 'FINAL_VERIFICATION' ? 'Catatan verifikasi akhir' : 'Catatan verifikasi kelengkapan';
+  const textRequired = (type === 'ADMIN_VERIFICATION' && p.result !== 'APPROVED') || (type === 'ASSIGNMENT_RESPONSE' && response === 'REJECT');
 
   const submit = () => {
     const e: Record<string, string> = {};
-    const payload: Record<string, unknown> = {};
-    for (const [k, orig] of Object.entries(record.payload ?? {})) {
-      const raw = vals[k];
-      if (typeof orig === 'boolean') payload[k] = Boolean(raw);
-      else if (typeof orig === 'number') { const n = Number(raw); if (raw === '' || Number.isNaN(n)) e[k] = 'Isi dengan angka'; else payload[k] = n; }
-      else if (orig !== null && typeof orig === 'object') { try { payload[k] = JSON.parse(String(raw)); } catch { e[k] = 'Format isian tidak valid'; } }
-      else if (orig === null) payload[k] = String(raw) === '' ? null : String(raw);
-      else payload[k] = String(raw);
+    const payload: Record<string, unknown> = { ...p };
+    const changes: [string, string][] = [];
+    const body: Record<string, unknown> = {};
+    if (type === 'DECISION') {
+      const none = rank === 'TIDAK_TERAKREDITASI';
+      if (decree.trim().length < 3) e.decree = 'Nomor Surat Keputusan wajib diisi';
+      if (!none) {
+        if (!validFrom) e.validFrom = 'Tanggal mulai berlaku wajib diisi';
+        if (!validUntil) e.validUntil = 'Tanggal berakhir wajib diisi';
+        if (validFrom && validUntil && validUntil <= validFrom) e.validUntil = 'Tanggal berakhir harus setelah tanggal mulai';
+      }
+      payload.rank = rank; payload.decreeNumber = decree.trim(); payload.validFrom = none ? null : validFrom; payload.validUntil = none ? null : validUntil;
+      if (rank !== p.rank) changes.push(['Peringkat', `${RANK_LABEL[p.rank as keyof typeof RANK_LABEL] ?? p.rank} menjadi ${RANK_LABEL[rank as keyof typeof RANK_LABEL] ?? rank}`]);
+      if (decree.trim() !== p.decreeNumber) changes.push(['Nomor Surat Keputusan', `${p.decreeNumber} menjadi ${decree.trim()}`]);
+      if ((payload.validFrom ?? null) !== (p.validFrom ?? null) || (payload.validUntil ?? null) !== (p.validUntil ?? null)) changes.push(['Masa berlaku', payload.validFrom ? `${fmtDate(String(payload.validFrom))} s.d. ${fmtDate(String(payload.validUntil))}` : 'Tidak ada']);
+    } else {
+      if (textRequired && text.trim().length < 3) e.text = type === 'ASSIGNMENT_RESPONSE' ? 'Alasan penolakan wajib diisi' : 'Catatan wajib diisi untuk hasil perbaikan atau penolakan';
+      if (type === 'ASSIGNMENT_RESPONSE') {
+        payload.response = response;
+        if (response !== p.response) changes.push(['Tanggapan', `${RESULT_LABEL[p.response] ?? p.response} menjadi ${RESULT_LABEL[response] ?? response}`]);
+      }
+      const orig = originalText(record) ?? '';
+      if (textTouched || !textKnown) {
+        if (type === 'ASSIGNMENT_RESPONSE') body.responseReason = text.trim(); else body.notes = text.trim();
+        if (text.trim() !== orig.trim()) changes.push([textLabel, text.trim() || '—']);
+      }
     }
-    const m = metaSchema.safeParse({ reason, evidenceRef, expectedVersion });
+    const m = metaSchema.safeParse({ reason, evidenceRef });
     if (!m.success) for (const i of m.error.issues) e[String(i.path[0])] = i.message;
+    if (!changes.length && !Object.keys(e).length) e.nochange = 'Belum ada isian yang diubah. Ubah sedikitnya satu isian sebelum mengirim koreksi.';
     setErrs(e);
-    if (Object.keys(e).length) { setFormErr('Periksa kembali isian yang ditandai.'); return; }
+    if (Object.keys(e).length) { setFormErr(e.nochange ?? 'Periksa kembali isian yang ditandai.'); return; }
     setFormErr(null);
-    confirm.ask({ payload });
+    confirm.ask({ body: { ...body, payload, reason: reason.trim(), evidenceRef: evidenceRef.trim(), expectedVersion: record.version }, changes });
   };
 
+  const none = rank === 'TIDAK_TERAKREDITASI';
   return (
-    <Modal open onClose={onClose} wide title={`Koreksi: ${RECORD_LABEL[record.recordType] ?? record.recordType}`}
+    <Modal open onClose={onClose} wide title={`Koreksi: ${RECORD_LABEL[type] ?? type}`}
       footer={<><Button variant="secondary" onClick={onClose}>Batal</Button><Button onClick={submit} loading={mut.isPending}>Lanjut ke konfirmasi</Button></>}>
       <div className="space-y-5">
         <Notice tone="chain" title="Koreksi menambah versi baru">Catatan asli tetap tersimpan dan dapat dilihat pada Riwayat versi. Sebutkan alasan dan rujukan bukti yang dapat diperiksa.</Notice>
         <FormError message={formErr} />
         <fieldset className="space-y-3">
           <legend className="mb-2 text-[15px] font-medium">1. Ubah isi catatan</legend>
-          {Object.entries(record.payload ?? {}).map(([k, orig]) => {
-            const complex = orig !== null && typeof orig === 'object';
-            return (
-              <div key={k}>
-                <Field label={fieldLabel(k)} error={errs[k]} hint={LOCKED.has(k) ? 'Tidak dapat diubah.' : undefined}>
-                  {(p) => typeof orig === 'boolean'
-                    ? <input {...p} type="checkbox" checked={Boolean(vals[k])} onChange={(e) => setVals({ ...vals, [k]: e.target.checked })} className="h-5 w-5" />
-                    : complex
-                      ? <Textarea {...p} rows={5} className="font-mono text-xs" value={String(vals[k])} onChange={(e) => setVals({ ...vals, [k]: e.target.value })} />
-                      : <Input {...p} type={typeof orig === 'number' ? 'number' : 'text'} step="any" disabled={LOCKED.has(k)} value={String(vals[k])} onChange={(e) => setVals({ ...vals, [k]: e.target.value })} />}
-                </Field>
-              </div>
-            );
-          })}
+          {locked.length > 0 && (
+            <dl className="rounded-lg bg-slate-50 p-3 text-sm">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-faint">Tidak dapat diubah</p>
+              {locked.filter((k) => k in p).map((k) => <div key={k} className="grid gap-x-3 py-0.5 sm:grid-cols-[minmax(0,30%)_minmax(0,1fr)]"><dt className="text-muted">{fieldLabel(k)}</dt><dd className="text-ink">{lockedText(k, p[k])}</dd></div>)}
+            </dl>
+          )}
+          {type === 'DECISION' && (
+            <>
+              <Field label="Peringkat" required>{(f) => <Select {...f} value={rank} onChange={(e) => setRank(e.target.value)}>{ACCREDITATION_RANKS.map((r) => <option key={r} value={r}>{RANK_LABEL[r]}</option>)}</Select>}</Field>
+              <Field label="Nomor Surat Keputusan" required error={errs.decree}>{(f) => <Input {...f} value={decree} onChange={(e) => setDecree(e.target.value)} />}</Field>
+              <Field label="Berlaku sejak" required={!none} error={errs.validFrom}>{(f) => <Input {...f} type="date" disabled={none} value={none ? '' : validFrom} onChange={(e) => setValidFrom(e.target.value)} />}</Field>
+              <Field label="Berlaku sampai" required={!none} error={errs.validUntil}>{(f) => <Input {...f} type="date" disabled={none} value={none ? '' : validUntil} onChange={(e) => setValidUntil(e.target.value)} />}</Field>
+            </>
+          )}
+          {type === 'ASSIGNMENT_RESPONSE' && (
+            <Field label="Tanggapan" hint="Tanggapan hanya dapat diubah selama penawaran masih menunggu tanggapan; sesudahnya hanya alasan yang dapat dikoreksi.">
+              {(f) => <Select {...f} value={response} onChange={(e) => setResponse(e.target.value)}><option value="ACCEPT">Menerima</option><option value="REJECT">Menolak</option></Select>}
+            </Field>
+          )}
+          {type !== 'DECISION' && (
+            <Field label={textLabel} required={textRequired} error={errs.text} hint={!textKnown ? 'Teks aslinya tidak tersedia bagi Bapak/Ibu. Isi teks yang benar; teks lama akan digantikan.' : 'Teks diubah di sini; sidik jari (hash) dihitung otomatis oleh sistem.'}>
+              {(f) => <Textarea {...f} rows={4} value={text} onChange={(e) => { setText(e.target.value); setTextTouched(true); }} />}
+            </Field>
+          )}
         </fieldset>
         <div className="space-y-4">
           <h3 className="text-[15px] font-medium">2. Alasan dan bukti</h3>
-          <Field label="Alasan koreksi" required error={errs.reason}>{(p) => <Textarea {...p} value={reason} onChange={(e) => setReason(e.target.value)} />}</Field>
-          <Field label="Rujukan bukti" required error={errs.evidenceRef} hint="Misalnya nomor surat, tautan, atau nama dokumen pendukung.">{(p) => <Input {...p} value={evidenceRef} onChange={(e) => setEvidenceRef(e.target.value)} />}</Field>
-          <Field label="Versi catatan yang dikoreksi" error={errs.expectedVersion} hint="Terisi otomatis. Ubah hanya bila diminta administrator.">{(p) => <Input {...p} type="number" min={1} value={expectedVersion} onChange={(e) => setExpectedVersion(Number(e.target.value))} />}</Field>
+          <Field label="Alasan koreksi" required error={errs.reason}>{(f) => <Textarea {...f} value={reason} onChange={(e) => setReason(e.target.value)} />}</Field>
+          <Field label="Rujukan bukti" required error={errs.evidenceRef} hint="Misalnya nomor surat, tautan, atau nama dokumen pendukung.">{(f) => <Input {...f} value={evidenceRef} onChange={(e) => setEvidenceRef(e.target.value)} />}</Field>
+          <p className="text-sm text-muted">Koreksi ini akan menjadi versi {record.version + 1} dari catatan ini. Nomor versi diisi otomatis oleh sistem.</p>
         </div>
       </div>
       {confirm.dialog}

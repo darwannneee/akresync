@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle2, Hourglass, Link2, Save } from 'lucide-react';
 import type { SubmissionDetail, User } from '../../api/types';
-import { Badge, Button, Modal } from '../../components/ui';
+import { Badge, Button, ButtonLink, Modal } from '../../components/ui';
 import { nextActions, type ActionKey } from '../../lib/workflow';
 import { ActionForm } from './ActionForm';
 import type { DetailTab } from './types';
@@ -33,7 +33,7 @@ export function NextStepCard({ s, user, goTab }: { s: SubmissionDetail; user: Us
               <span className="text-[15px] font-semibold text-ink">{a.title}</span>
               <Badge tone={a.storage === 'C' ? 'chain' : 'neutral'} icon={a.storage === 'C' ? <Link2 size={12} aria-hidden /> : <Save size={12} aria-hidden />}>{a.storage === 'C' ? 'Dicatat permanen' : 'Tersimpan dengan jejak audit'}</Badge>
             </div>
-            <Button onClick={() => (a.key === 'ak_correction' ? goTab('catatan') : setOpenKey(a.key))}>{a.key === 'ak_correction' ? 'Buka Catatan Resmi' : 'Kerjakan'}</Button>
+            {a.to ? <ButtonLink to={a.to(s.id)}>{a.button}</ButtonLink> : <Button onClick={() => setOpenKey(a.key)}>Kerjakan</Button>}
           </li>
         ))}
       </ul>

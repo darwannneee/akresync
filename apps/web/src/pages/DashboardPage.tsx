@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Plus, UserCheck } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { Badge, Button, Card, DataTable, EmptyState, FormError, Notice, PageHeader, Select, Skeleton } from '../components/ui';
+import { Badge, ButtonLink, Card, DataTable, EmptyState, FormError, Notice, PageHeader, Select, Skeleton } from '../components/ui';
 import { ActivityCard, AiCard, IntegrityCard, KpiRow, RanksCard, StagesCard, TrendCard, UppsProgressCard } from '../features/dashboard/panels';
 import { useDashboardStats } from '../features/common/queries';
 import { useTaskQueue } from '../features/common/useTasks';
 import { StagePill } from '../features/common/StagePill';
 import { errorMessage } from '../api/client';
 import { usePendingRegistrationCount } from '../features/sekretariat/uppsRegistrations';
-import { fmtDateTime, fmtNumber } from '../lib/labels';
+import { fmtDateTime, fmtNumber, shortId } from '../lib/labels';
 import { currentIndex, holderLabel } from '../lib/workflow';
 import type { SubmissionSummary } from '../api/types';
 import type { AppRole } from '@akreditasi/shared';
@@ -38,17 +38,17 @@ export function DashboardPage() {
   const filtered = useMemo(() => rows.filter((s) => stage === '' || String(currentIndex(s)) === stage), [rows, stage]);
   if (!user) return null;
   const detail = (s: SubmissionSummary) => `/pengajuan/${s.id}`;
-  const prog = (s: SubmissionSummary) => <div><div className="font-medium text-ink">{s.programName ?? s.id.slice(0, 8)}{s.programLevel ? ` (${s.programLevel})` : ''}</div><div className="text-muted">{s.institutionName}</div></div>;
+  const prog = (s: SubmissionSummary) => <div><div className="font-medium text-ink">{s.programName ?? shortId(s.id)}{s.programLevel ? ` (${s.programLevel})` : ''}</div><div className="text-muted">{s.institutionName}</div><div className="mt-0.5 text-xs text-faint">Nomor pengajuan <span className="font-mono" title={s.id}>{shortId(s.id)}</span></div></div>;
   return (
     <div>
       <PageHeader title={TITLE[user.role]} crumbs={[{ label: 'Dasbor' }]}
-        actions={user.role === 'upps' ? <Link to="/upps/baru"><Button icon={<Plus size={15} />}>Ajukan Akreditasi Baru</Button></Link> : undefined} />
+        actions={user.role === 'upps' ? <ButtonLink to="/upps/baru" icon={<Plus size={15} />}>Ajukan Akreditasi Baru</ButtonLink> : undefined} />
       {query.isError && <div className="mb-4"><FormError message={errorMessage(query.error)} /></div>}
       {user.role === 'sek_adm' && (
         <Notice tone={pendingRegs ? 'warn' : 'info'} className="mb-4">
           <span className="flex flex-wrap items-center justify-between gap-2">
             <span>{pendingRegs ? `${pendingRegs} pendaftaran akun UPPS menunggu verifikasi Bapak/Ibu.` : 'Tidak ada pendaftaran akun UPPS yang menunggu verifikasi.'}</span>
-            <Link to="/sekretariat/administrasi/akun-upps"><Button size="sm" variant={pendingRegs ? 'primary' : 'secondary'} icon={<UserCheck size={14} />}>Verifikasi Akun UPPS</Button></Link>
+            <ButtonLink to="/sekretariat/administrasi/akun-upps" size="sm" variant={pendingRegs ? 'primary' : 'secondary'} icon={<UserCheck size={14} />}>Verifikasi Akun UPPS</ButtonLink>
           </span>
         </Notice>
       )}
@@ -60,13 +60,13 @@ export function DashboardPage() {
           {loading && !rows.length ? <div className="space-y-2"><Skeleton className="h-10" /><Skeleton className="h-10" /></div>
             : tasks.length ? (
               <DataTable toolbar rows={tasks} rowKey={(t) => `${t.submission.id}-${t.action.key}`} caption="Tugas saya" pageSize={10}
-                search={(t) => `${t.action.title} ${t.submission.programName ?? ''} ${t.submission.institutionName ?? ''}`}
+                search={(t) => `${t.action.title} ${t.submission.programName ?? ''} ${t.submission.institutionName ?? ''} ${shortId(t.submission.id)}`}
                 columns={[
                   { key: 't', header: 'Tugas', primary: true, cell: (t) => <span className="font-medium text-ink">{t.action.title}</span> },
                   { key: 'p', header: 'Program studi', cell: (t) => prog(t.submission) },
                   { key: 's', header: 'Posisi', cell: (t) => <StagePill stage={t.submission.stage} /> },
                   { key: 'u', header: 'Diperbarui', cell: (t) => <span className="whitespace-nowrap">{fmtDateTime(t.submission.updatedAt)}</span> },
-                  { key: 'a', header: 'Aksi', cell: (t) => <Link to={t.action.to?.(t.submission.id) ?? detail(t.submission)}><Button size="sm" icon={<ArrowRight size={14} />}>{t.action.button}</Button></Link> },
+                  { key: 'a', header: 'Aksi', cell: (t) => <ButtonLink size="sm" to={t.action.to?.(t.submission.id) ?? detail(t.submission)} icon={<ArrowRight size={14} />}>{t.action.button}</ButtonLink> },
                 ]} />
             ) : <EmptyState icon={<CheckCircle2 size={24} />} title="Tidak ada tugas saat ini">Seluruh tugas Bapak/Ibu telah selesai. Daftar terisi otomatis bila ada pengajuan yang memerlukan tindakan.</EmptyState>}
         </Card>
@@ -84,7 +84,7 @@ export function DashboardPage() {
         <Card title="Daftar Pengajuan" actions={<Badge tone="neutral">{rows.length} pengajuan</Badge>}>
           {loading && !rows.length ? <Skeleton className="h-32" /> : (
             <DataTable toolbar rows={filtered} rowKey={(s) => s.id} caption="Daftar pengajuan" searchValue={text} onSearchChange={setText}
-              search={(s) => `${s.programName ?? ''} ${s.institutionName ?? ''} ${s.id}`}
+              search={(s) => `${s.programName ?? ''} ${s.institutionName ?? ''} ${s.id} ${shortId(s.id)}`}
               toolbarExtra={<label className="flex min-w-0 max-w-full items-center gap-2 text-muted">Tahap<Select aria-label="Saring menurut tahap" value={stage} onChange={(e) => setStage(e.target.value)} className="!w-auto !min-h-[40px] min-w-0 max-w-[13rem] !py-1 sm:max-w-none">{STAGE_FILTERS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}</Select></label>}
               emptyText="Tidak ada pengajuan yang sesuai. Ubah kata kunci atau pilih Semua tahap."
               columns={[
@@ -93,7 +93,7 @@ export function DashboardPage() {
                 { key: 'h', header: 'Sedang ditangani', cell: (s) => <Badge tone="neutral">{holderLabel(s)}</Badge> },
                 ...(filtered.some((x) => x.aiScore) ? [{ key: 'ai', header: 'Skor AI sementara', align: 'right' as const, cell: (x: SubmissionSummary) => x.aiScore ? <div title="Hasil analisis AI (pendukung, bukan nilai resmi)"><b className="tabular-nums">{fmtNumber(x.aiScore.totals.total)}</b><div className="text-xs text-muted">bukan nilai resmi</div></div> : <span className="text-faint">—</span> }] : []),
                 { key: 'u', header: 'Diperbarui', cell: (s) => <span className="whitespace-nowrap">{fmtDateTime(s.updatedAt)}</span> },
-                { key: 'o', header: 'Aksi', cell: (s) => <Link to={detail(s)}><Button variant="secondary" size="sm">Detail</Button></Link> },
+                { key: 'o', header: 'Aksi', cell: (s) => <ButtonLink variant="secondary" size="sm" to={detail(s)}>Detail</ButtonLink> },
               ]} />
           )}
         </Card>

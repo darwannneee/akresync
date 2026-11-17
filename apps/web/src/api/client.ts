@@ -11,7 +11,7 @@ export class ApiRequestError extends Error {
 let accessToken: string | null = null;
 let onAuthLost: (() => void) | null = null;
 export const getAccessToken = () => accessToken;
-export const setAccessToken = (t: string | null) => { accessToken = t; };
+export const setAccessToken = (t: string | null) => { accessToken = t; if (!t) clearPendingKeys(); };
 export const setAuthLostHandler = (fn: (() => void) | null) => { onAuthLost = fn; };
 
 export function uuid(): string {
@@ -64,14 +64,42 @@ export interface RequestOptions {
   form?: FormData;
   query?: Record<string, string | number | undefined>;
   noAuthRetry?: boolean;
+  /** Kunci idempotensi tindakan ini; dipakai ulang pada percobaan ulang tindakan yang sama. */
+  idempotencyKey?: string;
 }
+
+/**
+ * Kunci idempotensi per tindakan: satu kunci untuk satu isi permintaan yang sama selama belum ada hasil pasti.
+ * Percobaan ulang setelah galat jaringan, galat server (5xx), atau bentrok sementara memakai kunci yang sama,
+ * sehingga server dapat mengembalikan hasil sebelumnya alih-alih mencatat dua kali. Kunci dilepas setelah sukses atau
+ * penolakan pasti (4xx), dan kedaluwarsa setelah 10 menit.
+ */
+const KEY_TTL_MS = 10 * 60 * 1000;
+const pendingKeys = new Map<string, { key: string; at: number }>();
+function fingerprint(method: string, path: string, opts: RequestOptions): string {
+  let body = '';
+  if (opts.form) body = [...opts.form.entries()].map(([k, v]) => (typeof v === 'string' ? `${k}=${v}` : `${k}:${v.name}:${v.size}:${v.lastModified}`)).join('&');
+  else if (opts.body !== undefined) body = JSON.stringify(opts.body);
+  return `${method} ${path} ${body}`;
+}
+function keyFor(fp: string): string {
+  const now = Date.now();
+  for (const [k, v] of pendingKeys) if (now - v.at > KEY_TTL_MS) pendingKeys.delete(k);
+  const hit = pendingKeys.get(fp);
+  if (hit) return hit.key;
+  const key = uuid();
+  pendingKeys.set(fp, { key, at: now });
+  return key;
+}
+const keepKey = (status: number) => status === 0 || status >= 500 || status === 408 || status === 409 || status === 429;
+export function clearPendingKeys(): void { pendingKeys.clear(); }
 
 async function raw(method: string, path: string, opts: RequestOptions, retried: boolean): Promise<Response> {
   const url = new URL(`${API_URL}${path}`);
   for (const [k, v] of Object.entries(opts.query ?? {})) if (v !== undefined && v !== '') url.searchParams.set(k, String(v));
   const headers: Record<string, string> = {};
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-  if (method === 'POST' || method === 'PUT') headers['Idempotency-Key'] = uuid();
+  if (method === 'POST' || method === 'PUT') headers['Idempotency-Key'] = opts.idempotencyKey ?? uuid();
   let body: BodyInit | undefined;
   if (opts.form) body = opts.form;
   else if (opts.body !== undefined) {
@@ -91,9 +119,19 @@ async function raw(method: string, path: string, opts: RequestOptions, retried: 
   return res;
 }
 
+/** Pesan cadangan bila server tidak mengirim pesan yang dapat dibaca; kode teknis tetap tersedia pada `ApiRequestError.code`. */
+const STATUS_MESSAGE: Record<number, string> = {
+  401: 'Sesi Bapak/Ibu telah berakhir. Silakan masuk kembali.',
+  403: 'Bapak/Ibu tidak berwenang melakukan tindakan ini.',
+  404: 'Data yang diminta tidak ditemukan.',
+  413: 'Ukuran berkas terlalu besar.',
+  429: 'Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.',
+  500: 'Terjadi gangguan pada server. Silakan coba lagi sebentar lagi.',
+};
+
 async function fail(res: Response): Promise<never> {
   let code = 'HTTP_' + res.status;
-  let message = `Permintaan gagal (${res.status}).`;
+  let message = STATUS_MESSAGE[res.status] ?? (res.status >= 500 ? STATUS_MESSAGE[500]! : `Permintaan belum berhasil (kode ${res.status}). Coba lagi.`);
   let details: unknown;
   try {
     const j = (await res.json()) as Partial<ApiError>;
@@ -103,7 +141,18 @@ async function fail(res: Response): Promise<never> {
 }
 
 export async function request<T>(method: string, path: string, opts: RequestOptions = {}): Promise<ApiEnvelope<T>> {
-  const res = await raw(method, path, opts, false);
+  const mutating = method === 'POST' || method === 'PUT';
+  const fp = mutating ? fingerprint(method, path, opts) : '';
+  const withKey = mutating ? { ...opts, idempotencyKey: keyFor(fp) } : opts;
+  let res: Response;
+  try {
+    res = await raw(method, path, withKey, false);
+  } catch (e) {
+    // Galat jaringan: kunci dipertahankan agar klik ulang tidak membuat catatan ganda.
+    if (e instanceof ApiRequestError && !keepKey(e.status)) pendingKeys.delete(fp);
+    throw e;
+  }
+  if (mutating && !keepKey(res.status)) pendingKeys.delete(fp);
   if (!res.ok) return fail(res);
   if (res.status === 204) return { data: undefined as T };
   const j = (await res.json()) as ApiEnvelope<T>;
@@ -117,7 +166,8 @@ export const api = {
   upload: <T>(path: string, form: FormData) => request<T>('POST', path, { form }),
 };
 
-export async function downloadFile(path: string, fallbackName: string): Promise<void> {
+/** Unduh berkas terautentikasi; mengembalikan header respons (mis. X-Chain-Verified pada sertifikat). */
+export async function downloadFile(path: string, fallbackName: string): Promise<Headers> {
   const res = await raw('GET', path, {}, false);
   if (!res.ok) return fail(res);
   const blob = await res.blob();
@@ -131,6 +181,7 @@ export async function downloadFile(path: string, fallbackName: string): Promise<
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+  return res.headers;
 }
 
 export const errorMessage = (e: unknown): string =>

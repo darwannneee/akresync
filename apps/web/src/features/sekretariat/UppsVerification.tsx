@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Download, Eye, XCircle } from 'lucide-react';
 import { api, downloadFile, errorMessage, fetchBlob } from '../../api/client';
-import { Badge, Button, Card, ConfirmDialog, DataTable, Field, FormError, InfoTable, Modal, Notice, PageHeader, Skeleton, Tabs, Textarea, type Tone } from '../../components/ui';
+import { Badge, Button, ButtonLink, Card, ConfirmDialog, DataTable, Field, FormError, InfoTable, Modal, Notice, PageHeader, Skeleton, Tabs, Textarea, type Tone } from '../../components/ui';
 import { useToast } from '../../components/Toast';
 import { fmtDateTime } from '../../lib/labels';
 import { REG_STATUS_LABEL, useUppsRegistration, useUppsRegistrations, type RegFile, type RegStatus, type RegSummary } from './uppsRegistrations';
@@ -44,7 +44,7 @@ export function UppsVerificationList() {
                   { key: 'n', header: 'Prodi', align: 'right', cell: (r) => r.programCount },
                   { key: 's', header: 'Status', cell: (r) => <RegStatusBadge status={r.status} /> },
                   { key: 'd', header: 'Didaftarkan', cell: (r) => <span className="whitespace-nowrap">{fmtDateTime(r.createdAt)}</span> },
-                  { key: 'a', header: 'Aksi', cell: (r) => <Link to={`/sekretariat/administrasi/akun-upps/${r.id}`}><Button size="sm" variant={r.status === 'pending_verification' ? 'primary' : 'secondary'}>{r.status === 'pending_verification' ? 'Proses' : 'Detail'}</Button></Link> },
+                  { key: 'a', header: 'Aksi', cell: (r) => <ButtonLink to={`/sekretariat/administrasi/akun-upps/${r.id}`} size="sm" variant={r.status === 'pending_verification' ? 'primary' : 'secondary'}>{r.status === 'pending_verification' ? 'Proses' : 'Detail'}</ButtonLink> },
                 ]} />}
         </div>
       </div>

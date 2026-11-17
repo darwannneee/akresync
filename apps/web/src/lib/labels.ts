@@ -67,6 +67,30 @@ export const AUDIT_KIND_LABEL: Record<string, string> = {
 export const AUDIT_STATUS_LABEL: Record<AuditStatus | 'saved', string> = {
   saved: 'Tersimpan', pending: 'Pencatatan tertunda', committed: 'Tercatat permanen', failed: 'Pencatatan gagal',
 };
+/** Fase pencatatan audit untuk pengguna: dibedakan dari status basis data (pending/committed/failed) dan jumlah percobaan. */
+export type AuditPhase = 'saved' | 'pending' | 'retrying' | 'committed' | 'failed';
+export const auditPhase = (e: { status?: string | null; attempts?: number | null }): AuditPhase =>
+  e.status === 'committed' ? 'committed' : e.status === 'failed' ? 'failed' : e.status === 'pending' ? ((e.attempts ?? 0) > 0 ? 'retrying' : 'pending') : 'saved';
+export const AUDIT_PHASE_LABEL: Record<AuditPhase, string> = {
+  saved: 'Tersimpan',
+  pending: 'Sedang dicatat',
+  retrying: 'Gagal sementara, dicoba ulang otomatis',
+  committed: 'Tercatat permanen',
+  failed: 'Gagal permanen, hubungi administrator',
+};
+/** Ringkasan kalimat untuk sekumpulan peristiwa audit. */
+export function auditSummaryText(n: { pending: number; retrying: number; failed: number }): string | null {
+  const out: string[] = [];
+  if (n.pending > 0) out.push(`${n.pending} jejak audit sedang dicatat.`);
+  if (n.retrying > 0) out.push(`${n.retrying} jejak audit gagal sementara dan dicoba ulang otomatis oleh sistem.`);
+  if (n.failed > 0) out.push(`${n.failed} jejak audit gagal dicatat secara permanen. Hubungi administrator.`);
+  return out.length ? out.join(' ') : null;
+}
+export const countAudit = (events: { status?: string | null; attempts?: number | null }[]) => {
+  const n = { pending: 0, retrying: 0, failed: 0, committed: 0 };
+  for (const e of events) { const p = auditPhase(e); if (p === 'pending') n.pending++; else if (p === 'retrying') n.retrying++; else if (p === 'failed') n.failed++; else if (p === 'committed') n.committed++; }
+  return n;
+};
 export const RECORD_STATUS_LABEL: Record<string, string> = { pending_chain: 'Menunggu konfirmasi', committed: 'Tercatat permanen', failed: 'Gagal dicatat' };
 
 /* ============ Hasil, peringkat, respons ============ */
@@ -95,6 +119,13 @@ export const PAYLOAD_FIELD_LABEL: Record<string, string> = {
   minutesCid: 'Berkas berita acara', minutesSha256: 'Sidik jari berita acara', alRecordKey: 'Catatan hasil AL', akRecordKeys: 'Catatan hasil AK',
   rank: 'Peringkat', decreeNumber: 'Nomor Surat Keputusan', validFrom: 'Berlaku sejak', validUntil: 'Berlaku sampai', finalVerificationKey: 'Catatan verifikasi akhir',
 };
+
+/** Daftar baku: "A", "A dan B", "A, B, dan C". */
+export function joinNames(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? '';
+  if (items.length === 2) return `${items[0]} dan ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, dan ${items[items.length - 1]}`;
+}
 
 /* ============ Format ============ */
 const TZ = 'Asia/Jakarta';
@@ -145,6 +176,14 @@ export function fmtRelative(s?: string | number | null): string {
   if (abs < 86400) return rtf.format(Math.round(sec / 3600), 'hour');
   if (abs < 86400 * 30) return rtf.format(Math.round(sec / 86400), 'day');
   return fmtDate(s);
+}
+/** Durasi dalam hari; di bawah satu hari ditampilkan dalam jam atau menit. */
+export function fmtDays(days: number | null | undefined): string {
+  if (days === null || days === undefined || !Number.isFinite(days)) return '—';
+  if (days >= 1) return `${fmtNumber(days, 1)} hari`;
+  const minutes = days * 24 * 60;
+  if (minutes >= 60) return `${fmtNumber(minutes / 60, 1)} jam`;
+  return `${fmtNumber(Math.max(minutes, 1), 0)} menit`;
 }
 export const fmtDuration = (sec: number | null | undefined) =>
   sec === null || sec === undefined ? '—' : sec < 60 ? `${fmtNumber(sec, 1)} detik` : sec < 3600 ? `${fmtNumber(sec / 60, 1)} menit` : `${fmtNumber(sec / 3600, 1)} jam`;

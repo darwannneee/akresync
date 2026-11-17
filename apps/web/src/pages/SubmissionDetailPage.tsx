@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowDown, Printer } from 'lucide-react';
 import { ROLE_HOME } from '@akreditasi/shared';
 import { useAuth } from '../auth/AuthContext';
-import { Button, Card, EmptyState, FormError, PageHeader, PageSkeleton, Tabs } from '../components/ui';
+import { Button, ButtonLink, Card, EmptyState, FormError, PageHeader, PageSkeleton, Tabs, buttonClass } from '../components/ui';
 import { useSubmission, useSubmissionAudit } from '../features/common/queries';
 import { errorMessage } from '../api/client';
 import { fmtDateTime, shortId } from '../lib/labels';
@@ -28,18 +28,18 @@ export function SubmissionDetailPage() {
   const [tab, setTab] = useState<DetailTab>('ringkasan');
   if (!user) return null;
   if (q.isLoading) return <PageSkeleton />;
-  if (q.isError || !q.data) return <div className="space-y-4"><FormError message={errorMessage(q.error)} /><Link to={ROLE_HOME[user.role]}><Button variant="secondary" icon={<ArrowLeft size={16} />}>Kembali ke beranda</Button></Link></div>;
+  if (q.isError || !q.data) return <div className="space-y-4"><FormError message={errorMessage(q.error)} /><ButtonLink to={ROLE_HOME[user.role]} variant="secondary" icon={<ArrowLeft size={16} />}>Kembali ke beranda</ButtonLink></div>;
   const s = q.data;
   const audit = auditQ.data ?? s.audit ?? [];
   const hasAction = nextActions(s, user).actions.length > 0;
   const tabs: { id: DetailTab; label: string; count?: number }[] = [
     { id: 'ringkasan', label: 'Ringkasan' },
     { id: 'dokumen', label: 'Dokumen', count: s.documents?.length },
-    { id: 'penilaian', label: 'Penugasan dan Penilaian' },
+    { id: 'penilaian', label: 'Penugasan' },
     { id: 'jadwal', label: 'Jadwal AL', count: s.alSchedules?.length },
     { id: 'catatan', label: 'Catatan resmi', count: s.records?.length },
     { id: 'audit', label: 'Jejak audit', count: audit.length },
-    ...(user.role !== 'sek_keu' && s.aiProgress?.enabled ? [{ id: 'ai' as const, label: 'Analisis AI' }] : []),
+    ...(user.role !== 'sek_keu' ? [{ id: 'ai' as const, label: 'Analisis AI' }] : []),
     { id: 'aktivitas', label: 'Aktivitas' },
   ];
   const panel = (t: DetailTab, node: React.ReactNode) => <div role="tabpanel" id={`panel-${t}`} aria-labelledby={`tab-${t}`} className={t === tab ? 'block' : 'hidden print-block'}>{node}</div>;
@@ -50,7 +50,7 @@ export function SubmissionDetailPage() {
       <PageHeader title={name} crumbs={[{ label: 'Pengajuan', to: ROLE_HOME[user.role] }, { label: 'Detail' }]}
         description={<span className="flex flex-wrap items-center gap-x-3 gap-y-1.5"><span>{s.institutionName}</span><StagePill stage={s.stage} /></span>}
         actions={<>
-          {hasAction && <a href="#tindakan"><Button icon={<ArrowDown size={15} />}>Kerjakan tugas</Button></a>}
+          {hasAction && <a href="#tindakan" className={buttonClass()}><ArrowDown size={15} aria-hidden />Kerjakan tugas</a>}
           <Button variant="secondary" icon={<Printer size={15} />} onClick={() => window.print()}>Cetak</Button>
         </>} />
       <div className="space-y-6">
@@ -60,12 +60,12 @@ export function SubmissionDetailPage() {
           <div className="px-4 pt-1 sm:px-5"><Tabs label="Bagian pengajuan" tabs={tabs} value={tab} onChange={setTab} /></div>
           <div className="p-4 sm:p-5">
             {panel('ringkasan', <div className="space-y-6"><MiniStats s={s} audit={audit} user={user} /><Card title="Alur Akreditasi"><StageTracker d={s} audit={audit} /></Card><SummaryTab s={s} /><ProofCard s={s} audit={audit} /></div>)}
-            {panel('dokumen', <DocumentsPanel docs={s.documents ?? []} currentVersion={s.documentSetVersion} />)}
+            {panel('dokumen', <DocumentsPanel docs={s.documents ?? []} currentVersion={s.documentSetVersion} role={user.role} />)}
             {panel('penilaian', <AssignmentsTab s={s} />)}
             {panel('jadwal', <ScheduleTab s={s} />)}
             {panel('catatan', <RecordsTable submissionId={id} records={s.records ?? []} user={user} />)}
             {panel('audit', auditQ.isLoading ? <EmptyState title="Memuat jejak audit…" /> : <AuditTable events={audit} />)}
-            {s.aiProgress?.enabled && user.role !== 'sek_keu' && panel('ai', <AiTab s={s} user={user} />)}
+            {user.role !== 'sek_keu' && panel('ai', tab === 'ai' || !!s.aiProgress?.enabled ? <AiTab s={s} user={user} /> : null)}
             {panel('aktivitas', <ActivityTimeline s={s} audit={audit} />)}
           </div>
         </div>

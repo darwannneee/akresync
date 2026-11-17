@@ -1,5 +1,4 @@
 import type { ActionKey } from '../../lib/workflow';
-import { Button } from '../../components/ui';
 import type { ActionProps } from './types';
 import { ComposeSubmission, UploadProof, UppsOfferResponse, UppsResponse } from '../upps/UppsActions';
 import { AdminVerify, DecideSchedule, IssueCertificate, IssueInvoice, VerifyPayment } from '../sekretariat/SekretariatActions';
@@ -27,7 +26,6 @@ export function ActionForm({ k, ...p }: ActionProps & { k: ActionKey }) {
     case 'final_verify': return <FinalVerify {...p} />;
     case 'respond_offer': return <RespondOffer {...p} />;
     case 'ak_scoring': return <AkScoring {...p} />;
-    case 'ak_correction': return <Button onClick={() => p.goTab?.('catatan')}>Buka catatan resmi untuk melakukan koreksi</Button>;
     case 'al_assessment': return <AlAssessment {...p} />;
     case 'lead_response': return <LeadResponse {...p} />;
     case 'decision': return <DecisionForm {...p} />;

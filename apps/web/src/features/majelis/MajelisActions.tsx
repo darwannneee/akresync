@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ACCREDITATION_RANKS } from '@akreditasi/shared';
 import { api } from '../../api/client';
-import { Button, DL, Field, Input, ModalActions, StepSection } from '../../components/ui';
+import { Button, DL, Field, Input, ModalActions, Notice, StepSection } from '../../components/ui';
 import { RadioCards, useConfirmed } from '../common/forms';
 import { useAction } from '../common/useAction';
 import { RANK_LABEL, fmtDate, fmtNumber } from '../../lib/labels';
@@ -40,6 +40,7 @@ export function DecisionForm({ s }: ActionProps) {
   });
   return (
     <form id={fid} className="space-y-6" noValidate onSubmit={f.handleSubmit((v) => confirm.ask(v))}>
+      {s.finalVerification?.notes && <Notice tone="info" title="Catatan verifikasi akhir KEA"><span className="whitespace-pre-wrap">{s.finalVerification.notes}</span></Notice>}
       {results.length > 0 && (
         <StepSection n={1} title="Tinjau hasil penilaian" hint={`Skor total pada skala 0 sampai ${fmtNumber(MAX_TOTAL_SCORE)}.`}>
           <DL cols={3} items={results.map((a) => [`${a.phase === 'AK' ? 'Kecukupan' : 'Lapangan'} · ${a.assessorName ?? 'Asesor'}`, fmtNumber(a.totalScore)] as [string, string])} />

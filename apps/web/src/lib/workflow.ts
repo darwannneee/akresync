@@ -5,7 +5,7 @@
  */
 import type { AppRole, StorageClass } from '@akreditasi/shared';
 import type { AuditEventView, FormalRecordView, SubmissionDetail, SubmissionSummary, User } from '../api/types';
-import { AUDIT_KIND_LABEL, RECORD_LABEL, roleName } from './labels';
+import { AUDIT_KIND_LABEL, RECORD_LABEL, auditPhase, joinNames, roleName } from './labels';
 
 export type StepStatus = 'selesai' | 'aktif' | 'menunggu' | 'terkunci' | 'ditolak';
 export const STATUS_LABEL: Record<StepStatus, string> = {
@@ -53,6 +53,14 @@ const hasObjection = (d: Detail) => (d.responses ?? []).some((r) => r.responseTy
 const leadResolved = (d: Detail) => (d.responses ?? []).some((r) => r.responderRole === 'lead_assessor');
 const uppsResponded = (d: Detail) => (d.responses ?? []).some((r) => r.responderRole === 'upps');
 const uppsAccepted = (d: Detail) => (d.responses ?? []).some((r) => r.responderRole === 'upps' && r.responseType === 'accept');
+/** Penilaian AK asesor ini dikembalikan KEA dan belum diserahkan ulang (diserahkan sebelum waktu pengembalian). */
+export function needsRescore(d: Detail, a: { phase: string; status: string; submittedAt?: string | null }): boolean {
+  if (d.akStatus !== 'consistency_returned' || a.phase !== 'AK' || a.status !== 'submitted') return false;
+  const at = Date.parse(String(lastOffer(d)?.consistencyAt ?? ''));
+  const sub = Date.parse(String(a.submittedAt ?? ''));
+  if (Number.isNaN(at) || Number.isNaN(sub)) return true;
+  return sub <= at;
+}
 const rejectionPending = (d: Detail) => { const l = lastOffer(d); return l?.status === 'rejected' && !l.rejectionReviewedAt; };
 export const isPaymentRejected = (d: Detail) => d.payments?.[0]?.status === 'rejected' && ['invoice_issued', 'payment_proof_uploaded'].includes(d.stage);
 
@@ -115,9 +123,11 @@ export function buildWorkflow(d: Detail): MainStage[] {
     step('usul', 'Usulkan jadwal Asesmen Lapangan', 'kea', 'A', al === 'not_started' || al === 'rejected' ? 'aktif' : 'selesai', al === 'rejected' ? 'Usulan sebelumnya ditolak, usulkan ulang' : undefined),
     step('setuju-jadwal', 'Setujui jadwal Asesmen Lapangan', 'sek_adm', 'A', al === 'proposed' ? 'aktif' : al === 'approved' ? 'selesai' : 'menunggu'),
   ];
+  // Urutan mengikuti rancangan: isi skor, unggah berita acara, lalu serahkan (penyerahan mensyaratkan berita acara).
   const stage5: SubStep[] = [
+    step('nilai-al', 'Isi penilaian Asesmen Lapangan', 'asesor', 'A', 'aktif'),
     step('minutes', 'Unggah Berita Acara Asesmen Lapangan', 'asesor', 'A', hasMinutes(d) ? 'selesai' : 'aktif'),
-    step('nilai-al', 'Isi dan serahkan penilaian Asesmen Lapangan', 'asesor', 'C', hasMinutes(d) ? 'aktif' : 'menunggu'),
+    step('serahkan-al', 'Serahkan hasil Asesmen Lapangan', 'asesor', 'C', hasMinutes(d) ? 'aktif' : 'menunggu', hasMinutes(d) ? undefined : 'Menunggu Berita Acara diunggah'),
   ];
   const stage6: SubStep[] = [
     step('tanggap-upps', 'UPPS menyampaikan tanggapan atas hasil', 'upps', 'A', uppsAccepted(d) || (uppsResponded(d) && leadResolved(d)) ? 'selesai' : uppsResponded(d) ? 'selesai' : 'aktif'),
@@ -155,7 +165,7 @@ export type ActionKey =
   | 'admin_verify' | 'decide_schedule' | 'issue_certificate'
   | 'issue_invoice' | 'verify_payment'
   | 'offer' | 'review_rejection' | 'reoffer' | 'consistency' | 'propose_schedule' | 'final_verify'
-  | 'respond_offer' | 'ak_scoring' | 'ak_correction' | 'al_assessment' | 'lead_response'
+  | 'respond_offer' | 'ak_scoring' | 'al_assessment' | 'lead_response'
   | 'decision';
 
 export interface NextAction {
@@ -220,13 +230,17 @@ export function dutiesFor(d: Detail, role: AppRole, uid?: string): NextAction[] 
       const myResp = last ? (uid === undefined ? (last.assessor1Response && last.assessor2Response ? 'ok' : null) : last.assessor1Id === uid ? last.assessor1Response : last.assessor2Response) : null;
       const myAk = (d.assessments ?? []).find((a) => a.phase === 'AK' && (uid === undefined || a.assessorId === uid));
       const akSubmittedCount = (d.assessments ?? []).filter((a) => a.phase === 'AK' && a.status === 'submitted').length;
-      const akOpen = uid === undefined ? akSubmittedCount < 2 : myAk?.status !== 'submitted';
+      const returned = d.akStatus === 'consistency_returned';
+      const akList = (d.assessments ?? []).filter((a) => a.phase === 'AK');
+      const akOpen = returned
+        ? (uid === undefined ? akList.some((a) => needsRescore(d, a)) : !myAk || myAk.status !== 'submitted' || needsRescore(d, myAk))
+        : (uid === undefined ? akSubmittedCount < 2 : myAk?.status !== 'submitted');
       if (inPair && last?.status === 'offered' && !myResp) out.push(A('respond_offer', 'asesor', 'Tanggapi penawaran penugasan', 'Tanggapi penugasan', 'menanggapi penawaran penugasan', 'C', `KEA menugaskan Bapak/Ibu sebagai asesor. Terima atau tolak disertai alasan. ${WHY_C}`));
-      if (inPair && ['effective', 'ak_partial', 'consistency_returned'].includes(d.akStatus)) {
-        if (akOpen) out.push(A('ak_scoring', 'asesor', d.akStatus === 'consistency_returned' ? 'Nilai ulang Asesmen Kecukupan' : 'Isi penilaian Asesmen Kecukupan', myAk ? 'Lanjutkan penilaian' : 'Mulai penilaian', 'menyerahkan penilaian Asesmen Kecukupan', 'C', `Isi skor setiap butir pada sembilan kriteria, lalu serahkan hasil. ${WHY_C}`, (id) => `/asesor/pengajuan/${id}/penilaian/AK`));
-        else if (d.akStatus === 'consistency_returned') out.push(A('ak_correction', 'asesor', 'Perbaiki hasil Asesmen Kecukupan melalui koreksi', 'Buka catatan resmi', 'memperbaiki hasil AK', 'C', `KEA mengembalikan hasil. Koreksi dilakukan pada Catatan resmi dengan menyebutkan alasan. ${WHY_C}`));
+      if (inPair && ['effective', 'ak_partial', 'consistency_returned'].includes(d.akStatus) && akOpen) {
+        out.push(A('ak_scoring', 'asesor', returned ? 'Nilai ulang Asesmen Kecukupan' : 'Isi penilaian Asesmen Kecukupan', returned ? 'Nilai ulang' : myAk ? 'Lanjutkan penilaian' : 'Mulai penilaian', 'menyerahkan penilaian Asesmen Kecukupan', 'C',
+          returned ? `KEA mengembalikan hasil untuk dinilai ulang. Baca catatan KEA, perbaiki skor pada halaman penilaian, lalu serahkan ulang. ${WHY_C}` : `Isi skor setiap butir pada seluruh kriteria, lalu serahkan hasil. ${WHY_C}`, (id) => `/asesor/pengajuan/${id}/penilaian/AK`));
       }
-      if (isLead && inBranch(d) && branchesDone(d)) out.push(A('al_assessment', 'asesor', 'Laksanakan Asesmen Lapangan: unggah berita acara dan serahkan penilaian', 'Buka langkah asesmen lapangan', 'menyerahkan hasil Asesmen Lapangan', 'C', `Unggah berita acara terlebih dahulu, kemudian isi dan serahkan penilaian. ${WHY_C}`));
+      if (isLead && inBranch(d) && branchesDone(d)) out.push(A('al_assessment', 'asesor', 'Laksanakan Asesmen Lapangan: isi penilaian, unggah berita acara, lalu serahkan', 'Buka langkah asesmen lapangan', 'menyerahkan hasil Asesmen Lapangan', 'C', `Isi skor penilaian, unggah berita acara, kemudian serahkan hasil. Penyerahan mensyaratkan berita acara. ${WHY_C}`));
       if (isLead && hasObjection(d) && !leadResolved(d)) out.push(A('lead_response', 'asesor', 'Tanggapi keberatan UPPS', 'Tanggapi keberatan', 'menanggapi keberatan UPPS', 'A', `UPPS mengajukan keberatan atas hasil asesmen. Sampaikan respons ketua asesor. ${WHY_A}`));
       break;
     }
@@ -247,7 +261,7 @@ export const holderLabel = (d: Detail): string => {
   if (d.stage === 'released') return 'Proses selesai';
   if (d.stage === 'admin_rejected') return 'Proses dihentikan';
   const h = holders(d);
-  return h.length ? h.map((r) => roleName(r)).join(' dan ') : 'Menunggu pembaruan sistem';
+  return h.length ? joinNames(h.map((r) => roleName(r))) : 'Menunggu pembaruan sistem';
 };
 
 export interface NextResult {
@@ -267,23 +281,35 @@ const AUDIT_GATES: Record<string, { kinds: string[]; label: string }> = {
   al_assessment: { kinds: ['AKConsistencyApproved', 'ALScheduleApproved'], label: 'persetujuan konsistensi AK dan jadwal Asesmen Lapangan' },
   final_verify: { kinds: ['ResponsesCompleted'], label: 'penyelesaian tanggapan' },
 };
+/** Peristiwa audit terbaru berjenis `kind` pada rincian (seluruh peristiwa) atau ringkasan daftar (hanya peristiwa prasyarat). */
+function latestAudit(d: Detail, kind: string): { status?: string | null; attempts?: number | null } | undefined {
+  const list = d.audit ?? d.gateAudit ?? [];
+  const same = list.filter((e) => e.kind === kind);
+  if (!same.length) return undefined;
+  const committed = same.find((e) => e.status === 'committed');
+  return committed ?? same[same.length - 1];
+}
 function auditCommitted(d: Detail, kind: string): boolean {
-  return (d.audit ?? []).some((e) => e.kind === kind && e.status === 'committed');
+  return latestAudit(d, kind)?.status === 'committed';
 }
 
 export function nextActions(d: Detail, user: Pick<User, 'id' | 'role'>): NextResult {
-  const pendingGates: string[] = [];
+  const gates: { label: string; phase: ReturnType<typeof auditPhase> | 'none' }[] = [];
   const actions = dutiesFor(d, user.role, user.id).filter((a) => {
     const gate = AUDIT_GATES[a.key];
     if (!gate || gate.kinds.every((k) => auditCommitted(d, k))) return true;
-    pendingGates.push(gate.label);
+    const worst = gate.kinds.map((k) => latestAudit(d, k)).filter((e) => !!e && e.status !== 'committed').map((e) => auditPhase(e!));
+    gates.push({ label: gate.label, phase: worst.includes('failed') ? 'failed' : worst.includes('retrying') ? 'retrying' : worst.length ? 'pending' : 'none' });
     return false;
   });
   const h = holders(d);
   const finished = d.stage === 'released' || d.stage === 'admin_rejected';
   let waiting: string | null = null;
-  if (!actions.length && pendingGates.length) {
-    waiting = `Bukti ${pendingGates.join(' serta ')} sedang dicatat permanen. Langkah Bapak/Ibu akan tersedia otomatis dalam beberapa detik.`;
+  if (!actions.length && gates.length) {
+    const label = gates.map((g) => g.label).join(' serta ');
+    if (gates.some((g) => g.phase === 'failed')) waiting = `Bukti ${label} gagal dicatat permanen. Langkah Bapak/Ibu belum dapat dilanjutkan; hubungi administrator.`;
+    else if (gates.some((g) => g.phase === 'retrying')) waiting = `Pencatatan permanen bukti ${label} sempat gagal dan sedang dicoba ulang otomatis oleh sistem. Langkah Bapak/Ibu akan tersedia setelah berhasil.`;
+    else waiting = `Bukti ${label} sedang dicatat permanen. Langkah Bapak/Ibu akan tersedia otomatis dalam beberapa detik.`;
   } else if (!actions.length) {
     if (d.stage === 'released') waiting = 'Seluruh proses akreditasi telah selesai. Tidak ada langkah lanjutan.';
     else if (d.stage === 'admin_rejected') waiting = 'Pengajuan ditolak pada verifikasi administrasi. Tidak ada langkah lanjutan pada pengajuan ini.';

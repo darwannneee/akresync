@@ -3,10 +3,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../api/client';
+import { Download } from 'lucide-react';
 import { Button, DL, Field, ModalActions, Notice, StepSection, Textarea } from '../../components/ui';
 import { RadioCards, SingleUpload, useConfirmed } from '../common/forms';
-import { useAction } from '../common/useAction';
-import { DOC_TYPE_LABEL, PAYMENT_STATUS_LABEL, fmtBytes, fmtRupiah } from '../../lib/labels';
+import { useAction, useDownload } from '../common/useAction';
+import { DOC_TYPE_LABEL, PAYMENT_STATUS_LABEL, fmtBytes, fmtDateTime, fmtNumber, fmtRupiah } from '../../lib/labels';
 import { AiProgressCard } from '../ai/ProgressCard';
 import type { ActionProps } from '../submissions/types';
 
@@ -37,7 +38,13 @@ export function ComposeSubmission({ s }: ActionProps) {
   };
   return (
     <div className="space-y-6">
-      {rev && <Notice tone="warn" title="Sekretariat meminta perbaikan">Lihat catatan pada tab Catatan resmi, unggah dokumen yang diperbaiki (LED dan LKPS wajib ada pada versi baru), kemudian kirim ulang.</Notice>}
+      {rev && (
+        <Notice tone="warn" title="Sekretariat meminta perbaikan">
+          {s.adminVerification?.notes
+            ? <><span className="block whitespace-pre-wrap">Catatan Sekretariat Administrasi: {s.adminVerification.notes}</span><span className="mt-1 block">Unggah dokumen yang diperbaiki (LED dan LKPS wajib ada pada versi baru), kemudian kirim ulang.</span></>
+            : 'Unggah dokumen yang diperbaiki (LED dan LKPS wajib ada pada versi baru), kemudian kirim ulang.'}
+        </Notice>
+      )}
       {slot(1, 'LED', 'Dokumen utama berisi evaluasi diri program studi.')}
       {slot(2, 'LKPS', 'Dokumen utama berisi data kinerja program studi.')}
       <AiProgressCard p={s.aiProgress} />
@@ -101,22 +108,37 @@ export function UppsOfferResponse({ s, user }: ActionProps) {
 
 export function UppsResponse({ s }: ActionProps) {
   const m = useAction((v: { type: 'accept' | 'objection'; body: string }) => api.post(`/submissions/${s.id}/responses`, v), { title: 'Tanggapan UPPS telah disampaikan', submissionId: s.id });
+  const download = useDownload();
   const [type, setType] = useState<'accept' | 'objection'>('accept');
   const [body, setBody] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const fid = useId();
-  const al = (s.assessments ?? []).filter((a) => a.phase === 'AL');
+  const al = (s.assessments ?? []).filter((a) => a.phase === 'AL' && a.status === 'submitted');
+  const minutes = (s.documents ?? []).filter((d) => d.docType === 'AL_MINUTES').slice(-1)[0];
+  const confirm = useConfirmed<{ type: 'accept' | 'objection'; body: string }>({
+    run: (v) => m.mutate(v), pending: m.isPending, title: 'Sampaikan tanggapan atas hasil asesmen?', confirmLabel: 'Ya, sampaikan tanggapan',
+    summary: (v) => [['Sikap UPPS', v.type === 'accept' ? 'Menerima hasil' : 'Mengajukan keberatan'], [v.type === 'accept' ? 'Catatan' : 'Uraian keberatan', v.body]],
+  });
   return (
     <form id={fid} className="space-y-4" noValidate onSubmit={(e) => {
       e.preventDefault();
       if (type === 'objection' && body.trim().length < 5) { setErr('Uraikan keberatan Bapak/Ibu (minimal 5 huruf) agar dapat ditanggapi ketua asesor.'); return; }
-      setErr(null); m.mutate({ type, body: body.trim() || 'Menerima hasil asesmen.' });
+      setErr(null); confirm.ask({ type, body: body.trim() || 'Menerima hasil asesmen.' });
     }}>
-      {al.length > 0 && <DL items={al.map((a) => [a.assessorName ?? 'Ketua asesor', `Skor Asesmen Lapangan: ${a.totalScore ?? '—'}`] as [string, string])} />}
-      <RadioCards name="type" legend="Sikap UPPS atas hasil asesmen" value={type} onChange={(v) => { setType(v as 'accept' | 'objection'); setErr(null); }} options={[{ value: 'accept', label: 'Menerima hasil', hint: 'Proses dilanjutkan ke verifikasi akhir.' }, { value: 'objection', label: 'Mengajukan keberatan', hint: 'Ketua asesor akan menanggapi keberatan.' }]} />
-      <Field label={type === 'objection' ? 'Uraian keberatan' : 'Catatan'} required={type === 'objection'} hint={type === 'objection' ? 'Sebutkan butir atau temuan yang dikeberatkan beserta alasannya.' : 'Opsional.'} error={err ?? undefined}>{(p) => <Textarea {...p} value={body} onChange={(e) => setBody(e.target.value)} />}</Field>
+      <StepSection n={1} title="Hasil Asesmen Lapangan" hint="Skor total dan Berita Acara. Skor rinci per butir tidak ditampilkan kepada UPPS.">
+        {al.length > 0
+          ? <DL items={[...al.map((a) => [`Skor total oleh ${a.assessorName ?? 'ketua asesor'}`, <b key={a.id}>{fmtNumber(a.totalScore)}</b>] as [string, React.ReactNode]), ...(al[0]?.submittedAt ? [['Diserahkan', fmtDateTime(al[0].submittedAt)] as [string, React.ReactNode]] : [])]} />
+          : <p className="text-sm text-muted">Hasil Asesmen Lapangan belum dapat ditampilkan. Muat ulang halaman bila perlu.</p>}
+        {minutes && <div className="mt-3"><Button variant="secondary" size="sm" icon={<Download size={15} />} onClick={() => download(`/documents/${minutes.id}/download`, minutes.fileName)}>Unduh Berita Acara ({fmtBytes(minutes.sizeBytes)})</Button></div>}
+      </StepSection>
+      <StepSection n={2} title="Sampaikan tanggapan">
+        <div className="space-y-4">
+          <RadioCards name="type" legend="Sikap UPPS atas hasil asesmen" value={type} onChange={(v) => { setType(v as 'accept' | 'objection'); setErr(null); }} options={[{ value: 'accept', label: 'Menerima hasil', hint: 'Proses dilanjutkan ke verifikasi akhir.' }, { value: 'objection', label: 'Mengajukan keberatan', hint: 'Ketua asesor akan menanggapi keberatan.' }]} />
+          <Field label={type === 'objection' ? 'Uraian keberatan' : 'Catatan'} required={type === 'objection'} hint={type === 'objection' ? 'Sebutkan butir atau temuan yang dikeberatkan beserta alasannya.' : 'Opsional.'} error={err ?? undefined}>{(p) => <Textarea {...p} value={body} onChange={(e) => setBody(e.target.value)} />}</Field>
+        </div>
+      </StepSection>
       <ModalActions><Button type="submit" form={fid} loading={m.isPending}>Sampaikan Tanggapan</Button></ModalActions>
+      {confirm.dialog}
     </form>
   );
 }
-

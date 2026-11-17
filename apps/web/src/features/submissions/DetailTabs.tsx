@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { CalendarDays, Download, Link2, ScrollText, Users } from 'lucide-react';
 import { MAX_TOTAL_SCORE } from '@akreditasi/shared';
 import type { AuditEventView, SubmissionDetail } from '../../api/types';
@@ -7,7 +8,8 @@ import {
   fmtDateRange, fmtDateTime, fmtNumber, fmtRupiah, rankLabel, roleName,
 } from '../../lib/labels';
 import { recordTime } from '../../lib/workflow';
-import { useDownload } from '../common/useAction';
+import { useToast } from '../../components/Toast';
+import { downloadFile, errorMessage } from '../../api/client';
 import { AiProgressCard } from '../ai/ProgressCard';
 import { AiBanner, TotalsView } from '../ai/parts';
 
@@ -19,18 +21,41 @@ function plainChainError(raw: string): string {
   return /^FORBIDDEN/.test(raw) ? `Ditolak karena kewenangan: ${msg}` : sentence;
 }
 
+const sameDecision = (a: Record<string, unknown> | undefined, b: Record<string, unknown> | undefined) =>
+  !!a && !!b && ['rank', 'decreeNumber', 'totalScore', 'validFrom', 'validUntil'].every((k) => String(a[k] ?? '') === String(b[k] ?? ''));
+
+type CertCheck = 'true' | 'false' | 'outdated' | 'unavailable';
+
 export function DecisionSummary({ s }: { s: SubmissionDetail }) {
-  const download = useDownload();
-  const dec = s.records?.filter((r) => r.recordType === 'DECISION').slice(-1)[0];
+  const toast = useToast();
+  const [check, setCheck] = useState<CertCheck | null>(null);
+  const [busy, setBusy] = useState(false);
+  const decisions = (s.records ?? []).filter((r) => r.recordType === 'DECISION');
+  const dec = decisions.slice(-1)[0];
   const p = dec?.payload as { rank?: string; decreeNumber?: string; validFrom?: string | null; validUntil?: string | null; totalScore?: number } | undefined;
   if (!p && !s.certificate) return null;
+  // Sertifikat usang: keputusan dikoreksi setelah sertifikat terbit dan isinya berubah.
+  const certDecision = decisions.find((r) => r.id === s.certificate?.decisionRecordId);
+  const outdated = !!certDecision && !!dec && certDecision.id !== dec.id && !sameDecision(certDecision.payload, dec.payload);
+  const download = async () => {
+    setBusy(true);
+    try {
+      const h = await downloadFile(`/certificates/${s.certificate!.id}/download`, `sertifikat-${s.certificate!.certificateNo}.pdf`);
+      setCheck((h.get('x-chain-verified') as CertCheck | null) ?? 'unavailable');
+    } catch (e) { toast.error(errorMessage(e)); } finally { setBusy(false); }
+  };
   return (
     <Card title="Keputusan akreditasi" actions={<Badge tone="chain" icon={<Link2 size={13} />}>Tercatat permanen</Badge>}>
       {p && <DL items={[['Peringkat', <b key="r" className="text-xl text-navy-900">{rankLabel(p.rank)}</b>], ['Nomor Surat Keputusan', p.decreeNumber], ['Skor total', fmtNumber(p.totalScore)], ['Masa berlaku', p.validFrom ? fmtDateRange(p.validFrom, p.validUntil ?? undefined) : 'Tidak ada']]} />}
-      <div className="mt-4">
+      <div className="mt-4 space-y-3">
+        {outdated && <Notice tone="warn" title="Sertifikat perlu diterbitkan ulang">Keputusan akreditasi telah dikoreksi setelah sertifikat ini terbit, dan isinya berubah. Hubungi Sekretariat Administrasi untuk penerbitan ulang; sertifikat lama tidak lagi sesuai dengan keputusan terkini.</Notice>}
         {s.certificate
-          ? <Button icon={<Download size={16} />} onClick={() => download(`/certificates/${s.certificate!.id}/download`, `sertifikat-${s.certificate!.certificateNo}.pdf`)}>Unduh sertifikat ({s.certificate.certificateNo})</Button>
+          ? <Button icon={<Download size={16} />} loading={busy} onClick={() => void download()}>Unduh sertifikat ({s.certificate.certificateNo})</Button>
           : <Notice tone="info">Sertifikat belum diterbitkan oleh Sekretariat Administrasi.</Notice>}
+        {check === 'true' && <Notice tone="success" title="Sertifikat sesuai dengan keputusan di ledger">Isi sertifikat yang diunduh cocok dengan catatan penetapan yang tersimpan permanen.</Notice>}
+        {check === 'outdated' && <Notice tone="warn" title="Sertifikat tidak lagi sesuai dengan keputusan terkini">Keputusan telah dikoreksi setelah sertifikat terbit. Sertifikat perlu diterbitkan ulang oleh Sekretariat Administrasi.</Notice>}
+        {check === 'false' && <Notice tone="danger" title="Sertifikat tidak sesuai dengan catatan di ledger">Isi sertifikat berbeda dari catatan penetapan. Jangan gunakan sertifikat ini dan hubungi administrator.</Notice>}
+        {check === 'unavailable' && <Notice tone="info" title="Validasi ke ledger belum dapat dilakukan">Berkas berhasil diunduh, tetapi layanan pencatatan permanen tidak dapat dihubungi untuk mencocokkan isinya. Coba unduh lagi nanti.</Notice>}
       </div>
     </Card>
   );
@@ -38,8 +63,14 @@ export function DecisionSummary({ s }: { s: SubmissionDetail }) {
 
 export function SummaryTab({ s }: { s: SubmissionDetail }) {
   const pay = s.payments?.[0];
+  const adm = s.adminVerification;
   return (
     <div className="space-y-5">
+      {adm && adm.result !== 'APPROVED' && (s.stage === 'admin_revision' || s.stage === 'admin_rejected') && (
+        <Notice tone={adm.result === 'REJECTED' ? 'danger' : 'warn'} title={adm.result === 'REJECTED' ? 'Pengajuan ditolak pada verifikasi kelengkapan' : 'Sekretariat Administrasi meminta perbaikan dokumen'}>
+          <span className="whitespace-pre-wrap">{adm.notes ?? 'Tidak ada catatan yang dicantumkan.'}</span>
+        </Notice>
+      )}
       <DecisionSummary s={s} />
       {s.aiScore && <Card title="Skor AI sementara" description="Hasil analisis AI (pendukung, bukan nilai resmi)"><AiBanner /><div className="mt-4"><TotalsView totals={s.aiScore.totals} /></div></Card>}
       {s.aiProgress && s.aiProgress.phase !== 'done' && <AiProgressCard p={s.aiProgress} />}
@@ -72,7 +103,7 @@ export function AssignmentsTab({ s }: { s: SubmissionDetail }) {
             { key: 'a', header: 'Asesor', cell: (o) => `${o.assessor1Name ?? o.assessor1Id}; ${o.assessor2Name ?? o.assessor2Id}` },
             { key: 'l', header: 'Ketua', cell: (o) => o.leadAssessorName ?? o.leadAssessorId },
             { key: 's', header: 'Status', cell: (o) => <Badge tone={o.status === 'effective' ? 'success' : o.status === 'rejected' ? 'danger' : 'info'}>{OFFER_STATUS_LABEL[o.status] ?? o.status}</Badge> },
-            { key: 'r', header: 'Tanggapan', cell: (o) => <span className="text-sm">Asesor 1: {o.assessor1Response ? RESPONSE_LABEL[o.assessor1Response] : 'belum'}; Asesor 2: {o.assessor2Response ? RESPONSE_LABEL[o.assessor2Response] : 'belum'}; UPPS: {o.uppsResponse ? RESPONSE_LABEL[o.uppsResponse] : 'belum'}{o.rejectionReason && <><br />Alasan penolakan: {o.rejectionReason}</>}</span> },
+            { key: 'r', header: 'Tanggapan', cell: (o) => <span className="text-sm">Asesor 1: {o.assessor1Response ? RESPONSE_LABEL[o.assessor1Response] : 'belum'}; Asesor 2: {o.assessor2Response ? RESPONSE_LABEL[o.assessor2Response] : 'belum'}; UPPS: {o.uppsResponse ? RESPONSE_LABEL[o.uppsResponse] : 'belum'}{o.status === 'rejected' && o.rejectionReason && <><br />Alasan penolakan{o.rejectionBy ? ` (${o.rejectionBy === 'upps' ? 'UPPS' : 'asesor'})` : ''}: {o.rejectionReason}</>}</span> },
           ]} />
         </section>
       )}

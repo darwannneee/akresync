@@ -26,7 +26,8 @@ function toNotification(type: 'audit_status' | 'record_committed', d: Record<str
   }
   const kind = typeof d.kind === 'string' ? AUDIT_KIND_LABEL[d.kind] ?? undefined : undefined;
   const status = d.status;
-  if (status === 'failed') return { title: 'Pencatatan jejak audit belum berhasil', detail: kind, submissionId, tone: 'warn' };
+  if (status === 'failed') return { title: 'Pencatatan jejak audit gagal permanen', detail: kind ? `${kind}. Hubungi administrator.` : 'Hubungi administrator.', submissionId, tone: 'warn' };
+  if (status === 'pending' && Number(d.attempts ?? 0) > 0) return { title: 'Pencatatan jejak audit gagal sementara', detail: kind ? `${kind}. Dicoba ulang otomatis.` : 'Dicoba ulang otomatis.', submissionId, tone: 'warn' };
   if (status === 'committed') return { title: 'Jejak audit tercatat permanen', detail: kind, submissionId, tone: 'audit' };
   return { title: 'Status pencatatan diperbarui', detail: kind, submissionId, tone: 'audit' };
 }

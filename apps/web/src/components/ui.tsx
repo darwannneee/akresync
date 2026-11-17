@@ -1,13 +1,13 @@
 import {
   createContext, forwardRef, useCallback, useContext, useEffect, useId, useMemo, useRef, useState,
-  type ButtonHTMLAttributes, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes,
+  type ButtonHTMLAttributes, type ComponentProps, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Circle, Clock, Copy, FileText, HelpCircle, Home, Info, Link2, Loader2, Lock, Search, UploadCloud, X, XCircle } from 'lucide-react';
 import { ROLE_HOME, type AuditStatus } from '@akreditasi/shared';
 import { useAuth } from '../auth/AuthContext';
-import { AUDIT_STATUS_LABEL } from '../lib/labels';
+import { AUDIT_PHASE_LABEL, auditPhase } from '../lib/labels';
 import type { StepStatus } from '../lib/workflow';
 import { STATUS_LABEL } from '../lib/workflow';
 
@@ -30,6 +30,19 @@ export function Button({ variant = 'primary', size = 'md', loading, className, c
       {loading ? <Loader2 size={15} className="animate-spin" aria-hidden /> : icon}
       {children}
     </button>
+  );
+}
+export const buttonClass = (variant: Variant = 'primary', size: 'sm' | 'md' = 'md', extra?: string) =>
+  cx('inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors duration-150', size === 'sm' ? 'min-h-[36px] px-3.5 py-1' : 'min-h-[42px] px-4 py-2', VARIANTS[variant], extra);
+
+/** Tautan bergaya tombol: satu elemen <a>, bukan tombol di dalam tautan. */
+export function ButtonLink({ to, variant = 'primary', size = 'md', className, children, icon, ...rest }:
+  Omit<ComponentProps<typeof Link>, 'className'> & { variant?: Variant; size?: 'sm' | 'md'; className?: string; icon?: ReactNode }) {
+  return (
+    <Link to={to} {...rest}
+      className={buttonClass(variant, size, className)}>
+      {icon}{children}
+    </Link>
   );
 }
 export function Spinner({ className }: { className?: string }) {
@@ -77,13 +90,13 @@ export function StatusPill({ status, label }: { status: StepStatus; label?: stri
   const Icon = status === 'selesai' ? CheckCircle2 : status === 'ditolak' ? XCircle : status === 'menunggu' ? Clock : status === 'terkunci' ? Lock : Circle;
   return <Badge tone={STEP_TONE[status]} icon={<Icon size={12} aria-hidden />}>{label ?? STATUS_LABEL[status]}</Badge>;
 }
-/** Bukti pencatatan: Tersimpan (abu), Tertunda (amber), Tercatat permanen (indigo), Gagal (merah). */
-export function ProofBadge({ status }: { status?: AuditStatus | 'saved' | null }) {
-  const s = status ?? 'saved';
-  const label = AUDIT_STATUS_LABEL[s] ?? AUDIT_STATUS_LABEL.saved;
-  if (s === 'committed') return <Badge tone="chain" icon={<Link2 size={12} aria-hidden />}>{label}</Badge>;
-  if (s === 'pending') return <Badge tone="warn" icon={<span className="dot-pulse inline-block h-1.5 w-1.5 rounded-full bg-wait" aria-hidden />}>{label}</Badge>;
-  if (s === 'failed') return <Badge tone="danger" icon={<XCircle size={12} aria-hidden />}>{label}</Badge>;
+/** Bukti pencatatan: Tersimpan (abu), Sedang dicatat atau dicoba ulang (amber), Tercatat permanen (indigo), Gagal permanen (merah). */
+export function ProofBadge({ status, attempts }: { status?: AuditStatus | 'saved' | null; attempts?: number | null }) {
+  const phase = auditPhase({ status: status ?? 'saved', attempts });
+  const label = AUDIT_PHASE_LABEL[phase];
+  if (phase === 'committed') return <Badge tone="chain" icon={<Link2 size={12} aria-hidden />}>{label}</Badge>;
+  if (phase === 'pending' || phase === 'retrying') return <Badge tone="warn" className="whitespace-normal text-left" icon={<span className="dot-pulse inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-wait" aria-hidden />}>{label}</Badge>;
+  if (phase === 'failed') return <Badge tone="danger" className="whitespace-normal text-left" icon={<XCircle size={12} aria-hidden />}>{label}</Badge>;
   return <Badge tone="neutral">{label}</Badge>;
 }
 
@@ -203,6 +216,24 @@ export function DataTable<T>({ columns, rows, rowKey, caption, onRowClick, toolb
 
 /* ---------- Tabs (nav-tabs) ---------- */
 export function Tabs<T extends string>({ tabs, value, onChange, label }: { tabs: { id: T; label: string; count?: number }[]; value: T; onChange: (v: T) => void; label: string }) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ left: false, right: false });
+  const measure = useCallback(() => {
+    const el = listRef.current;
+    if (!el) return;
+    setEdge({ left: el.scrollLeft > 4, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
+  }, []);
+  useEffect(() => {
+    measure();
+    const el = listRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [measure, tabs.length]);
+  useEffect(() => {
+    document.getElementById(`tab-${value}`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [value]);
   const onKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
     e.preventDefault();
@@ -210,16 +241,21 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: { tabs:
     onChange(n.id);
     document.getElementById(`tab-${n.id}`)?.focus();
   };
+  const scrollBy = (dir: -1 | 1) => listRef.current?.scrollBy({ left: dir * 200, behavior: 'smooth' });
   return (
-    <div role="tablist" aria-label={label} className="no-print flex gap-1 overflow-x-auto border-b border-slate-200">
-      {tabs.map((t, i) => (
-        <button key={t.id} id={`tab-${t.id}`} role="tab" type="button" aria-selected={t.id === value} aria-controls={`panel-${t.id}`} tabIndex={t.id === value ? 0 : -1}
-          onClick={() => onChange(t.id)} onKeyDown={(e) => onKey(e, i)}
-          className={cx('-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-4 py-2.5 text-sm transition-colors',
-            t.id === value ? 'border-navy-700 font-semibold text-navy-700' : 'border-transparent font-medium text-muted hover:border-slate-300 hover:text-ink')}>
-          {t.label}{t.count !== undefined && <span className={cx('ml-2 rounded-full px-2 py-0.5 text-xs tabular-nums', t.id === value ? 'bg-navy-50 text-navy-700' : 'bg-slate-100 text-muted')}>{t.count}</span>}
-        </button>
-      ))}
+    <div className="no-print relative border-b border-slate-200">
+      <div ref={listRef} role="tablist" aria-label={label} onScroll={measure} className="flex gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {tabs.map((t, i) => (
+          <button key={t.id} id={`tab-${t.id}`} role="tab" type="button" aria-selected={t.id === value} aria-controls={`panel-${t.id}`} tabIndex={t.id === value ? 0 : -1}
+            onClick={() => onChange(t.id)} onKeyDown={(e) => onKey(e, i)}
+            className={cx('-mb-px min-h-[44px] shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors',
+              t.id === value ? 'border-navy-700 font-semibold text-navy-700' : 'border-transparent font-medium text-muted hover:border-slate-300 hover:text-ink')}>
+            {t.label}{t.count !== undefined && <span className={cx('ml-1.5 rounded-full px-1.5 py-0.5 text-xs tabular-nums', t.id === value ? 'bg-navy-50 text-navy-700' : 'bg-slate-100 text-muted')}>{t.count}</span>}
+          </button>
+        ))}
+      </div>
+      {edge.left && <button type="button" tabIndex={-1} aria-label="Geser tab ke kiri" onClick={() => scrollBy(-1)} className="absolute inset-y-0 left-0 grid w-9 place-items-center bg-gradient-to-r from-white via-white/90 to-transparent text-navy-700"><ChevronLeft size={18} aria-hidden /></button>}
+      {edge.right && <button type="button" tabIndex={-1} aria-label="Geser tab ke kanan" onClick={() => scrollBy(1)} className="absolute inset-y-0 right-0 grid w-9 place-items-center bg-gradient-to-l from-white via-white/90 to-transparent text-navy-700"><ChevronRight size={18} aria-hidden /></button>}
     </div>
   );
 }

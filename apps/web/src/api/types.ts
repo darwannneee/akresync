@@ -31,6 +31,10 @@ export interface SubmissionSummary {
   createdAt?: string;
   updatedAt?: string;
   aiScore?: AiScoreSummary | null;
+  /** Status terbaru peristiwa audit yang menjadi prasyarat tahap berikutnya (hanya pada daftar). */
+  gateAudit?: { kind: string; status: AuditStatus; attempts?: number }[];
+  auditPending?: number;
+  auditFailed?: number;
 }
 
 export interface DocumentView {
@@ -48,6 +52,7 @@ export interface DocumentView {
   indexStatus?: IndexStatus | null;
   indexError?: string | null;
   docCheck?: DocCheck | null;
+  auditAttempts?: number | null;
 }
 
 export interface PaymentView {
@@ -74,10 +79,12 @@ export interface OfferView {
   assessor2Response?: 'ACCEPT' | 'REJECT' | null;
   uppsResponse?: 'ACCEPT' | 'REJECT' | null;
   rejectionReason?: string | null;
+  rejectionBy?: 'upps' | 'asesor' | null;
   rejectionReviewNotes?: string | null;
   rejectionReviewedAt?: string | null;
   consistencyStatus?: 'pending' | 'approved' | 'returned';
   consistencyNotes?: string | null;
+  consistencyAt?: string | null;
 }
 
 export interface AssessmentView {
@@ -90,6 +97,7 @@ export interface AssessmentView {
   scores?: Record<string, Record<string, number>>;
   totalScore?: number | string | null;
   minutesDocumentId?: string | null;
+  submittedAt?: string | null;
 }
 
 export interface AlScheduleView {
@@ -111,7 +119,7 @@ export interface ResponseView {
   createdAt?: string;
 }
 
-export interface CertificateView { id: string; certificateNo: string; issuedAt?: string }
+export interface CertificateView { id: string; certificateNo: string; issuedAt?: string; decisionRecordId?: string }
 
 export interface FormalRecordView {
   id: string;
@@ -127,6 +135,8 @@ export interface FormalRecordView {
   actorUid?: string | null;
   payload: Record<string, unknown>;
   correction?: { reason: string; evidenceRef: string } | null;
+  /** Isi teks catatan (catatan verifikasi, alasan); tidak dikirim ke peran yang tidak berhak. */
+  offChain?: { notes?: string | null; reason?: string | null; responseReason?: string | null; offerId?: string } | null;
   committedAt?: string | null;
   createdAt?: string;
   timestamp?: string;
@@ -160,6 +170,10 @@ export interface SubmissionDetail extends SubmissionSummary {
   rejectedAttempts?: { id: string; recordType: RecordType; version: number; error?: string | null; createdAt?: string }[];
   audit?: AuditEventView[];
   aiProgress?: AiProgress;
+  /** Catatan verifikasi kelengkapan versi terbaru; dikirim juga ke UPPS pemilik. */
+  adminVerification?: { result: 'APPROVED' | 'REVISION_REQUIRED' | 'REJECTED'; notes: string | null; version: number; recordedAt?: string | null } | null;
+  /** Catatan verifikasi akhir KEA; untuk Majelis dan pihak internal. */
+  finalVerification?: { notes: string | null; version: number; recordedAt?: string | null } | null;
 }
 
 export interface RecordHistoryItem {

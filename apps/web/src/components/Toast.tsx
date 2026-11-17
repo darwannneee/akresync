@@ -38,9 +38,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         return;
       }
       const st = env.audit?.status;
-      if (st === 'failed') push({ kind: 'warn', title, lines: ['Tersimpan. Pencatatan jejak audit belum berhasil dan akan dicoba ulang oleh sistem.'] });
+      if (st === 'failed') push({ kind: 'warn', title, lines: ['Tersimpan. Jejak audit gagal dicatat secara permanen; hubungi administrator.'] });
       else if (st === 'committed') push({ kind: 'success', title, lines: ['Tersimpan · jejak audit tercatat permanen.'] });
-      else if (st === 'pending') push({ kind: 'info', title, lines: ['Tersimpan · jejak audit sedang dicatat. Status akan diperbarui otomatis.'] });
+      else if (st === 'pending') push({ kind: 'info', title, lines: ['Tersimpan · jejak audit sedang dicatat. Bila sempat gagal, sistem mencoba ulang otomatis dan status diperbarui di halaman ini.'] });
       else push({ kind: 'success', title, lines: ['Tersimpan.'] });
     },
   }), [push]);

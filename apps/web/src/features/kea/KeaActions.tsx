@@ -10,6 +10,7 @@ import { useAction } from '../common/useAction';
 import { useAssessors } from '../common/queries';
 import { MODE_LABEL, fmtDate, fmtNumber } from '../../lib/labels';
 import type { ActionProps } from '../submissions/types';
+import { ScoreComparison } from './ScoreComparison';
 
 const offerSchema = z.object({ assessor1Id: z.string().min(1, 'Pilih asesor pertama'), assessor2Id: z.string().min(1, 'Pilih asesor kedua'), leadAssessorId: z.string().min(1, 'Tetapkan ketua asesor') })
   .refine((v) => v.assessor1Id !== v.assessor2Id, { path: ['assessor2Id'], message: 'Kedua asesor harus orang yang berbeda' })
@@ -67,17 +68,23 @@ export function Consistency({ s }: ActionProps) {
   const ak = (s.assessments ?? []).filter((a) => a.phase === 'AK' && a.status === 'submitted');
   const totals = ak.map((a) => Number(a.totalScore ?? 0));
   const diff = totals.length === 2 ? Math.abs(totals[0]! - totals[1]!) : null;
+  const confirm = useConfirmed<{ result: string; notes: string }>({
+    run: (v) => consistency.mutate(v), pending: consistency.isPending, title: 'Catat pemeriksaan konsistensi AK?', confirmLabel: 'Ya, catat pemeriksaan', permanent: false,
+    summary: (v) => [['Program studi', s.programName], ['Keputusan', v.result === 'approved' ? 'Konsisten, proses dilanjutkan' : 'Dikembalikan untuk dinilai ulang'], ['Selisih skor total', diff === null ? '—' : fmtNumber(diff)], ['Catatan untuk asesor', v.notes || '—']],
+  });
   return (
     <div className="space-y-6">
       <StepSection n={1} title="Bandingkan hasil kedua asesor" hint={`Skor total pada skala 0 sampai ${fmtNumber(MAX_TOTAL_SCORE)}.`}>
         <DataTable rows={ak} rowKey={(a) => a.id} caption="Hasil Asesmen Kecukupan"
           columns={[{ key: 'n', header: 'Asesor', primary: true, cell: (a) => a.assessorName ?? a.assessorId }, { key: 's', header: 'Status', cell: () => <Badge tone="success">Telah diserahkan</Badge> }, { key: 't', header: 'Skor total', align: 'right', cell: (a) => <b>{fmtNumber(a.totalScore)}</b> }]} />
-        {diff !== null && <p className="mt-3 text-base">Selisih skor kedua asesor: <b>{fmtNumber(diff)}</b></p>}
+        {diff !== null && <p className="mt-3 text-base">Selisih skor total kedua asesor: <b>{fmtNumber(diff)}</b></p>}
+        {ak.length === 2 && <div className="mt-4"><ScoreComparison first={ak[0]!} second={ak[1]!} /></div>}
       </StepSection>
       <StepSection n={2} title="Putuskan konsistensi">
         <ResultNotesForm submitLabel="Catat pemeriksaan konsistensi" pending={consistency.isPending} notesRequiredFor={['returned']} notesLabel="Catatan untuk asesor" notesHint="Wajib diisi bila hasil dikembalikan."
-          options={[{ value: 'approved', label: 'Konsisten, setujui', hint: 'Proses dilanjutkan.' }, { value: 'returned', label: 'Kembalikan untuk dinilai ulang', hint: 'Asesor diminta memperbaiki hasilnya.' }]} onSubmit={(v) => consistency.mutate(v)} />
+          options={[{ value: 'approved', label: 'Konsisten, setujui', hint: 'Proses dilanjutkan.' }, { value: 'returned', label: 'Kembalikan untuk dinilai ulang', hint: 'Asesor diminta memperbaiki hasilnya.' }]} onSubmit={(v) => confirm.ask(v)} />
       </StepSection>
+      {confirm.dialog}
     </div>
   );
 }

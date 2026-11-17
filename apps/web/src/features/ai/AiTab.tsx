@@ -1,8 +1,8 @@
-import { RotateCw, RefreshCw } from 'lucide-react';
+import { Bot, RotateCw, RefreshCw } from 'lucide-react';
 import { INSTRUMENT_DOKTOR_2025 as INST } from '@akreditasi/shared';
 import type { SubmissionDetail, User } from '../../api/types';
 import { Badge, Button, Card, EmptyState, Notice, Skeleton } from '../../components/ui';
-import { fmtDateTime } from '../../lib/labels';
+import { PHASE_LABEL, fmtDateTime } from '../../lib/labels';
 import { useAiDetail, useAiList, useReindex, useRerunAi } from './hooks';
 import { AiBanner, AiFailedNotice, AiStatusBadge, AiTechnical, ComparisonView, HistoryTable, INDEX_LABEL, SuggestionBlock, TotalsView, itemNo } from './parts';
 import { AiProgressCard } from './ProgressCard';
@@ -12,10 +12,20 @@ export function AiTab({ s, user }: { s: SubmissionDetail; user: User }) {
   const list = useAiList(s.id);
   const lastDone = list.data?.analyses.find((a) => a.status === 'done') ?? null;
   const detail = useAiDetail(lastDone?.id);
-  const rerun = useRerunAi(s.id, 'AK');
+  const rerunAk = useRerunAi(s.id, 'AK');
+  const rerunAl = useRerunAi(s.id, 'AL');
   const reindex = useReindex(s.id);
   if (list.isLoading) return <Skeleton className="h-40 w-full" />;
+  if (list.isError) {
+    return (
+      <div className="space-y-5">
+        <AiBanner />
+        <EmptyState title="Analisis AI belum dapat ditampilkan" icon={<Bot size={22} />}>Analisis AI hanya tersedia bagi pihak yang bertugas pada pengajuan ini, atau layanan sedang tidak dapat dihubungi. Muat ulang halaman bila perlu.</EmptyState>
+      </div>
+    );
+  }
   const d = list.data;
+  const rerun = (latestPhase?: 'AK' | 'AL') => (latestPhase === 'AL' ? rerunAl : rerunAk);
   const latest = d?.latest ?? null;
   const active = latest && (latest.status === 'queued' || latest.status === 'running');
   const res = detail.data?.result ?? lastDone?.result ?? null;
@@ -25,7 +35,7 @@ export function AiTab({ s, user }: { s: SubmissionDetail; user: User }) {
   return (
     <div className="space-y-5">
       <AiBanner />
-      {d && !d.enabled && <Notice tone="info">Layanan AI belum diaktifkan pada server ini.</Notice>}
+      {d && !d.enabled && <Notice tone="warn" title="Layanan AI sedang nonaktif">{res ? 'Analisis baru tidak dapat diminta sampai layanan diaktifkan. Hasil analisis sebelumnya tetap ditampilkan di bawah.' : 'Analisis baru tidak dapat diminta sampai layanan diaktifkan oleh administrator.'}</Notice>}
       <AiProgressCard p={s.aiProgress} />
 
       {d && d.index.length > 0 && user.role !== 'upps' && (
@@ -43,12 +53,12 @@ export function AiTab({ s, user }: { s: SubmissionDetail; user: User }) {
         </Card>
       )}
 
-      {latest?.status === 'failed' && <AiFailedNotice a={latest} canRetry={canRerun} retrying={rerun.isPending} onRetry={() => rerun.mutate()} />}
+      {latest?.status === 'failed' && <AiFailedNotice a={latest} canRetry={canRerun && !!d?.enabled} retrying={rerun(latest.phase).isPending} onRetry={() => rerun(latest.phase).mutate()} />}
       {active && <Notice tone="info" title={latest!.status === 'queued' ? 'Analisis menunggu giliran' : 'Analisis sedang diproses'}>Halaman diperbarui otomatis.</Notice>}
 
       {res && lastDone ? (
         <>
-          <Card title="Skor AI sementara" description={`Analisis selesai ${fmtDateTime(lastDone.finishedAt)} · himpunan dokumen versi ${lastDone.setVersion ?? '—'}`} actions={<AiStatusBadge status="done" />}>
+          <Card title="Skor AI sementara" description={`${PHASE_LABEL[lastDone.phase] ?? lastDone.phase} · selesai ${fmtDateTime(lastDone.finishedAt)} · himpunan dokumen versi ${lastDone.setVersion ?? '—'}`} actions={<AiStatusBadge status="done" />}>
             {lastDone.totals && <TotalsView totals={lastDone.totals} />}
             <div className="mt-4 rounded-lg border border-line bg-white p-3"><p className="text-xs font-medium text-faint">Ringkasan AI</p><p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed">{res.summary || '—'}</p></div>
             <div className="mt-4"><AiTechnical a={detail.data ?? lastDone} /></div>
@@ -69,7 +79,7 @@ export function AiTab({ s, user }: { s: SubmissionDetail; user: User }) {
             </div>
           </Card>
         </>
-      ) : !active && latest?.status !== 'failed' && <EmptyState title="Belum ada hasil analisis AI">Analisis berjalan otomatis setelah LED dan LKPS terunggah dan terindeks.</EmptyState>}
+      ) : !active && latest?.status !== 'failed' && <EmptyState title="Belum ada hasil analisis AI" icon={<Bot size={22} />} action={canRerun && d?.enabled ? <div className="flex flex-wrap justify-center gap-2"><Button variant="secondary" size="sm" loading={rerunAk.isPending} onClick={() => rerunAk.mutate()}>Minta analisis AK</Button><Button variant="secondary" size="sm" loading={rerunAl.isPending} onClick={() => rerunAl.mutate()}>Minta analisis AL</Button></div> : undefined}>{d && !d.enabled ? 'Layanan AI sedang nonaktif, sehingga belum ada analisis yang dihasilkan untuk pengajuan ini.' : 'Analisis berjalan otomatis setelah LED dan LKPS terunggah dan terindeks.'}</EmptyState>}
 
       {user.role !== 'upps' && d && d.comparisons.length > 0 && (
         <Card title="Kesesuaian saran AI dengan skor asesor" description="Perbandingan per butir antara saran AI dan skor yang diisi atau diserahkan asesor.">
@@ -78,7 +88,10 @@ export function AiTab({ s, user }: { s: SubmissionDetail; user: User }) {
       )}
 
       {d && d.analyses.length > 0 && (
-        <Card title="Riwayat analisis AI" description="Setiap analisis tersimpan beserta model, versi prompt, token, latensi, dan sidik jari hasil." actions={canRerun ? <Button variant="secondary" size="sm" icon={<RotateCw size={15} />} loading={rerun.isPending} disabled={!!active} onClick={() => rerun.mutate()}>Analisis ulang</Button> : undefined}>
+        <Card title="Riwayat analisis AI" description="Setiap analisis tersimpan beserta model, versi prompt, token, latensi, dan sidik jari hasil." actions={canRerun ? <>
+            <Button variant="secondary" size="sm" icon={<RotateCw size={15} />} loading={rerunAk.isPending} disabled={!!active || !d.enabled} onClick={() => rerunAk.mutate()}>Analisis ulang AK</Button>
+            <Button variant="secondary" size="sm" icon={<RotateCw size={15} />} loading={rerunAl.isPending} disabled={!!active || !d.enabled} onClick={() => rerunAl.mutate()}>Analisis ulang AL</Button>
+          </> : undefined}>
           <HistoryTable rows={d.analyses} />
         </Card>
       )}

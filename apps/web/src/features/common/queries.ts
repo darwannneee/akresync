@@ -18,12 +18,18 @@ export const useSubmission = (id: string) =>
     queryFn: () => fetchSubmission(id),
     refetchInterval: (q) => {
       const p = q.state.data?.aiProgress;
-      return p?.enabled && ['checking', 'indexing', 'analyzing'].includes(p.phase) ? 5000 : false;
+      if (p?.enabled && ['checking', 'indexing', 'analyzing'].includes(p.phase)) return 5000;
+      // Selama ada jejak audit yang belum tercatat permanen, muat ulang berkala agar langkah berikutnya muncul tanpa muat ulang manual (SSE bisa terputus).
+      return (q.state.data?.audit ?? []).some((e) => e.status === 'pending') ? 6000 : false;
     },
   });
 
 export const useSubmissionAudit = (id: string) =>
-  useQuery({ queryKey: ['audit', id], queryFn: async () => (await api.get<AuditEventView[]>(`/submissions/${id}/audit`)).data ?? [] });
+  useQuery({
+    queryKey: ['audit', id],
+    queryFn: async () => (await api.get<AuditEventView[]>(`/submissions/${id}/audit`)).data ?? [],
+    refetchInterval: (q) => ((q.state.data ?? []).some((e) => e.status === 'pending') ? 6000 : false),
+  });
 
 export const useInstitutions = () =>
   useQuery({ queryKey: ['institutions'], queryFn: async () => (await api.get<Institution[]>('/institutions')).data ?? [] });

@@ -23,8 +23,8 @@ export function AuditTable({ events }: { events: AuditEventView[] }) {
     <DataTable rows={events} rowKey={(e) => e.eventId} caption="Jejak audit"
       columns={[
         { key: 'p', header: 'Peristiwa', primary: true, cell: (e) => <div><div className="font-medium text-ink">{AUDIT_KIND_LABEL[e.kind] ?? e.kind}</div><div className="text-sm text-muted">{roleName(e.actorRole)} · {fmtDateTime(e.occurredAt)}</div></div> },
-        { key: 's', header: 'Bukti', cell: (e) => <div><ProofBadge status={e.status} />{e.status === 'failed' && e.lastError && <div className="mt-1 max-w-[16rem] text-sm text-bad">{e.lastError}</div>}</div> },
-        { key: 't', header: 'Rincian teknis', cell: (e) => <TechnicalDetails items={[['Nomor transaksi', <CopyableMono key="t" value={e.txId} full />], ['Blok', e.blockNumber], ['Sidik jari data', <CopyableMono key="h" value={e.payloadSha256} full />], ['Versi', e.version], ['Percobaan', e.attempts]]} /> },
+        { key: 's', header: 'Bukti', cell: (e) => <div className="max-w-[16rem]"><ProofBadge status={e.status} attempts={e.attempts} /></div> },
+        { key: 't', header: 'Rincian teknis', cell: (e) => <TechnicalDetails items={[['Nomor transaksi', <CopyableMono key="t" value={e.txId} full />], ['Blok', e.blockNumber], ['Sidik jari data', <CopyableMono key="h" value={e.payloadSha256} full />], ['Versi', e.version], ['Percobaan pencatatan', e.attempts], ...(e.lastError ? [['Catatan galat terakhir', <span key="le" className="break-words">{e.lastError}</span>] as [string, React.ReactNode]] : [])]} /> },
         { key: 'v', header: 'Pemeriksaan', cell: (e) => {
           const r = res[e.eventId];
           return (

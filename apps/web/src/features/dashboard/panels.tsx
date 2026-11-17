@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Activity, ArrowRight, Award, Bot, CheckCircle2, Clock3, Hourglass, Inbox, Link2, ShieldAlert, ShieldCheck, Timer } from 'lucide-react';
 import type { DashboardStats } from '@akreditasi/shared';
-import { Badge, Button, Card, EmptyState, Notice, ProgressBar, Skeleton, StatWidget, StepIndicator, cx } from '../../components/ui';
+import { Badge, ButtonLink, Card, EmptyState, Notice, ProgressBar, Skeleton, StatWidget, StepIndicator, cx } from '../../components/ui';
 import { ChartCard, Donut, HBars, RANK_COLORS, SERIES, TrendArea } from '../../components/charts';
-import { AUDIT_KIND_LABEL, RANK_LABEL, RECORD_LABEL, fmtDuration, fmtNumber, fmtRelative } from '../../lib/labels';
+import { AUDIT_KIND_LABEL, RANK_LABEL, RECORD_LABEL, fmtDays, fmtDuration, fmtNumber, fmtRelative } from '../../lib/labels';
 import { currentIndex } from '../../lib/workflow';
 import type { SubmissionSummary } from '../../api/types';
 import type { TaskItem } from '../common/useTasks';
@@ -20,7 +20,7 @@ export function KpiRow({ stats, actionCount, loading }: { stats?: DashboardStats
         hint={actionCount ? 'Lihat daftar tugas di bawah' : 'Tidak ada tugas saat ini'} />
       <StatWidget tone="warn" label="Sedang berjalan" value={fmtNumber(k.inProgress, 0)} icon={<Hourglass size={20} />} hint={`dari ${fmtNumber(k.total, 0)} pengajuan tercatat`} />
       <StatWidget tone="success" label="Selesai dan terbit" value={fmtNumber(k.completed, 0)} icon={<CheckCircle2 size={20} />} hint={k.total ? `${pct(k.completed, k.total)}% dari seluruh pengajuan` : 'Belum ada pengajuan'} />
-      <StatWidget tone="neutral" label="Rerata durasi proses" value={k.avgDecisionDays === null ? '—' : <>{fmtNumber(k.avgDecisionDays, 1)}<span className="ml-1.5 text-base font-medium text-muted">hari</span></>} icon={<Timer size={20} />} hint="Pengajuan hingga keputusan" />
+      <StatWidget tone="neutral" label="Rerata durasi proses" value={k.avgDecisionDays === null ? '—' : fmtDays(k.avgDecisionDays)} icon={<Timer size={20} />} hint={k.avgDecisionDays === null ? 'Tampil setelah ada keputusan pertama' : 'Pengajuan hingga keputusan'} />
     </div>
   );
 }
@@ -64,13 +64,12 @@ export function RanksCard({ stats }: { stats: DashboardStats }) {
 export function IntegrityCard({ stats }: { stats: DashboardStats }) {
   const c = stats.chain;
   const total = c.audit.committed + c.audit.pending + c.audit.failed;
-  const healthy = c.audit.failed === 0 && c.audit.pending === 0;
-  const status = c.audit.failed > 0
+    const status = c.audit.failed > 0
     ? <Badge tone="warn" icon={<ShieldAlert size={13} aria-hidden />}>Perlu perhatian</Badge>
     : c.audit.pending > 0 ? <Badge tone="info" icon={<Clock3 size={13} aria-hidden />}>Sedang diproses</Badge>
       : <Badge tone="success" icon={<ShieldCheck size={13} aria-hidden />}>Sehat</Badge>;
   const items: [string, string][] = [
-    ['Transaksi on-chain', fmtNumber(c.onChainTx, 0)],
+    ['Transaksi tercatat permanen', fmtNumber(c.onChainTx, 0)],
     ['Blok terakhir tercatat', c.lastBlock === null ? '—' : fmtNumber(c.lastBlock, 0)],
     ['Jeda audit rerata', fmtDuration(c.auditLagAvgSec)],
     ['Jeda audit p95', fmtDuration(c.auditLagP95Sec)],
@@ -81,12 +80,13 @@ export function IntegrityCard({ stats }: { stats: DashboardStats }) {
       <div className="mb-1 flex items-baseline justify-between text-sm"><span className="font-medium text-ink">Jejak audit tercatat permanen</span><b className="tabular-nums text-ink">{pct(c.audit.committed, total)}%</b></div>
       <ProgressBar value={c.audit.committed} max={Math.max(total, 1)} label="Persentase jejak audit tercatat permanen" />
       <p className="mt-1.5 text-sm text-muted">
-        {fmtNumber(c.audit.committed, 0)} tercatat, {fmtNumber(c.audit.pending, 0)} tertunda, {fmtNumber(c.audit.failed, 0)} gagal dan akan dicoba ulang.
+        {fmtNumber(c.audit.committed, 0)} tercatat, {fmtNumber(c.audit.pending, 0)} sedang dicatat atau dicoba ulang otomatis, {fmtNumber(c.audit.failed, 0)} gagal permanen.
       </p>
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-slate-100 pt-4">
         {items.map(([k, v], i) => <div key={k} className={cx(i === 4 && 'col-span-2 sm:col-span-1')}><dt className="text-sm text-muted">{k}</dt><dd className="text-lg font-semibold tabular-nums text-ink">{v}</dd></div>)}
       </dl>
-      {!healthy && c.audit.failed > 0 && <p className="mt-3 text-sm text-wait">Sebagian jejak audit belum berhasil dicatat. Sistem mencoba ulang secara otomatis.</p>}
+      {c.audit.failed > 0 && <p className="mt-3 text-sm text-wait">Sebagian jejak audit gagal dicatat secara permanen. Hubungi administrator untuk menindaklanjuti.</p>}
+      {c.audit.failed === 0 && c.audit.pending > 0 && <p className="mt-3 text-sm text-muted">Jejak audit yang belum tercatat dicoba ulang otomatis oleh sistem.</p>}
     </Card>
   );
 }
@@ -131,7 +131,7 @@ export function ActivityCard({ stats, wide }: { stats: DashboardStats; wide?: bo
                 <span className="block text-sm text-muted">{[r.programName, r.institutionName].filter(Boolean).join(' · ')}</span>
                 <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-faint">
                   <span>{fmtRelative(r.at)}</span>
-                  <Badge tone={ok ? 'chain' : bad ? 'danger' : 'warn'}>{ok ? 'Tercatat permanen' : bad ? 'Pencatatan gagal' : 'Menunggu pencatatan'}</Badge>
+                  <Badge tone={ok ? 'chain' : bad ? 'danger' : 'warn'}>{ok ? 'Tercatat permanen' : bad ? 'Gagal permanen' : 'Sedang dicatat'}</Badge>
                 </span>
               </>
             );
@@ -161,7 +161,7 @@ export function UppsProgressCard({ rows, tasks }: { rows: SubmissionSummary[]; t
   const name = `${active.programName ?? 'Pengajuan'}${active.programLevel ? ` (${active.programLevel})` : ''}`;
   return (
     <Card title={name} description={`${active.institutionName ?? ''} · ${idx >= 9 ? 'Seluruh tahap selesai' : `Tahap ${idx + 1} dari 9`}`}
-      actions={<Link to={`/pengajuan/${active.id}`}><Button variant="secondary" size="sm" icon={<ArrowRight size={14} />}>Buka detail</Button></Link>}>
+      actions={<ButtonLink to={`/pengajuan/${active.id}`} variant="secondary" size="sm" icon={<ArrowRight size={14} />}>Buka detail</ButtonLink>}>
       <div className="overflow-x-auto pb-1">
         <div className="min-w-[720px]">
           <StepIndicator steps={STAGE_STEPS.map((label, i) => ({ label, state: idx >= 9 || i < idx ? 'done' : i === idx ? 'current' : 'todo' }))} />
@@ -169,7 +169,7 @@ export function UppsProgressCard({ rows, tasks }: { rows: SubmissionSummary[]; t
       </div>
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-navy-50 px-4 py-3">
         <div className="min-w-0 text-sm"><p className="font-semibold text-navy-900">{task ? 'Tugas berikutnya' : 'Menunggu pihak lain'}</p><p className="text-slate-700">{task ? task.action.title : 'Belum ada tindakan untuk Bapak/Ibu pada pengajuan ini.'}</p></div>
-        {task && <Link to={task.action.to?.(active.id) ?? `/pengajuan/${active.id}`}><Button icon={<ArrowRight size={15} />}>{task.action.button}</Button></Link>}
+        {task && <ButtonLink to={task.action.to?.(active.id) ?? `/pengajuan/${active.id}`} icon={<ArrowRight size={15} />}>{task.action.button}</ButtonLink>}
       </div>
     </Card>
   );

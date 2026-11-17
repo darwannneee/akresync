@@ -6,7 +6,7 @@ import { api } from '../../api/client';
 import { Button, DL, Field, Input, ModalActions, Notice, StepSection } from '../../components/ui';
 import { ResultNotesForm, useConfirmed } from '../common/forms';
 import { useAction } from '../common/useAction';
-import { MODE_LABEL, RESULT_LABEL, fmtDateRange, fmtRupiah } from '../../lib/labels';
+import { MODE_LABEL, RESULT_LABEL, fmtDateRange, fmtRupiah, rankLabel } from '../../lib/labels';
 import type { ActionProps } from '../submissions/types';
 import { DocQuickList } from '../submissions/DocQuickList';
 
@@ -36,22 +36,34 @@ export function AdminVerify({ s }: ActionProps) {
 export function DecideSchedule({ s }: ActionProps) {
   const sched = (s.alSchedules ?? []).find((x) => x.status === 'proposed');
   const decide = useAction((v: { result: string; notes: string }) => api.post(`/al-schedules/${sched!.id}/decision`, v), { title: 'Keputusan jadwal telah dicatat', submissionId: s.id });
+  const confirm = useConfirmed<{ result: string; notes: string }>({
+    run: (v) => decide.mutate(v), pending: decide.isPending, title: 'Catat keputusan jadwal Asesmen Lapangan?', confirmLabel: 'Ya, catat keputusan', permanent: false,
+    summary: (v) => [['Program studi', s.programName], ['Jadwal', sched ? `${fmtDateRange(sched.startDate, sched.endDate)}, ${sched.location}` : '—'], ['Keputusan', RESULT_LABEL[v.result] ?? v.result], ['Catatan', v.notes || '—']],
+  });
   if (!sched) return <p className="text-sm text-muted">Memuat usulan jadwal…</p>;
   return (
     <div className="space-y-5">
       <DL items={[['Tanggal pelaksanaan', fmtDateRange(sched.startDate, sched.endDate)], ['Lokasi', sched.location], ['Moda', MODE_LABEL[sched.mode] ?? sched.mode], ['Usulan ke', sched.version]]} />
       <ResultNotesForm submitLabel="Catat keputusan jadwal" pending={decide.isPending} notesRequiredFor={['rejected']} notesHint="Wajib diisi bila jadwal ditolak, agar KEA dapat mengusulkan ulang."
-        options={[{ value: 'approved', label: 'Setujui jadwal' }, { value: 'rejected', label: 'Tolak jadwal' }]} onSubmit={(v) => decide.mutate(v)} />
+        options={[{ value: 'approved', label: 'Setujui jadwal' }, { value: 'rejected', label: 'Tolak jadwal' }]} onSubmit={(v) => confirm.ask(v)} />
+      {confirm.dialog}
     </div>
   );
 }
 
 export function IssueCertificate({ s }: ActionProps) {
   const issue = useAction(() => api.post(`/submissions/${s.id}/certificate`), { title: 'Sertifikat telah diterbitkan', submissionId: s.id });
+  const dec = (s.records ?? []).filter((r) => r.recordType === 'DECISION').slice(-1)[0];
+  const p = dec?.payload as { rank?: string; decreeNumber?: string } | undefined;
+  const confirm = useConfirmed<null>({
+    run: () => issue.mutate(undefined), pending: issue.isPending, title: 'Terbitkan sertifikat hasil akreditasi?', confirmLabel: 'Ya, terbitkan sertifikat', permanent: false,
+    summary: () => [['Program studi', s.programName], ['Institusi', s.institutionName], ['Peringkat', p?.rank ? rankLabel(p.rank) : '—'], ['Nomor Surat Keputusan', p?.decreeNumber ?? '—']],
+  });
   return (
     <div className="space-y-3">
-      <Notice tone="info">Sistem akan menyusun sertifikat PDF berdasarkan peringkat dan Surat Keputusan yang telah ditetapkan Majelis.</Notice>
-      <ModalActions><Button loading={issue.isPending} onClick={() => issue.mutate(undefined)}>Terbitkan Sertifikat</Button></ModalActions>
+      <Notice tone="info">Sistem akan menyusun sertifikat PDF berdasarkan peringkat dan Surat Keputusan yang telah ditetapkan Majelis. Setelah terbit, pengajuan dinyatakan selesai.</Notice>
+      <ModalActions><Button loading={issue.isPending} onClick={() => confirm.ask(null)}>Terbitkan Sertifikat</Button></ModalActions>
+      {confirm.dialog}
     </div>
   );
 }
@@ -76,6 +88,10 @@ export function VerifyPayment({ s }: ActionProps) {
   const verify = useAction((v: { result: string; notes: string }) => api.post(`/submissions/${s.id}/payment-verification`, v), { title: 'Verifikasi pembayaran telah dicatat', submissionId: s.id });
   const pay = s.payments?.[0];
   const proofs = (s.documents ?? []).filter((d) => d.docType === 'PAYMENT_PROOF').slice(-1);
+  const confirm = useConfirmed<{ result: string; notes: string }>({
+    run: (v) => verify.mutate(v), pending: verify.isPending, title: 'Catat hasil verifikasi pembayaran?', confirmLabel: 'Ya, catat hasil', permanent: false,
+    summary: (v) => [['Program studi', s.programName], ['Tagihan', pay ? `${pay.invoiceNo}, ${fmtRupiah(pay.amount)}` : '—'], ['Hasil verifikasi', v.result === 'verified' ? 'Pembayaran sah' : 'Bukti pembayaran ditolak'], ['Catatan', v.notes || '—']],
+  });
   return (
     <div className="space-y-6">
       <StepSection n={1} title="Periksa bukti pembayaran" hint={pay ? `Tagihan ${pay.invoiceNo}, sebesar ${fmtRupiah(pay.amount)}.` : undefined}>
@@ -83,8 +99,9 @@ export function VerifyPayment({ s }: ActionProps) {
       </StepSection>
       <StepSection n={2} title="Catat hasil verifikasi">
         <ResultNotesForm submitLabel="Catat hasil verifikasi" pending={verify.isPending} notesRequiredFor={['rejected']} notesHint="Wajib diisi bila bukti ditolak; catatan ini dibaca UPPS."
-          options={[{ value: 'verified', label: 'Pembayaran sah', hint: 'Proses dilanjutkan ke penugasan asesor.' }, { value: 'rejected', label: 'Tolak bukti pembayaran', hint: 'UPPS diminta mengunggah ulang.' }]} onSubmit={(v) => verify.mutate(v)} />
+          options={[{ value: 'verified', label: 'Pembayaran sah', hint: 'Proses dilanjutkan ke penugasan asesor.' }, { value: 'rejected', label: 'Tolak bukti pembayaran', hint: 'UPPS diminta mengunggah ulang.' }]} onSubmit={(v) => confirm.ask(v)} />
       </StepSection>
+      {confirm.dialog}
     </div>
   );
 }
