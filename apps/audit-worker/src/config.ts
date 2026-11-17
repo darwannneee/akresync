@@ -10,17 +10,29 @@ const schema = z.object({
   FABRIC_NETWORK_FILE: z.string().default('../../.runtime/fabric/network.json'),
   AUDIT_IDENTITY_DIR: z.string().default('../../.runtime/fabric/audit-identity'),
   RETRY_BACKOFF_SECONDS: z.string().default('1,2,4,8,16'),
+  RETRY_COOLDOWN_SECONDS: z.coerce.number().positive().default(30),
+  SWEEP_INTERVAL_SECONDS: z.coerce.number().positive().default(60),
+  SWEEP_PENDING_AGE_SECONDS: z.coerce.number().positive().default(300),
+  SWEEP_MAX_ATTEMPTS: z.coerce.number().int().positive().default(30),
 });
 
-export type WorkerConfig = Omit<z.infer<typeof schema>, 'RETRY_BACKOFF_SECONDS' | 'KAFKA_BROKERS'> & { brokers: string[]; backoffMs: number[] };
+export type WorkerConfig = Omit<z.infer<typeof schema>, 'RETRY_BACKOFF_SECONDS' | 'KAFKA_BROKERS' | 'RETRY_COOLDOWN_SECONDS' | 'SWEEP_INTERVAL_SECONDS' | 'SWEEP_PENDING_AGE_SECONDS' | 'SWEEP_MAX_ATTEMPTS'> & { brokers: string[]; backoffMs: number[]; cooldownMs: number; sweepIntervalMs: number; sweepPendingAgeSeconds: number; sweepMaxAttempts: number };
 
 export function parseConfig(env: NodeJS.ProcessEnv): WorkerConfig {
   const r = schema.safeParse(env);
   if (!r.success) throw new Error(`Konfigurasi tidak valid: ${r.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`);
-  const { RETRY_BACKOFF_SECONDS, KAFKA_BROKERS, ...rest } = r.data;
+  const { RETRY_BACKOFF_SECONDS, KAFKA_BROKERS, RETRY_COOLDOWN_SECONDS, SWEEP_INTERVAL_SECONDS, SWEEP_PENDING_AGE_SECONDS, SWEEP_MAX_ATTEMPTS, ...rest } = r.data;
   const backoffMs = RETRY_BACKOFF_SECONDS.split(',').map((s) => Number(s.trim()) * 1000);
   if (backoffMs.some((n) => !Number.isFinite(n) || n < 0)) throw new Error('RETRY_BACKOFF_SECONDS tidak valid');
-  return { ...rest, brokers: KAFKA_BROKERS.split(',').map((s) => s.trim()), backoffMs };
+  return {
+    ...rest,
+    brokers: KAFKA_BROKERS.split(',').map((s) => s.trim()),
+    backoffMs,
+    cooldownMs: RETRY_COOLDOWN_SECONDS * 1000,
+    sweepIntervalMs: SWEEP_INTERVAL_SECONDS * 1000,
+    sweepPendingAgeSeconds: SWEEP_PENDING_AGE_SECONDS,
+    sweepMaxAttempts: SWEEP_MAX_ATTEMPTS,
+  };
 }
 
 export const resolvePath = (p: string) => (path.isAbsolute(p) ? p : path.resolve(process.cwd(), p));

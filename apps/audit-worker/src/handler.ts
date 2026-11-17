@@ -61,12 +61,35 @@ export interface Deps {
   publishDlq(key: string | null, value: Buffer | string | null, error: string): Promise<void>;
   sleep(ms: number): Promise<void>;
   backoffMs: number[];
+  /** Tanda berhenti (shutdown): sisa percobaan dilewati agar proses dapat selesai. */
+  isStopping?: () => boolean;
   log?: { info: (o: object, m: string) => void; warn: (o: object, m: string) => void };
 }
 
-export type Outcome = 'committed' | 'already_committed' | 'failed';
+/**
+ * `retry`: galat sementara (jaringan Fabric, timeout, layanan tidak tersedia). Status tetap `pending`,
+ * offset JANGAN di-commit; pesan dicoba lagi oleh pemanggil atau oleh pemroses ulang berkala.
+ */
+export type Outcome = 'committed' | 'already_committed' | 'failed' | 'retry';
 
-const PERMANENT = /\b(AUDIT_CONFLICT|INVALID_ARGUMENT|FORBIDDEN):/;
+/** Galat permanen: mengulang tidak akan membantu (aturan chaincode / data tidak sah). */
+export const PERMANENT = /\b(AUDIT_CONFLICT|INVALID_ARGUMENT|FORBIDDEN):/;
+/** Galat sementara: layanan atau jaringan belum siap; aman dicoba ulang kapan saja (RecordAudit idempoten per eventId). */
+export const TRANSIENT = /UNAVAILABLE|DEADLINE_EXCEEDED|CANCELLED|ABORTED|ECONN|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|EPIPE|timeout|timed out|No connection|Failed to connect|connect ECONN|socket|network|peer|endorse|orderer|MVCC|not available|unavailable|tidak VALID/i;
+
+export const classifyError = (text: string): 'permanent' | 'transient' | 'unknown' =>
+  PERMANENT.test(text) ? 'permanent' : TRANSIENT.test(text) ? 'transient' : 'unknown';
+
+/** Dilempar agar offset tidak di-commit; pesan yang sama diproses lagi setelah jeda. */
+export class RetryLaterError extends Error {
+  constructor(
+    public readonly eventId: string,
+    public readonly reason: string,
+  ) {
+    super(`audit ${eventId} belum tercatat, dicoba lagi: ${reason}`);
+    this.name = 'RetryLaterError';
+  }
+}
 
 function errText(err: unknown): string {
   const parts: string[] = [];
@@ -85,7 +108,7 @@ function errText(err: unknown): string {
 
 /**
  * Proses satu pesan. Mengembalikan setelah hasil akhir pasti (committed / failed+DLQ),
- * sehingga pemanggil boleh meng-commit offset. Melempar hanya bila DB/DLQ sendiri gagal
+ * sehingga pemanggil boleh meng-commit offset; `retry` berarti belum pasti (offset jangan di-commit). Melempar hanya bila DB/DLQ sendiri gagal
  * (offset JANGAN di-commit → pesan diproses ulang).
  */
 export async function processMessage(deps: Deps, key: string | null, value: Buffer | string | null): Promise<Outcome> {
@@ -105,6 +128,7 @@ export async function processMessage(deps: Deps, key: string | null, value: Buff
 
   let attempts = 0;
   let lastError = '';
+  let kind: 'permanent' | 'transient' | 'unknown' = 'unknown';
   const maxAttempts = deps.backoffMs.length + 1;
   while (attempts < maxAttempts) {
     attempts++;
@@ -113,10 +137,11 @@ export async function processMessage(deps: Deps, key: string | null, value: Buff
       outcome = await deps.submitAudit(event);
     } catch (err) {
       lastError = errText(err);
-      if (PERMANENT.test(lastError)) break; // AUDIT_CONFLICT dll: tidak ada gunanya mencoba ulang
+      kind = classifyError(lastError);
+      if (kind === 'permanent') break; // AUDIT_CONFLICT dll: tidak ada gunanya mencoba ulang
       await deps.recordAttempt(event.eventId, attempts, lastError);
       const wait = deps.backoffMs[attempts - 1];
-      if (wait === undefined) break;
+      if (wait === undefined || deps.isStopping?.()) break;
       await deps.sleep(wait);
       continue;
     }
@@ -124,6 +149,11 @@ export async function processMessage(deps: Deps, key: string | null, value: Buff
     await deps.markCommitted(event.eventId, outcome, attempts);
     deps.log?.info({ eventId: event.eventId, txId: outcome.txId, attempts }, 'audit tercatat');
     return 'committed';
+  }
+  if (kind === 'transient') {
+    // Status tetap pending (last_error terisi): tampil sebagai "dicoba ulang otomatis". Offset tidak di-commit.
+    deps.log?.warn({ eventId: event.eventId, attempts }, 'audit belum berhasil (galat sementara); akan dicoba lagi');
+    return 'retry';
   }
   await deps.markFailed(event.eventId, lastError, attempts);
   await deps.publishDlq(event.eventId, value, lastError);
@@ -142,6 +172,10 @@ export interface MessageLike {
 export function makeEachMessage(deps: Deps, commitOffsets: (o: { topic: string; partition: number; offset: string }[]) => Promise<void>) {
   return async (m: MessageLike): Promise<Outcome> => {
     const outcome = await processMessage(deps, m.key?.toString() ?? null, m.value);
+    if (outcome === 'retry') {
+      const id = parseOutboxMessage(m.value).event.eventId;
+      throw new RetryLaterError(id, 'galat sementara pada layanan ledger');
+    }
     await commitOffsets([{ topic: m.topic, partition: m.partition, offset: (BigInt(m.offset) + 1n).toString() }]);
     return outcome;
   };

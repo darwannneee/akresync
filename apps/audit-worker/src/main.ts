@@ -2,9 +2,10 @@ import { Kafka, logLevel, type Consumer } from 'kafkajs';
 import pg from 'pg';
 import pino from 'pino';
 import { parseConfig } from './config.js';
-import { dbDeps } from './db.js';
+import { dbDeps, sweepDeps } from './db.js';
 import { AuditSubmitter } from './fabric.js';
-import { makeEachMessage, type Deps } from './handler.js';
+import { RetryLaterError, makeEachMessage, type Deps } from './handler.js';
+import { PERMANENT_SQL_PATTERN, sweepOnce } from './sweep.js';
 
 const cfg = parseConfig(process.env);
 const log = pino({ level: cfg.LOG_LEVEL });
@@ -34,6 +35,7 @@ const deps: Deps = {
     }
   },
   backoffMs: cfg.backoffMs,
+  isStopping: () => stopping,
   log,
 };
 
@@ -51,7 +53,18 @@ async function runConsumer(): Promise<void> {
     autoCommit: false,
     eachMessage: async ({ topic, partition, message, heartbeat }) => {
       currentHeartbeat = heartbeat;
-      await each({ topic, partition, key: message.key, value: message.value, offset: message.offset });
+      // Galat sementara: offset tidak di-commit dan pesan yang sama diproses lagi setelah jeda.
+      // Hanya partisi ini yang tertahan, dan hanya selama layanan ledger belum pulih.
+      for (;;) {
+        try {
+          await each({ topic, partition, key: message.key, value: message.value, offset: message.offset });
+          return;
+        } catch (err) {
+          if (!(err instanceof RetryLaterError) || stopping) throw err;
+          log.warn({ eventId: err.eventId, cooldownMs: cfg.cooldownMs }, 'menunggu sebelum mencoba ulang audit');
+          await deps.sleep(cfg.cooldownMs);
+        }
+      }
     },
   });
   log.info({ topics: subscribed }, 'audit-worker berjalan');
@@ -69,6 +82,20 @@ async function runConsumer(): Promise<void> {
   }
   await consumer.disconnect();
 }
+
+// Pemroses ulang berkala: baris audit_status yang `failed` karena galat sementara atau `pending` terlalu lama
+// dikirim ulang dari outbox (idempoten per eventId), sehingga pengajuan tidak macet permanen.
+const sweepRefs = sweepDeps(pool, PERMANENT_SQL_PATTERN, cfg.sweepMaxAttempts, cfg.sweepPendingAgeSeconds);
+let sweeping = false;
+const sweepTimer = setInterval(() => {
+  if (sweeping || stopping) return;
+  sweeping = true;
+  sweepOnce(deps, sweepRefs)
+    .then((r) => { if (r.tried) log.info(r, 'pemroses ulang audit selesai'); })
+    .catch((err) => log.warn({ err: String(err) }, 'pemroses ulang audit gagal'))
+    .finally(() => { sweeping = false; });
+}, cfg.sweepIntervalMs);
+sweepTimer.unref();
 
 async function shutdown(signal: string) {
   if (stopping) return;
