@@ -61,6 +61,16 @@ export function needsRescore(d: Detail, a: { phase: string; status: string; subm
   if (Number.isNaN(at) || Number.isNaN(sub)) return true;
   return sub <= at;
 }
+/** Kalimat bila AK dikembalikan KEA dan masih ada asesor yang belum menyerahkan ulang; null bila tidak berlaku. */
+export function rescorePendingMessage(d: Detail): string | null {
+  if (d.akStatus !== 'consistency_returned') return null;
+  const o = lastOffer(d);
+  const akList = (d.assessments ?? []).filter((x) => x.phase === 'AK');
+  const pair: [string | undefined, string | undefined][] = o ? [[o.assessor1Id, o.assessor1Name], [o.assessor2Id, o.assessor2Name]] : [];
+  const names = pair.filter(([id]) => { const a = akList.find((x) => x.assessorId === id); return !a || needsRescore(d, a); }).map(([, n]) => n).filter((n): n is string => !!n);
+  const who = names.length ? joinNames(names) : 'kedua asesor';
+  return `Pemeriksaan konsistensi belum dapat dilakukan: menunggu penyerahan ulang dari ${who}.`;
+}
 const rejectionPending = (d: Detail) => { const l = lastOffer(d); return l?.status === 'rejected' && !l.rejectionReviewedAt; };
 export const isPaymentRejected = (d: Detail) => d.payments?.[0]?.status === 'rejected' && ['invoice_issued', 'payment_proof_uploaded'].includes(d.stage);
 
@@ -117,7 +127,7 @@ export function buildWorkflow(d: Detail): MainStage[] {
       ak === 'not_started' || ak === 'offer_rejected' ? 'aktif' : 'selesai', ak === 'offer_rejected' && last?.rejectionReason ? `Alasan penolakan: ${last.rejectionReason}` : undefined),
     step('setuju', 'Asesor dan UPPS menerima penugasan', 'asesor_upps', 'C', ak === 'offered' ? 'aktif' : akOrderIdx > 2 ? 'selesai' : 'menunggu'),
     step('nilai-ak', 'Dua asesor menyerahkan penilaian AK', 'asesor', 'C', ['effective', 'ak_partial', 'consistency_returned'].includes(ak) ? 'aktif' : akOrderIdx >= 5 && ak !== 'consistency_returned' ? 'selesai' : 'menunggu', ak === 'consistency_returned' ? 'Dikembalikan KEA untuk dinilai ulang' : undefined),
-    step('konsistensi', 'Periksa konsistensi hasil AK', 'kea', 'A', ak === 'ak_complete' ? 'aktif' : ak === 'consistency_approved' ? 'selesai' : 'menunggu'),
+    step('konsistensi', 'Periksa konsistensi hasil AK', 'kea', 'A', ak === 'ak_complete' ? 'aktif' : ak === 'consistency_approved' ? 'selesai' : 'menunggu', rescorePendingMessage(d) ?? undefined),
   ];
   const laneAl: SubStep[] = [
     step('usul', 'Usulkan jadwal Asesmen Lapangan', 'kea', 'A', al === 'not_started' || al === 'rejected' ? 'aktif' : 'selesai', al === 'rejected' ? 'Usulan sebelumnya ditolak, usulkan ulang' : undefined),
@@ -314,6 +324,7 @@ export function nextActions(d: Detail, user: Pick<User, 'id' | 'role'>): NextRes
   } else if (!actions.length) {
     if (d.stage === 'released') waiting = 'Seluruh proses akreditasi telah selesai. Tidak ada langkah lanjutan.';
     else if (d.stage === 'admin_rejected') waiting = 'Pengajuan ditolak pada verifikasi administrasi. Tidak ada langkah lanjutan pada pengajuan ini.';
+    else if (rescorePendingMessage(d) && inBranch(d)) waiting = rescorePendingMessage(d);
     else {
       const other = ROLES.flatMap((r) => dutiesFor(d, r)).filter((a) => a.role !== user.role);
       waiting = other.length

@@ -152,7 +152,20 @@ export function assessmentRoutes(ctx: AppContext, router: Router, auth: RequestH
     if (b.result === 'returned' && !b.notes) throw badRequest('Catatan wajib diisi saat mengembalikan AK');
     const out = await withTransaction(async (c) => {
       const sub = await loadSubmissionForUser(c, user, id, { forUpdate: true });
-      assertFlow('ak_consistency', stateOf(sub));
+      let pending: string[] | undefined;
+      if (sub.ak_status === 'consistency_returned') {
+        // Sama dengan needsRescore/proyeksi: asesor dianggap sudah menyerahkan ulang bila penyerahan setelah waktu pengembalian.
+        const eo = await q1(c, `SELECT * FROM assessor_offers WHERE submission_id=$1 AND status='effective' ORDER BY offer_no DESC LIMIT 1`, [id]);
+        if (eo) {
+          const rows = await c.query(
+            `SELECT u.full_name, (a.status='submitted' AND $4::timestamptz IS NOT NULL AND a.submitted_at > $4::timestamptz) AS redone
+             FROM users u LEFT JOIN assessments a ON a.assessor_id=u.id AND a.offer_id=$1 AND a.phase='AK' WHERE u.id IN ($2,$3)`,
+            [eo.id, eo.assessor1_id, eo.assessor2_id, eo.consistency_at ?? null],
+          );
+          pending = rows.rows.filter((r: any) => !r.redone).map((r: any) => r.full_name as string);
+        }
+      }
+      assertFlow('ak_consistency', stateOf(sub), pending);
       const offer = await activeOffer(c, id);
       const o = await q1(c, `UPDATE assessor_offers SET consistency_status=$2, consistency_notes=$3, consistency_by=$4, consistency_at=now(), version=version+1 WHERE id=$1 RETURNING *`, [offer.id, b.result, b.notes ?? null, user.id]);
       await c.query(`UPDATE submissions SET ak_status=$2, updated_at=now() WHERE id=$1`, [id, b.result === 'approved' ? 'consistency_approved' : 'consistency_returned']);

@@ -80,17 +80,25 @@ const RULES: Record<FlowAction, Rule> = {
   issue_certificate: { label: 'Penerbitan hasil', stages: ['decided'], hint: 'penetapan Majelis harus selesai' },
 };
 
-/** Pesan galat (Indonesia) bila urutan alur dilanggar; null bila boleh. */
-export function flowViolation(action: FlowAction, s: FlowState): string | null {
+/** Pesan bila AK dikembalikan KEA dan asesor tertentu belum menyerahkan ulang (nama bila tersedia). */
+export const akRescorePendingMessage = (names: string[] = []): string =>
+  `Pemeriksaan konsistensi belum dapat dilakukan: menunggu penyerahan ulang dari ${names.length ? names.join(' dan ') : 'kedua asesor'}.`;
+
+/**
+ * Pesan galat (Indonesia) bila urutan alur dilanggar; null bila boleh.
+ * `pendingRescore`: nama asesor yang belum menyerahkan ulang setelah pengembalian (hanya untuk konsistensi AK).
+ */
+export function flowViolation(action: FlowAction, s: FlowState, pendingRescore?: string[]): string | null {
   const r = RULES[action];
   const ok = r.stages.includes(s.stage) && (!r.ak || r.ak.includes(s.akStatus)) && (!r.al || r.al.includes(s.alStatus));
   if (ok) return null;
+  if (action === 'ak_consistency' && s.stage === 'in_assessment' && s.akStatus === 'consistency_returned') return akRescorePendingMessage(pendingRescore);
   const detail = s.stage === 'in_assessment' ? ` (Asesmen Kecukupan: ${AK_LABEL[s.akStatus] ?? s.akStatus}; jadwal Asesmen Lapangan: ${AL_LABEL[s.alStatus] ?? s.alStatus})` : '';
   return `${r.label} belum dapat dilakukan: ${r.hint}. Tahap saat ini: ${STAGE_LABEL[s.stage] ?? s.stage}${detail}.`;
 }
 
-export function assertFlow(action: FlowAction, s: FlowState): void {
-  const msg = flowViolation(action, s);
+export function assertFlow(action: FlowAction, s: FlowState, pendingRescore?: string[]): void {
+  const msg = flowViolation(action, s, pendingRescore);
   if (msg) throw conflict(msg, { action, ...s });
 }
 
