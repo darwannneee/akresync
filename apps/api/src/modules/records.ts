@@ -33,7 +33,8 @@ export function applyTextCorrection(
     const hasText = input.notes !== undefined || pv.notes !== undefined;
     const notes = input.notes !== undefined ? (input.notes?.trim() || null) : ((pv.notes as string | null | undefined) ?? null);
     if (type === 'ADMIN_VERIFICATION' && next.result !== 'APPROVED' && !notes) throw badRequest('Catatan verifikasi wajib diisi untuk hasil perlu perbaikan atau penolakan.');
-    if (hasText) next.notesSha256 = notes ? sha256Hex(notes) : null;
+    // Hash selalu diturunkan dari teks di server; tanpa teks, hash dipaksa null (nilai dari klien tidak dipercaya).
+    next.notesSha256 = hasText && notes ? sha256Hex(notes) : null;
     return { payload: next, offChain: hasText ? { notes } : {} };
   }
   if (type === 'ASSIGNMENT_RESPONSE') {
@@ -41,7 +42,7 @@ export function applyTextCorrection(
     const hasText = input.responseReason !== undefined || before !== undefined;
     const reason = input.responseReason !== undefined ? (input.responseReason?.trim() || null) : (before ?? null);
     if (next.response === 'REJECT' && hasText && !reason) throw badRequest('Alasan penolakan wajib diisi.');
-    if (hasText) next.reasonSha256 = reason ? sha256Hex(reason) : null;
+    next.reasonSha256 = hasText && reason ? sha256Hex(reason) : null;
     return { payload: next, offChain: { ...(hasText ? { responseReason: reason } : {}), ...(pv.offerId ? { offerId: pv.offerId } : {}) } };
   }
   return { payload: next, offChain: {} };

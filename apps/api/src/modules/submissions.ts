@@ -67,18 +67,24 @@ export function rejectionReasonsByOffer(records: any[], user: Pick<AuthUser, 'id
   const out = new Map<string, { reason: string | null; role: string }>();
   if (user.role === 'upps') return out;
   const byKey = new Map<string, any>();
+  // offerId hanya tersimpan pada catatan asal / koreksi baru; koreksi lama tanpa offerId ditelusuri dari versi lain pada kunci yang sama.
+  const offerByKey = new Map<string, { v: number; offerId: string }>();
   for (const r of records) {
     if (r.record_type !== 'ASSIGNMENT_RESPONSE' || r.status !== 'committed') continue;
     const prev = byKey.get(r.record_key);
     if (!prev || r.version > prev.version) byKey.set(r.record_key, r);
+    const oid = (r.off_chain as { offerId?: string } | null)?.offerId;
+    const seen = offerByKey.get(r.record_key);
+    if (oid && (!seen || r.version < seen.v)) offerByKey.set(r.record_key, { v: r.version, offerId: oid });
   }
   for (const r of byKey.values()) {
     const p = r.payload as { response?: string; responderRole?: string };
     const oc = (r.off_chain ?? {}) as { offerId?: string; reason?: string | null; responseReason?: string | null };
-    if (p.response !== 'REJECT' || !oc.offerId) continue;
+    const offerId = oc.offerId ?? offerByKey.get(r.record_key)?.offerId;
+    if (p.response !== 'REJECT' || !offerId) continue;
     if (user.role === 'asesor' && r.actor_user_id !== user.id) continue;
     const reason = (r.version > 1 ? oc.responseReason : oc.reason) ?? null;
-    out.set(oc.offerId, { reason, role: p.responderRole === 'upps' ? 'upps' : 'asesor' });
+    out.set(offerId, { reason, role: p.responderRole === 'upps' ? 'upps' : 'asesor' });
   }
   return out;
 }
@@ -166,7 +172,7 @@ export async function buildDetail(ctx: AppContext, user: AuthUser, id: string) {
     offers: offers.map((o) => ({ ...camel(o), rejectionReason: rejectionByOffer.get(o.id)?.reason ?? null, rejectionBy: rejectionByOffer.get(o.id)?.role ?? null })),
     // Catatan verifikasi kelengkapan terbaru: dikirim juga ke UPPS pemilik agar dapat memperbaiki dokumen.
     adminVerification: adminRec
-      ? { result: (adminRec.payload as AdminVerificationPayload).result, notes: (adminRec.off_chain as any)?.notes ?? null, version: adminRec.version, recordedAt: adminRec.committed_at ?? adminRec.created_at }
+      ? { result: (adminRec.payload as AdminVerificationPayload).result, notes: user.role === 'asesor' ? null : ((adminRec.off_chain as any)?.notes ?? null), version: adminRec.version, recordedAt: adminRec.committed_at ?? adminRec.created_at }
       : null,
     // Catatan verifikasi akhir KEA: untuk Majelis (dan pihak internal), tidak untuk UPPS/asesor.
     finalVerification: finalRec && !restricted
