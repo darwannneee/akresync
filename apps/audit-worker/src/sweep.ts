@@ -10,7 +10,7 @@ export interface SweepDeps {
 /** Pola galat permanen dalam bentuk yang dipakai SQL (`!~`), selaras dengan PERMANENT di handler. */
 export const PERMANENT_SQL_PATTERN = `(AUDIT_CONFLICT|INVALID_ARGUMENT|FORBIDDEN):|pesan ditolak`;
 
-export interface SweepResult { tried: number; committed: number; retry: number; failed: number }
+export interface SweepResult { tried: number; committed: number; retry: number; failed: number; skipped: number }
 
 /**
  * Satu putaran pemroses ulang. Setiap peristiwa dikirim ulang lewat jalur yang sama dengan consumer
@@ -18,20 +18,32 @@ export interface SweepResult { tried: number; committed: number; retry: number; 
  */
 export async function sweepOnce(deps: Deps, sweep: SweepDeps, limit = 20): Promise<SweepResult> {
   const rows = await sweep.listRetryable(limit);
-  const res: SweepResult = { tried: 0, committed: 0, retry: 0, failed: 0 };
-  const single: Deps = { ...deps, backoffMs: [] };
+  const res: SweepResult = { tried: 0, committed: 0, retry: 0, failed: 0, skipped: 0 };
+  // Pemroses ulang tidak mempublikasikan DLQ: kegagalan cukup tercatat sebagai status `failed` + last_error
+  // (pesan Kafka asli sudah ber-DLQ oleh konsumen bila memang ditolak), sehingga tidak ada DLQ ganda.
+  const single: Deps = { ...deps, backoffMs: [], publishDlq: async () => undefined };
   for (const row of rows) {
     if (deps.isStopping?.()) break;
-    res.tried++;
-    await sweep.reopen(row.eventId);
+    const work = async (): Promise<Outcome> => {
+      await sweep.reopen(row.eventId);
+      return processMessage(single, row.eventId, Buffer.from(JSON.stringify(row.payload)));
+    };
     let outcome: Outcome;
     try {
-      outcome = await processMessage(single, row.eventId, Buffer.from(JSON.stringify(row.payload)));
+      // Lewati peristiwa yang sedang diproses konsumen (kunci per eventId).
+      const locked = deps.withEventLock ? await deps.withEventLock(row.eventId, work) : { acquired: true as const, value: await work() };
+      if (!locked.acquired) {
+        res.skipped++;
+        continue;
+      }
+      outcome = locked.value;
     } catch (err) {
+      res.tried++;
       deps.log?.warn({ eventId: row.eventId, err: String(err) }, 'pemroses ulang audit gagal menulis status');
       res.retry++;
       continue;
     }
+    res.tried++;
     if (outcome === 'committed' || outcome === 'already_committed') res.committed++;
     else if (outcome === 'retry') res.retry++;
     else res.failed++;

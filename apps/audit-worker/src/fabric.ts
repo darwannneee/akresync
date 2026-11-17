@@ -8,6 +8,9 @@ import { CHAINCODE, CHAIN_FUNCTIONS } from '@akreditasi/shared';
 import { MSP_SEKRETARIAT, loadNetwork, resolvePath, type WorkerConfig } from './config.js';
 import type { SubmitOutcome } from './handler.js';
 
+/** Nama kode validasi transaksi Fabric yang relevan untuk klasifikasi galat (TxValidationCode). */
+const TX_CODE_NAMES: Record<number, string> = { 9: 'DUPLICATE_TXID', 10: 'ENDORSEMENT_POLICY_FAILURE', 11: 'MVCC_READ_CONFLICT', 12: 'PHANTOM_READ_CONFLICT' };
+
 export class AuditSubmitter {
   private gateway: Gateway;
   private client: grpc.Client;
@@ -35,8 +38,18 @@ export class AuditSubmitter {
   async submitAudit(event: AuditEvent): Promise<SubmitOutcome> {
     const tx = await this.contract.submitAsync(CHAIN_FUNCTIONS.RecordAudit, { arguments: [JSON.stringify(event)] });
     const status = await tx.getStatus();
-    if (!status.successful) throw new Error(`transaksi ${tx.getTransactionId()} tidak VALID (kode ${status.code})`);
-    return { txId: tx.getTransactionId(), blockNumber: status.blockNumber.toString() };
+    if (!status.successful) throw new Error(`transaksi ${tx.getTransactionId()} tidak VALID (kode ${status.code} ${TX_CODE_NAMES[status.code] ?? ''})`.trim());
+    const own = tx.getTransactionId();
+    // RecordAudit idempoten: bila peristiwa sudah tercatat, hasilnya memuat txId transaksi aslinya;
+    // transaksi ini hanya no-op, jadi txId/blok no-op tidak boleh menggantikan catatan asli.
+    let recorded: string | undefined;
+    try {
+      recorded = (JSON.parse(Buffer.from(tx.getResult()).toString('utf8')) as { txId?: unknown }).txId as string | undefined;
+    } catch {
+      recorded = undefined;
+    }
+    if (typeof recorded === 'string' && recorded && recorded !== own) return { txId: recorded, blockNumber: null };
+    return { txId: own, blockNumber: status.blockNumber.toString() };
   }
 
   close(): void {
