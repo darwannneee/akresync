@@ -53,15 +53,20 @@ export function assessmentRoutes(ctx: AppContext, router: Router, auth: RequestH
       const offer = await activeOffer(c, id);
       assertPhaseActor(offer, user.id, phase);
       const existing = await q1(c, `SELECT * FROM assessments WHERE offer_id=$1 AND assessor_id=$2 AND phase=$3 FOR UPDATE`, [offer.id, user.id, phase]);
-      if (existing?.status === 'submitted' && !(phase === 'AK' && sub.ak_status === 'consistency_returned')) throw conflict('Penilaian sudah diserahkan dan tidak dapat diubah');
-      const row = await q1(
-        c,
-        `INSERT INTO assessments (submission_id, offer_id, assessor_id, phase, scores, total_score)
-         VALUES ($1,$2,$3,$4,$5::jsonb,$6)
-         ON CONFLICT (offer_id, assessor_id, phase) DO UPDATE SET scores=EXCLUDED.scores, total_score=EXCLUDED.total_score, version=assessments.version+1, updated_at=now()
-         RETURNING *`,
-        [id, offer.id, user.id, phase, JSON.stringify(b.scores), total],
-      );
+      const rescoring = existing?.status === 'submitted' && phase === 'AK' && sub.ak_status === 'consistency_returned';
+      if (existing?.status === 'submitted' && !rescoring) throw conflict('Penilaian sudah diserahkan dan tidak dapat diubah');
+      // Penilaian ulang AK: draf disimpan di kolom terpisah; skor resmi (scores/total_score) tetap sampai
+      // penyerahan ulang tercatat VALID di pencatatan permanen (lihat proyeksi ASSESSMENT_RESULT).
+      const row = rescoring
+        ? await q1(c, `UPDATE assessments SET draft_scores=$2::jsonb, draft_total_score=$3, updated_at=now() WHERE id=$1 RETURNING *`, [existing!.id, JSON.stringify(b.scores), total])
+        : await q1(
+            c,
+            `INSERT INTO assessments (submission_id, offer_id, assessor_id, phase, scores, total_score)
+             VALUES ($1,$2,$3,$4,$5::jsonb,$6)
+             ON CONFLICT (offer_id, assessor_id, phase) DO UPDATE SET scores=EXCLUDED.scores, total_score=EXCLUDED.total_score, version=assessments.version+1, updated_at=now()
+             RETURNING *`,
+            [id, offer.id, user.id, phase, JSON.stringify(b.scores), total],
+          );
       const ev = await recordAuditEvent(c, { aggregateType: 'assessment', aggregateId: row!.id, submissionId: id, kind: 'AssessmentDraftSaved', version: row!.version, snapshot: row!, actor: { uid: user.id, role: user.role } });
       return { row: row!, ev };
     }, ctx.pool);
@@ -105,9 +110,12 @@ export function assessmentRoutes(ctx: AppContext, router: Router, auth: RequestH
     const offer = await activeOffer(ctx.pool, id);
     assertPhaseActor(offer, user.id, phase);
     const row = await q1(ctx.pool, `SELECT * FROM assessments WHERE offer_id=$1 AND assessor_id=$2 AND phase=$3`, [offer.id, user.id, phase]);
-    if (!row || !row.scores || Object.keys(row.scores).length === 0) throw conflict('Simpan skor rinci (draf) terlebih dahulu sebelum menyerahkan');
-    const total = computeTotalScore(row.scores, { complete: true });
-    const summary = hashSnapshot(row.scores);
+    // Penilaian ulang (sudah diserahkan sebelumnya): yang dinilai adalah draf terpisah, bukan skor resmi.
+    const rescoring = row?.status === 'submitted';
+    const toSubmit = rescoring ? row?.draft_scores : row?.scores;
+    if (!row || !toSubmit || Object.keys(toSubmit).length === 0) throw conflict(rescoring ? 'Simpan skor penilaian ulang (draf) terlebih dahulu sebelum menyerahkan ulang' : 'Simpan skor rinci (draf) terlebih dahulu sebelum menyerahkan');
+    const total = computeTotalScore(toSubmit, { complete: true });
+    const summary = hashSnapshot(toSubmit);
     let minutesCid: string | null = null;
     let minutesSha: string | null = null;
     if (phase === 'AL') {

@@ -1,4 +1,5 @@
 import type { AdminVerificationPayload, AssessmentResultPayload, AssignmentResponsePayload, AssessorOfferPayload, FormalRecord } from '@akreditasi/shared';
+import { hashSnapshot } from '@akreditasi/shared/node';
 import { q, q1, toDbKey, type Queryable } from '../db/pool.js';
 
 export interface ProjectionInput {
@@ -82,6 +83,11 @@ export async function applyProjection(db: Queryable, input: ProjectionInput): Pr
            submitted_at=now(), updated_at=now(), version = assessments.version + 1`,
         [submissionId, offer.id, input.actorUserId, p.phase, p.totalScore, p.scoreSummarySha256, toDbKey(record.recordKey)],
       );
+      // Penilaian ulang: draf menjadi skor resmi hanya bila cocok dengan ringkasan yang baru VALID dicatat permanen.
+      const dr = await q1<{ draft_scores: unknown }>(db, `SELECT draft_scores FROM assessments WHERE offer_id=$1 AND assessor_id=$2 AND phase=$3`, [offer.id, input.actorUserId, p.phase]);
+      if (dr?.draft_scores && hashSnapshot(dr.draft_scores as Record<string, unknown>) === p.scoreSummarySha256) {
+        await db.query(`UPDATE assessments SET scores=draft_scores, total_score=draft_total_score, draft_scores=NULL, draft_total_score=NULL WHERE offer_id=$1 AND assessor_id=$2 AND phase=$3`, [offer.id, input.actorUserId, p.phase]);
+      }
       if (p.phase === 'AL') {
         if (isOriginal) await touch(db, submissionId, `stage = 'al_submitted', chain_stage = 'AL_SUBMITTED'`);
         return;

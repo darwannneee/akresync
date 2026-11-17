@@ -46,7 +46,8 @@ export function ScoringPage() {
     if (loaded || !q.data) return;
     const base: InstrumentScores = {};
     const known = new Set(SCORED.map((i) => `${i.criterion}/${i.id}`));
-    for (const [c, items] of Object.entries(mine?.scores ?? {})) for (const [k, v] of Object.entries(items)) if (known.has(`${c}/${k}`) && typeof v === 'number') (base[c] ??= {})[k] = v;
+    // Draf penilaian ulang (bila ada) dimuat lebih dulu; bila tidak, skor yang sudah diserahkan menjadi titik awal.
+    for (const [c, items] of Object.entries(mine?.draftScores ?? mine?.scores ?? {})) for (const [k, v] of Object.entries(items)) if (known.has(`${c}/${k}`) && typeof v === 'number') (base[c] ??= {})[k] = v;
     setScores(base); setLoaded(true);
     if (mine) setSavedAt(new Date());
   }, [q.data, mine, loaded]);
@@ -97,7 +98,7 @@ export function ScoringPage() {
   const crit = CRITERIA.find((c) => c.code === active) ?? CRITERIA[0]!;
   const critItems = SCORED.filter((i) => i.criterion === crit.code);
   const sendNow = async () => {
-    try { if (dirty || !mine) await saveDraft.mutateAsync(); } catch { setConfirm(false); return; }
+    try { if (dirty || !mine || (rescoreOpen && !mine.draftScores)) await saveDraft.mutateAsync(); } catch { setConfirm(false); return; }
     submit.mutate(undefined);
   };
   const status = saveDraft.isPending ? 'Menyimpan draf…' : dirty ? 'Perubahan belum tersimpan (tersimpan otomatis sebentar lagi)' : savedAt ? `Draf tersimpan pukul ${savedAt.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).replace(':', '.')} WIB` : 'Belum ada perubahan';

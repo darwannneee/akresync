@@ -26,7 +26,7 @@ export function uuid(): string {
 }
 
 /** snake_case → camelCase secara rekursif, kecuali isi payload/scores/snapshot/value yang bentuknya milik domain. */
-const OPAQUE = new Set(['payload', 'scores', 'snapshot', 'value', 'result_data']);
+const OPAQUE = new Set(['payload', 'scores', 'draft_scores', 'draftScores', 'snapshot', 'value', 'result_data']);
 function camel(v: unknown, opaque = false): unknown {
   if (Array.isArray(v)) return v.map((x) => camel(x, opaque));
   if (v && typeof v === 'object') {

@@ -95,6 +95,8 @@ export interface AssessmentView {
   phase: 'AK' | 'AL';
   status: 'draft' | 'submitted';
   scores?: Record<string, Record<string, number>>;
+  /** Draf penilaian ulang (hanya milik asesor sendiri); skor resmi tetap di `scores`. */
+  draftScores?: Record<string, Record<string, number>> | null;
   totalScore?: number | string | null;
   minutesDocumentId?: string | null;
   submittedAt?: string | null;
