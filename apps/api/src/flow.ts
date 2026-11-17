@@ -1,5 +1,6 @@
 import type { AkStatus, AlScheduleStatus, SubmissionStage } from '@akreditasi/shared';
 import { conflict } from './errors.js';
+import { AK_LABEL, AL_LABEL, STAGE_LABEL } from './labels.js';
 
 export interface FlowState {
   stage: SubmissionStage;
@@ -84,7 +85,8 @@ export function flowViolation(action: FlowAction, s: FlowState): string | null {
   const r = RULES[action];
   const ok = r.stages.includes(s.stage) && (!r.ak || r.ak.includes(s.akStatus)) && (!r.al || r.al.includes(s.alStatus));
   if (ok) return null;
-  return `${r.label} belum dapat dilakukan: ${r.hint}. Tahap saat ini: ${s.stage}${s.stage === 'in_assessment' ? ` (AK: ${s.akStatus}, jadwal AL: ${s.alStatus})` : ''}.`;
+  const detail = s.stage === 'in_assessment' ? ` (Asesmen Kecukupan: ${AK_LABEL[s.akStatus] ?? s.akStatus}; jadwal Asesmen Lapangan: ${AL_LABEL[s.alStatus] ?? s.alStatus})` : '';
+  return `${r.label} belum dapat dilakukan: ${r.hint}. Tahap saat ini: ${STAGE_LABEL[s.stage] ?? s.stage}${detail}.`;
 }
 
 export function assertFlow(action: FlowAction, s: FlowState): void {

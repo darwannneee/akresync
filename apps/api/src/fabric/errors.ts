@@ -1,4 +1,5 @@
 import { AppError } from '../errors.js';
+import { humanizeChainMessage } from '../labels.js';
 
 const CODE_RE = /\b(FORBIDDEN|PRECONDITION_FAILED|NOT_FOUND|INVALID_ARGUMENT|VERSION_CONFLICT|AUDIT_CONFLICT):\s*([^\n\r]*)/;
 
@@ -33,16 +34,16 @@ export function mapChainError(err: unknown): AppError {
   const m = CODE_RE.exec(text);
   if (m) {
     const code = m[1] as string;
-    return new AppError(STATUS[code] ?? 400, code, (m[2] ?? '').trim() || code, { source: 'chaincode' });
+    return new AppError(STATUS[code] ?? 400, code, humanizeChainMessage((m[2] ?? '').trim() || code), { source: 'chaincode', detail: (m[2] ?? '').trim() });
   }
   if (err instanceof ChainCommitError) {
-    return new AppError(502, 'CHAIN_COMMIT_FAILED', `Transaksi tidak valid di ledger (kode ${err.statusCode})`, { txId: err.txId });
+    return new AppError(502, 'CHAIN_COMMIT_FAILED', `Perubahan tidak dapat disahkan oleh jaringan pencatatan permanen. Silakan muat ulang halaman lalu coba lagi bila perlu (kode ${err.statusCode}).`, { txId: err.txId });
   }
   if (isEndorseError(err)) {
     // Gagal pada tahap endorsement (mis. peer pemanggil mati): transaksi belum pernah dikirim ke orderer.
-    return new AppError(503, 'CHAIN_UNAVAILABLE', 'Layanan ledger sedang tidak tersedia; tidak ada perubahan yang tersimpan. Silakan coba lagi sebentar lagi.', { reason: text.slice(0, 300), notSubmitted: true });
+    return new AppError(503, 'CHAIN_UNAVAILABLE', 'Layanan pencatatan permanen sedang tidak tersedia; tidak ada perubahan yang tersimpan. Silakan coba lagi sebentar lagi.', { reason: text.slice(0, 300), notSubmitted: true });
   }
-  return new AppError(503, 'CHAIN_UNAVAILABLE', 'Jaringan Fabric tidak dapat memproses transaksi saat ini; silakan coba lagi sebentar lagi', { reason: text.slice(0, 300) });
+  return new AppError(503, 'CHAIN_UNAVAILABLE', 'Layanan pencatatan permanen belum dapat memproses permintaan ini. Silakan coba lagi sebentar lagi.', { reason: text.slice(0, 300) });
 }
 
 /** Galat gateway pada fase endorse (sebelum transaksi dikirim ke orderer) => pasti tidak ter-commit. */

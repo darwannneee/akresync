@@ -27,9 +27,9 @@ const ALLOWED_MIME = new Set([
 ]);
 
 export function requireFile(file: Express.Multer.File | undefined): Express.Multer.File {
-  if (!file) throw badRequest('Berkas wajib diunggah pada field "file"');
+  if (!file) throw badRequest('Pilih berkas yang akan diunggah.');
   if (file.size === 0) throw badRequest('Berkas kosong');
-  if (!ALLOWED_MIME.has(file.mimetype)) throw badRequest(`Tipe berkas ${file.mimetype} tidak diizinkan`);
+  if (!ALLOWED_MIME.has(file.mimetype)) throw badRequest(`Jenis berkas ${file.mimetype} tidak diizinkan. Gunakan PDF, dokumen Office, gambar, atau arsip ZIP.`);
   return file;
 }
 
@@ -77,10 +77,10 @@ export async function fetchAndDecrypt(ctx: Pick<AppContext, 'ipfs' | 'config'>, 
       ctx.config.DOCUMENT_MASTER_KEY,
     );
   } catch {
-    throw conflict('Integritas berkas gagal: dekripsi menolak data (ciphertext rusak/diubah)');
+    throw conflict('Berkas tidak dapat dibuka karena isinya rusak atau telah berubah. Hubungi administrator.', { reason: 'DECRYPT_FAILED' });
   }
   if (createHash('sha256').update(plain).digest('hex') !== String(doc.sha256_plain).trim()) {
-    throw conflict('Integritas berkas gagal: SHA-256 tidak cocok dengan catatan');
+    throw conflict('Isi berkas berbeda dari yang tercatat saat diunggah, sehingga tidak dapat diunduh. Hubungi administrator.', { reason: 'SHA256_MISMATCH' });
   }
   return plain;
 }
@@ -111,8 +111,15 @@ export async function assertAuditCommitted(db: Queryable, submissionId: string, 
      WHERE o.submission_id = $1 AND o.type = $2 ORDER BY o.created_at DESC LIMIT 1`,
     [submissionId, kind],
   );
-  if (!row) throw conflict(`${label} belum tercatat (peristiwa ${kind} belum ada)`);
-  if (row.status !== 'committed') throw conflict(`${label} belum tercatat on-chain (status audit ${kind}: ${row.status}); coba lagi setelah audit tersimpan`);
+  if (!row) throw conflict(`${label} belum tercatat. Selesaikan langkah sebelumnya terlebih dahulu.`, { kind });
+  if (row.status !== 'committed') {
+    throw conflict(
+      row.status === 'failed'
+        ? `${label} gagal dicatat permanen. Hubungi administrator.`
+        : `${label} masih dalam proses pencatatan permanen. Coba lagi dalam beberapa saat.`,
+      { kind, auditStatus: row.status },
+    );
+  }
 }
 
 export const camel = (row: Record<string, any>): Record<string, any> =>

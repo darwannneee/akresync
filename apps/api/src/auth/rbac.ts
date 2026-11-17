@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { AppRole, RouteSpec } from '@akreditasi/shared';
 import { forbidden, notFound, unauthorized } from '../errors.js';
+import { rolesText } from '../labels.js';
 import { verifyAccessToken } from './tokens.js';
 import { q1, type Queryable } from '../db/pool.js';
 import type { AuthUser } from './types.js';
@@ -37,7 +38,7 @@ export function authorize(spec: RouteSpec) {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (spec.roles === 'public') return next();
     if (!req.user) return next(unauthorized());
-    if (!isRoleAllowed(spec.roles, req.user.role)) return next(forbidden(`Peran ${req.user.role} tidak diizinkan untuk aksi ini`));
+    if (!isRoleAllowed(spec.roles, req.user.role)) return next(forbidden(spec.roles === 'authenticated' ? undefined : `Tindakan ini hanya dapat dilakukan oleh ${rolesText(spec.roles as AppRole[])}.`));
     next();
   };
 }

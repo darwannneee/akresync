@@ -56,9 +56,9 @@ export async function findReplay(ctx: AppContext, requestId: string, userId: str
   const row = await q1<FrRow>(ctx.pool, 'SELECT * FROM formal_records WHERE request_id = $1', [requestId]);
   if (!row) return null;
   if (row.actor_user_id !== userId || (submissionId && row.submission_id !== submissionId)) {
-    throw conflict('Idempotency-Key sudah dipakai untuk permintaan lain');
+    throw conflict('Permintaan ini bentrok dengan permintaan lain yang sudah diproses. Muat ulang halaman lalu ulangi.');
   }
-  if (row.status === 'pending_chain') throw conflict('Permintaan dengan Idempotency-Key ini masih diproses; coba lagi sebentar lagi');
+  if (row.status === 'pending_chain') throw conflict('Permintaan yang sama masih diproses. Tunggu sebentar lalu muat ulang halaman.');
   if (row.status === 'failed') return null;
   return { chain: receiptFromRow(row), record: { payload: row.payload, recordKey: row.record_key, version: row.version } as FormalRecord, formalRecordId: row.id, replayed: true };
 }
@@ -88,14 +88,14 @@ export async function executeChainAction(ctx: AppContext, input: ChainActionInpu
     [rowId, input.submissionId, input.recordType, placeholderKey, input.requestId, input.userId, JSON.stringify(dbSafe(input.payload)), JSON.stringify(dbSafe(input.offChain ?? {}))],
   );
   const id = upsertPending.rows[0]?.id;
-  if (!id) throw conflict('Idempotency-Key ini sedang diproses');
+  if (!id) throw conflict('Permintaan yang sama masih diproses. Tunggu sebentar lalu muat ulang halaman.');
 
   let submit;
   try {
     submit = await ctx.chain.submit(input.userId, input.fn, input.args);
-    if (!submit.record) throw new AppError(502, 'CHAIN_BAD_RESPONSE', 'Chaincode tidak mengembalikan catatan formal');
+    if (!submit.record) throw new AppError(502, 'CHAIN_BAD_RESPONSE', 'Layanan pencatatan permanen memberi respons yang tidak lengkap. Hubungi administrator.');
   } catch (err) {
-    const e = err instanceof AppError ? err : new AppError(503, 'CHAIN_UNAVAILABLE', 'Layanan ledger sedang tidak tersedia; silakan coba lagi sebentar lagi', { reason: String((err as Error).message).slice(0, 300) });
+    const e = err instanceof AppError ? err : new AppError(503, 'CHAIN_UNAVAILABLE', 'Layanan pencatatan permanen sedang tidak tersedia; silakan coba lagi sebentar lagi', { reason: String((err as Error).message).slice(0, 300) });
     if (isDefinitiveFailure(e)) {
       await ctx.pool.query(`UPDATE formal_records SET status='failed', error=$2 WHERE id=$1`, [id, `${e.code}: ${e.message}`.slice(0, 500)]);
     }
@@ -109,7 +109,7 @@ export async function executeChainAction(ctx: AppContext, input: ChainActionInpu
     }, ctx.pool);
   } catch (err) {
     logger.error({ err, txId: submit.txId, requestId: input.requestId }, 'transaksi VALID tetapi proyeksi gagal; reconciler akan melengkapi');
-    throw new AppError(500, 'PROJECTION_PENDING', `Transaksi chain berhasil (${submit.txId}) tetapi proyeksi basis data tertunda dan akan dilengkapi otomatis`, {
+    throw new AppError(500, 'PROJECTION_PENDING', `Perubahan sudah tercatat permanen (nomor transaksi ${submit.txId}) tetapi tampilan data masih diperbarui dan akan lengkap otomatis. Muat ulang halaman beberapa saat lagi.`, {
       txId: submit.txId,
       requestId: input.requestId,
     });

@@ -13,10 +13,24 @@ export const asyncHandler =
     fn(req, res).catch(next);
   };
 
+const FIELD_ID: Record<string, string> = { payload: 'muatan', reason: 'alasan', evidenceRef: 'rujukan bukti', notes: 'catatan', body: 'uraian', result: 'hasil', email: 'surel', password: 'kata sandi', role: 'peran' };
+
+/** Pesan isian yang dapat dipahami pengguna; detail teknis asli tetap ada pada `details`. */
+function issueText(i: { path: (string | number)[]; message: string; code?: string }): string {
+  const field = i.path.length ? i.path.map(String).join('.') : '';
+  const name = FIELD_ID[field] ?? field;
+  const label = name ? `Isian "${name}"` : 'Isian';
+  if (i.message === 'Required') return `${label} wajib diisi.`;
+  if (/^Expected .*, received/i.test(i.message) || i.message === 'Invalid input' || i.message.startsWith('Invalid ') || i.code === 'invalid_type' || i.code === 'invalid_enum_value') return `${label} tidak valid.`;
+  if (/^String must contain at least (\d+)/i.test(i.message)) return `${label} terlalu pendek.`;
+  if (/^String must contain at most/i.test(i.message)) return `${label} terlalu panjang.`;
+  return name ? `${label}: ${i.message}` : i.message;
+}
+
 export function parse<S extends ZodTypeAny>(schema: S, data: unknown): z.infer<S> {
   const r = schema.safeParse(data);
   if (!r.success) {
-    throw badRequest(r.error.issues.map((i) => `${i.path.join('.') || 'body'}: ${i.message}`).join('; '), r.error.issues);
+    throw badRequest(r.error.issues.map(issueText).join('; '), r.error.issues);
   }
   return r.data;
 }
@@ -41,12 +55,12 @@ export function mountWith(router: Router, auth: RequestHandler, spec: RouteSpec,
 export function requestIdFrom(req: Request): string {
   const h = req.header('Idempotency-Key');
   if (h === undefined) return randomUUID();
-  if (!/^[A-Za-z0-9._:-]{8,128}$/.test(h)) throw badRequest('Idempotency-Key harus 8-128 karakter [A-Za-z0-9._:-]');
+  if (!/^[A-Za-z0-9._:-]{8,128}$/.test(h)) throw badRequest('Kunci permintaan tidak valid. Muat ulang halaman lalu ulangi.');
   return h;
 }
 
 export const uuidParam = (v: unknown): string => {
-  if (typeof v !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)) throw badRequest('ID tidak valid');
+  if (typeof v !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)) throw badRequest('Alamat atau tautan yang dibuka tidak valid.');
   return v;
 };
 

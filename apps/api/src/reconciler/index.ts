@@ -35,7 +35,7 @@ export async function reconcileOnce(ctx: AppContext, now = Date.now()): Promise<
       const code = (err as { code?: string }).code;
       if (code === 'NOT_FOUND') {
         if (now - row.created_at.getTime() > pendingAfter * 3) {
-          await ctx.pool.query(`UPDATE formal_records SET status='failed', error='Tidak ditemukan di chain setelah batas waktu (rekonsiliasi)' WHERE id=$1 AND status='pending_chain'`, [row.id]);
+          await ctx.pool.query(`UPDATE formal_records SET status='failed', error='Tidak ditemukan pada pencatatan permanen setelah batas waktu (rekonsiliasi)' WHERE id=$1 AND status='pending_chain'`, [row.id]);
           res.failed++;
         } else res.skipped++;
       } else {
