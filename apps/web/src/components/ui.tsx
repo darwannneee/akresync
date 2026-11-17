@@ -215,13 +215,19 @@ export function DataTable<T>({ columns, rows, rowKey, caption, onRowClick, toolb
 }
 
 /* ---------- Tabs (nav-tabs) ---------- */
+const TAB_EDGE_PAD = 28; // px: lebar tombol geser; daftar tab diberi bantalan sebesar ini saat meluap agar tombol tidak menutupi area klik tab
 export function Tabs<T extends string>({ tabs, value, onChange, label }: { tabs: { id: T; label: string; count?: number }[]; value: T; onChange: (v: T) => void; label: string }) {
   const listRef = useRef<HTMLDivElement>(null);
-  const [edge, setEdge] = useState({ left: false, right: false });
+  const [edge, setEdge] = useState({ left: false, right: false, overflowing: false });
+  const overflowingRef = useRef(false);
   const measure = useCallback(() => {
     const el = listRef.current;
     if (!el) return;
-    setEdge({ left: el.scrollLeft > 4, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
+    // Lebar isi tanpa bantalan tepi (tempat tombol geser), agar status meluap tidak berayun saat bantalan dipasang.
+    const content = el.scrollWidth - (overflowingRef.current ? 2 * TAB_EDGE_PAD : 0);
+    const overflowing = content > el.clientWidth + 1;
+    overflowingRef.current = overflowing;
+    setEdge({ left: el.scrollLeft > 4, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4, overflowing });
   }, []);
   useEffect(() => {
     measure();
@@ -244,18 +250,18 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: { tabs:
   const scrollBy = (dir: -1 | 1) => listRef.current?.scrollBy({ left: dir * 200, behavior: 'smooth' });
   return (
     <div className="no-print relative border-b border-slate-200">
-      <div ref={listRef} role="tablist" aria-label={label} onScroll={measure} className="flex gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={listRef} role="tablist" aria-label={label} onScroll={measure} style={edge.overflowing ? { paddingInline: TAB_EDGE_PAD, scrollPaddingInline: TAB_EDGE_PAD } : undefined} className="flex gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {tabs.map((t, i) => (
           <button key={t.id} id={`tab-${t.id}`} role="tab" type="button" aria-selected={t.id === value} aria-controls={`panel-${t.id}`} tabIndex={t.id === value ? 0 : -1}
             onClick={() => onChange(t.id)} onKeyDown={(e) => onKey(e, i)}
-            className={cx('-mb-px min-h-[44px] shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors',
+            className={cx('min-h-[44px] shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors',
               t.id === value ? 'border-navy-700 font-semibold text-navy-700' : 'border-transparent font-medium text-muted hover:border-slate-300 hover:text-ink')}>
             {t.label}{t.count !== undefined && <span className={cx('ml-1.5 rounded-full px-1.5 py-0.5 text-xs tabular-nums', t.id === value ? 'bg-navy-50 text-navy-700' : 'bg-slate-100 text-muted')}>{t.count}</span>}
           </button>
         ))}
       </div>
-      {edge.left && <button type="button" tabIndex={-1} aria-label="Geser tab ke kiri" onClick={() => scrollBy(-1)} className="absolute inset-y-0 left-0 grid w-9 place-items-center bg-gradient-to-r from-white via-white/90 to-transparent text-navy-700"><ChevronLeft size={18} aria-hidden /></button>}
-      {edge.right && <button type="button" tabIndex={-1} aria-label="Geser tab ke kanan" onClick={() => scrollBy(1)} className="absolute inset-y-0 right-0 grid w-9 place-items-center bg-gradient-to-l from-white via-white/90 to-transparent text-navy-700"><ChevronRight size={18} aria-hidden /></button>}
+      {edge.left && <button type="button" tabIndex={-1} aria-label="Geser tab ke kiri" onClick={() => scrollBy(-1)} style={{ width: TAB_EDGE_PAD }} className="absolute bottom-0 left-0 top-0 grid place-items-center bg-white text-navy-700 hover:bg-navy-50"><ChevronLeft size={16} aria-hidden /></button>}
+      {edge.right && <button type="button" tabIndex={-1} aria-label="Geser tab ke kanan" onClick={() => scrollBy(1)} style={{ width: TAB_EDGE_PAD }} className="absolute bottom-0 right-0 top-0 grid place-items-center bg-white text-navy-700 hover:bg-navy-50"><ChevronRight size={16} aria-hidden /></button>}
     </div>
   );
 }
