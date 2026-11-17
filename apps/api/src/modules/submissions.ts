@@ -86,7 +86,7 @@ export function rejectionReasonsByOffer(records: any[], user: Pick<AuthUser, 'id
 /** Peristiwa audit yang menjadi prasyarat chaincode; status terbarunya disertakan pada daftar pengajuan. */
 const GATE_KINDS = ['PaymentVerified', 'AssignmentRejectionReviewed', 'AKConsistencyApproved', 'ALScheduleApproved', 'ResponsesCompleted'];
 
-type GateMap = Map<string, { kind: string; status: string }[]> & { pending: Map<string, number>; failed: Map<string, number> };
+type GateMap = Map<string, { kind: string; status: string; attempts: number }[]> & { pending: Map<string, number>; failed: Map<string, number> };
 
 export async function auditGateSummary(db: Queryable, ids: string[]): Promise<GateMap> {
   const out = new Map() as GateMap;
@@ -95,13 +95,13 @@ export async function auditGateSummary(db: Queryable, ids: string[]): Promise<Ga
   if (!ids.length) return out;
   const gate = await q(
     db,
-    `SELECT DISTINCT ON (o.submission_id, o.type) o.submission_id, o.type AS kind, a.status
+    `SELECT DISTINCT ON (o.submission_id, o.type) o.submission_id, o.type AS kind, a.status, a.attempts
      FROM outbox o JOIN audit_status a ON a.event_id = o.id
      WHERE o.submission_id = ANY($1::uuid[]) AND o.type = ANY($2::text[])
      ORDER BY o.submission_id, o.type, o.created_at DESC`,
     [ids, GATE_KINDS],
   );
-  for (const g of gate) out.set(g.submission_id, [...(out.get(g.submission_id) ?? []), { kind: g.kind, status: g.status }]);
+  for (const g of gate) out.set(g.submission_id, [...(out.get(g.submission_id) ?? []), { kind: g.kind, status: g.status, attempts: g.attempts }]);
   const counts = await q(
     db,
     `SELECT o.submission_id, a.status, count(*)::int AS n FROM outbox o JOIN audit_status a ON a.event_id = o.id
@@ -150,7 +150,7 @@ export async function buildDetail(ctx: AppContext, user: AuthUser, id: string) {
   for (const a of audit as any[]) if (a.aggregate_type === 'document_version') auditByDocument.set(a.aggregate_id, a);
   const docWithAudit = (d: any) => {
     const a = auditByDocument.get(d.id);
-    return { ...docDto(d), auditStatus: a?.status ?? null, auditTxId: a?.tx_id ?? null, indexStatus: d.index_status ?? null, indexError: d.index_error ?? null, docCheck: d.doc_check ?? null };
+    return { ...docDto(d), auditStatus: a?.status ?? null, auditTxId: a?.tx_id ?? null, auditAttempts: a?.attempts ?? null, indexStatus: d.index_status ?? null, indexError: d.index_error ?? null, docCheck: d.doc_check ?? null };
   };
   // Tabel on-chain hanya memuat catatan yang tidak gagal; percobaan ditolak chain dilaporkan terpisah.
   const onChain = formal.filter((f: any) => f.status !== 'failed');

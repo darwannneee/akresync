@@ -48,14 +48,14 @@ export function authRoutes(ctx: AppContext, router: Router, auth: RequestHandler
     // Selalu jalankan perbandingan agar waktu respons tidak membedakan email terdaftar.
     const ok = await verifyPassword(b.password, row?.password_hash ?? '$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinv');
     // Peran yang dipilih pada formulir harus sama dengan peran akun; pesannya sama dengan kata sandi salah agar tidak membocorkan.
-    if (!row || !ok || (b.role && row.role !== b.role)) throw unauthorized('Email atau kata sandi salah');
+    if (!row || !ok || (b.role && row.role !== b.role)) throw unauthorized('Surel, kata sandi, atau peran tidak sesuai');
     // Pesan khusus hanya setelah kata sandi benar (tidak membocorkan status akun kepada pihak lain).
     if (row.status === 'pending_verification') throw new AppError(403, 'ACCOUNT_PENDING', 'Akun sedang menunggu verifikasi Sekretariat Administrasi.');
     if (row.status === 'rejected') {
       const note = (await q1<{ review_note: string | null }>(ctx.pool, 'SELECT review_note FROM upps_registrations WHERE user_id = $1', [row.id]))?.review_note;
       throw new AppError(403, 'ACCOUNT_REJECTED', `Pendaftaran akun ditolak${note ? `: ${note}` : ''}.`);
     }
-    if (!row.is_active) throw unauthorized('Email atau kata sandi salah');
+    if (!row.is_active) throw unauthorized('Surel, kata sandi, atau peran tidak sesuai');
     res.json(envelope(await issueSession(res, toAuthUser(row))));
   });
 

@@ -19,7 +19,7 @@ const BG_CLS = 'min-h-screen bg-slate-50 px-3 py-8 sm:py-12';
 function Brand() {
   return <div className="mb-6 flex justify-center"><BrandMark /></div>;
 }
-const LegalFooter = () => <p className="rounded-b-2xl border-t border-slate-100 bg-slate-50 px-4 py-3.5 text-center text-sm text-muted">Hak cipta © 2026 Sistem Akreditasi. | Syarat &amp; Ketentuan | Kebijakan Privasi</p>;
+const LegalFooter = () => <p className="rounded-b-2xl border-t border-slate-100 bg-slate-50 px-4 py-3.5 text-center text-sm text-muted">Hak cipta © 2026 Sistem Akreditasi.</p>;
 
 /** Panel navy di halaman masuk: nilai sistem dan angka agregat publik (gagal dimuat = angka disembunyikan). */
 function LoginAside() {
@@ -44,7 +44,7 @@ function LoginAside() {
         </ul>
       </div>
       <dl className="grid max-w-xl grid-cols-3 gap-4 border-t border-white/10 pt-6">
-        {[['Pengajuan tercatat', stats.data ? fmtNumber(stats.data.submissions, 0) : '—'], ['Catatan on-chain', stats.data ? fmtNumber(stats.data.onChainTx, 0) : '—'], ['Tahap alur', '9']].map(([k, v]) => (
+        {[['Pengajuan tercatat', stats.data ? fmtNumber(stats.data.submissions, 0) : '—'], ['Catatan permanen', stats.data ? fmtNumber(stats.data.onChainTx, 0) : '—'], ['Tahap alur', '9']].map(([k, v]) => (
           <div key={k}><dd className="text-3xl font-semibold tabular-nums text-white">{v}</dd><dt className="mt-0.5 text-sm text-slate-300">{k}</dt></div>
         ))}
       </dl>
@@ -78,7 +78,7 @@ export function LoginPage() {
               try { const u = await signIn(v.email, v.password, v.role); nav(ROLE_HOME[u.role], { replace: true }); } catch (e) { setErr(errorMessage(e)); }
             })}>
               <FormError message={err} />
-              <Field label="Email" error={f.formState.errors.email?.message}>{(p) => <Input {...p} type="email" autoComplete="username" placeholder="Alamat Email" {...f.register('email')} />}</Field>
+              <Field label="Surel" error={f.formState.errors.email?.message}>{(p) => <Input {...p} type="email" autoComplete="username" placeholder="Alamat surel" {...f.register('email')} />}</Field>
               <Field label="Kata Sandi" error={f.formState.errors.password?.message}>
                 {(p) => (
                   <div className="relative">
