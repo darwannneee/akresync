@@ -17,14 +17,14 @@ function SubStepList({ steps }: { steps: SubStep[] }) {
   return (
     <ol className="space-y-2">
       {steps.map((x, i) => (
-        <li key={x.id} className="flex items-start gap-3 rounded-lg border border-line bg-white p-3">
+        <li key={x.id} className="flex flex-wrap items-start gap-x-3 gap-y-2 rounded-lg border border-line bg-white p-3">
           <span className={cx('mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-medium', RING[x.status].replace(/ring-\S+/g, ''))}>{x.status === 'selesai' ? <Check size={15} aria-hidden /> : i + 1}</span>
           <div className="min-w-0 flex-1">
             <p className={cx('font-medium', x.status === 'terkunci' ? 'text-faint' : 'text-ink')}>{x.label}</p>
             <p className="text-sm text-muted">{x.roleLabel} · {x.storage === 'C' ? 'dicatat permanen' : 'tersimpan dengan jejak audit'}</p>
             {x.note && <p className="text-sm text-wait">{x.note}</p>}
           </div>
-          <StatusPill status={x.status} />
+          <span className="ml-10 sm:ml-0"><StatusPill status={x.status} /></span>
         </li>
       ))}
     </ol>
@@ -43,8 +43,8 @@ function StageDetail({ stage, d, audit }: { stage: MainStage; d: SubmissionDetai
       <div className="mt-4">
         {stage.lanes ? (
           <div className="grid gap-4 lg:grid-cols-2">
-            <div><p className="mb-2 flex items-center gap-2 font-medium text-navy-900"><Badge tone="info">Jalur A</Badge>Penugasan asesor dan Asesmen Kecukupan</p><SubStepList steps={stage.lanes.ak} /></div>
-            <div><p className="mb-2 flex items-center gap-2 font-medium text-navy-900"><Badge tone="info">Jalur B</Badge>Jadwal Asesmen Lapangan</p><SubStepList steps={stage.lanes.al} /></div>
+            <div className="min-w-0"><p className="mb-2 flex items-center gap-2 font-medium text-navy-900"><Badge tone="info">Jalur A</Badge>Penugasan asesor dan Asesmen Kecukupan</p><SubStepList steps={stage.lanes.ak} /></div>
+            <div className="min-w-0"><p className="mb-2 flex items-center gap-2 font-medium text-navy-900"><Badge tone="info">Jalur B</Badge>Jadwal Asesmen Lapangan</p><SubStepList steps={stage.lanes.al} /></div>
             <p className="text-sm text-muted lg:col-span-2">Kedua jalur berjalan bersamaan. Tahap berikutnya dimulai setelah keduanya selesai.</p>
           </div>
         ) : <SubStepList steps={stage.steps} />}

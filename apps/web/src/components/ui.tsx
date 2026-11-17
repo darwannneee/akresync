@@ -286,10 +286,11 @@ function useDialog(open: boolean, onClose: () => void) {
     };
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKey);
       dialogStack.splice(dialogStack.indexOf(token), 1);
-      if (!dialogStack.length) document.body.style.overflow = '';
+      if (!dialogStack.length) { document.body.style.overflow = ''; document.documentElement.style.overflow = ''; }
       prev?.focus();
     };
   }, [open]);
@@ -320,7 +321,7 @@ export function Modal({ open, onClose, title, children, footer, wide }: { open: 
   const ctx = useMemo(() => ({ footer: slot, close: onClose }), [slot, onClose]);
   if (!open) return null;
   return createPortal(
-    <div className="no-print fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-slate-900/50 p-3 sm:p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="no-print fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto overscroll-contain bg-slate-900/50 p-3 sm:p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={id}
         className={cx('my-0 flex max-h-[calc(100vh-1.5rem)] w-full flex-col rounded-2xl border border-slate-200 bg-white shadow-pop outline-none sm:my-6 sm:max-h-[calc(100vh-3rem)]', wide ? 'max-w-3xl' : 'max-w-xl')}>
         <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
@@ -574,13 +575,13 @@ export function DL({ items, cols = 2 }: { items: [string, ReactNode][]; cols?: 1
 /** Tabel dua kolom "label : nilai" (ringkasan data). */
 export function InfoTable({ items }: { items: [string, ReactNode][] }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200">
-      <table className="min-w-full text-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200">
+      <table className="w-full table-fixed text-sm">
         <tbody>
           {items.map(([k, v]) => (
             <tr key={k} className="border-b border-slate-100 last:border-b-0">
-              <th scope="row" className="w-2/5 min-w-[9rem] bg-slate-50 px-4 py-2.5 text-left align-top font-medium text-slate-600 sm:w-1/3">{k}</th>
-              <td className="break-words px-4 py-2.5 align-top text-ink">{v ?? '—'}</td>
+              <th scope="row" className="w-2/5 break-words bg-slate-50 px-3 py-2.5 text-left align-top font-medium text-slate-600 sm:w-1/3 sm:px-4">{k}</th>
+              <td className="min-w-0 break-words px-3 py-2.5 align-top text-ink sm:px-4 [&_span.rounded-full]:whitespace-normal [&_span.rounded-full]:text-left">{v ?? '—'}</td>
             </tr>
           ))}
         </tbody>
