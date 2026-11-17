@@ -355,19 +355,19 @@ const ALERT_ICON: Record<AlertKind, { Icon: typeof Info; cls: string }> = {
   success: { Icon: CheckCircle2, cls: 'border-ok-line text-ok' },
   error: { Icon: XCircle, cls: 'border-bad-line text-bad' },
 };
-export function AlertDialog({ open, onClose, kind, title, text, children, actions }: { open: boolean; onClose: () => void; kind: AlertKind; title: string; text?: ReactNode; children?: ReactNode; actions: ReactNode }) {
+export function AlertDialog({ open, onClose, kind, title, text, children, actions, size = 'md' }: { open: boolean; onClose: () => void; kind: AlertKind; title: string; text?: ReactNode; children?: ReactNode; actions: ReactNode; size?: 'md' | 'lg' }) {
   const ref = useDialog(open, onClose);
   const id = useId();
   if (!open) return null;
   const { Icon, cls } = ALERT_ICON[kind];
   return createPortal(
     <div className="no-print fixed inset-0 z-[65] flex items-start justify-center overflow-y-auto bg-slate-900/50 p-3 sm:items-center sm:p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={ref} tabIndex={-1} role="alertdialog" aria-modal="true" aria-labelledby={id} className="my-4 w-full max-w-md rounded-2xl border border-slate-200 bg-white px-6 pb-6 pt-8 text-center shadow-pop outline-none">
-        <span className={cx('mx-auto grid h-16 w-16 place-items-center rounded-full border-4', cls)}><Icon size={32} aria-hidden /></span>
-        <h2 id={id} className="mt-4 text-xl font-semibold text-ink">{title}</h2>
-        {text && <p className="mt-1.5 text-sm text-muted">{text}</p>}
-        {children && <div className="mt-4 text-left">{children}</div>}
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">{actions}</div>
+      <div ref={ref} tabIndex={-1} role="alertdialog" aria-modal="true" aria-labelledby={id} className={cx('my-4 flex max-h-[85vh] w-full flex-col rounded-2xl border border-slate-200 bg-white px-6 pb-6 pt-8 text-center shadow-pop outline-none', size === 'lg' ? 'max-w-2xl' : 'max-w-md')}>
+        <span className={cx('mx-auto grid h-16 w-16 shrink-0 place-items-center rounded-full border-4', cls)}><Icon size={32} aria-hidden /></span>
+        <h2 id={id} className="mt-4 shrink-0 text-xl font-semibold text-ink">{title}</h2>
+        {text && <p className="mt-1.5 shrink-0 text-sm text-muted">{text}</p>}
+        {children && <div className="-mx-2 mt-4 min-h-0 flex-1 overflow-y-auto px-2 text-left">{children}</div>}
+        <div className="mt-5 flex shrink-0 flex-wrap items-center justify-center gap-2">{actions}</div>
       </div>
     </div>,
     document.body,
@@ -375,14 +375,14 @@ export function AlertDialog({ open, onClose, kind, title, text, children, action
 }
 
 /* ---------- Konfirmasi untuk tindakan yang dicatat (SweetAlert) ---------- */
-export function ConfirmDialog({ open, title, items, permanent = true, confirmLabel, onConfirm, onCancel, pending, children }: {
-  open: boolean; title: string; items?: [string, ReactNode][]; permanent?: boolean; confirmLabel: string; onConfirm: () => void; onCancel: () => void; pending?: boolean; children?: ReactNode;
+export function ConfirmDialog({ open, title, items, permanent = true, confirmLabel, onConfirm, onCancel, pending, children, size }: {
+  size?: 'md' | 'lg'; open: boolean; title: string; items?: [string, ReactNode][]; permanent?: boolean; confirmLabel: string; onConfirm: () => void; onCancel: () => void; pending?: boolean; children?: ReactNode;
 }) {
   return (
-    <AlertDialog open={open} onClose={pending ? () => undefined : onCancel} kind="question" title={title} text="Mohon periksa ringkasan berikut sebelum melanjutkan."
+    <AlertDialog size={size} open={open} onClose={pending ? () => undefined : onCancel} kind="question" title={title} text="Mohon periksa ringkasan berikut sebelum melanjutkan."
       actions={<><Button loading={pending} onClick={onConfirm}>{confirmLabel}</Button><Button variant="secondary" onClick={onCancel} disabled={pending}>Periksa kembali</Button></>}>
       <div className="space-y-3">
-        {items && <InfoTable items={items} />}
+        {items && <InfoTable items={items} compact={size === 'lg'} />}
         {children}
         {permanent
           ? <Notice tone="chain" title="Dicatat permanen">Data ini tidak dapat dihapus. Bila ada kekeliruan, perbaikan dilakukan melalui catatan koreksi baru beserta alasannya.</Notice>
@@ -579,15 +579,15 @@ export function DL({ items, cols = 2 }: { items: [string, ReactNode][]; cols?: 1
   );
 }
 /** Tabel dua kolom "label : nilai" (ringkasan data). */
-export function InfoTable({ items }: { items: [string, ReactNode][] }) {
+export function InfoTable({ items, compact }: { items: [string, ReactNode][]; compact?: boolean }) {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200">
       <table className="w-full table-fixed text-sm">
         <tbody>
           {items.map(([k, v]) => (
             <tr key={k} className="border-b border-slate-100 last:border-b-0">
-              <th scope="row" className="w-2/5 break-words bg-slate-50 px-3 py-2.5 text-left align-top font-medium text-slate-600 sm:w-1/3 sm:px-4">{k}</th>
-              <td className="min-w-0 break-words px-3 py-2.5 align-top text-ink sm:px-4 [&_span.rounded-full]:whitespace-normal [&_span.rounded-full]:text-left">{v ?? '—'}</td>
+              <th scope="row" title={compact ? k : undefined} className={cx('bg-slate-50 px-3 text-left align-top font-medium text-slate-600 sm:px-4', compact ? 'w-1/2 truncate py-1.5' : 'w-2/5 break-words py-2.5 sm:w-1/3')}>{k}</th>
+              <td className={cx('min-w-0 break-words px-3 align-top text-ink', compact ? 'py-1.5' : 'py-2.5', 'sm:px-4 [&_span.rounded-full]:whitespace-normal [&_span.rounded-full]:text-left')}>{v ?? '—'}</td>
             </tr>
           ))}
         </tbody>

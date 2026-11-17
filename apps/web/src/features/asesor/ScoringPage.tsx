@@ -196,7 +196,7 @@ export function ScoringPage() {
         </Card>
       </div>
 
-      <ConfirmDialog open={confirm} title={`${rescoreOpen ? 'Serahkan ulang' : 'Serahkan'} hasil ${PHASE_LABEL[phase]}?`} confirmLabel={rescoreOpen ? 'Ya, serahkan ulang' : 'Ya, serahkan hasil'} pending={submit.isPending || saveDraft.isPending} onCancel={() => setConfirm(false)} onConfirm={() => void sendNow()}
+      <ConfirmDialog size="lg" open={confirm} title={`${rescoreOpen ? 'Serahkan ulang' : 'Serahkan'} hasil ${PHASE_LABEL[phase]}?`} confirmLabel={rescoreOpen ? 'Ya, serahkan ulang' : 'Ya, serahkan hasil'} pending={submit.isPending || saveDraft.isPending} onCancel={() => setConfirm(false)} onConfirm={() => void sendNow()}
         items={[['Program studi', q.data.programName], ['Jenis penilaian', `${PHASE_LABEL[phase]} (${phase})`], ['Skor total', `${fmtNumber(total)} dari ${fmtNumber(MAX_TOTAL_SCORE)}`], ['Peringkat sementara', rank ? rankLabel(rank) : 'belum tersedia (ditetapkan Majelis)'], ['Butir terisi', `${filled} dari ${count}`], ...CRITERIA.map((c) => { const sm = criterionSummary(scores, c.code); return [`Kriteria ${c.code.slice(1)}. ${c.title}`, `${fmtNumber(sm.subtotal)} dari ${fmtNumber(sm.max)}`] as [string, string]; })]} />
     </div>
   );
