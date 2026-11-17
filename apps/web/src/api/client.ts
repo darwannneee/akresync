@@ -14,7 +14,7 @@ export const getAccessToken = () => accessToken;
 const tokenListeners = new Set<(t: string | null) => void>();
 /** Berlangganan perubahan token akses (mis. untuk menyambung ulang SSE setelah token diperbarui). */
 export const onAccessTokenChange = (f: (t: string | null) => void) => { tokenListeners.add(f); return () => { tokenListeners.delete(f); }; };
-export const setAccessToken = (t: string | null) => { const changed = t !== accessToken; accessToken = t; if (!t) clearPendingKeys(); if (changed) tokenListeners.forEach((f) => f(t)); };
+export const setAccessToken = (t: string | null) => { const changed = t !== accessToken; accessToken = t; if (t) { denied = false; lostNotified = false; } else clearPendingKeys(); if (changed) tokenListeners.forEach((f) => f(t)); };
 export const setAuthLostHandler = (fn: (() => void) | null) => { onAuthLost = fn; };
 
 export function uuid(): string {
@@ -40,26 +40,54 @@ function camel(v: unknown, opaque = false): unknown {
   return v;
 }
 
-let refreshing: Promise<boolean> | null = null;
-export function refreshSession(): Promise<boolean> {
+type RefreshResult = 'ok' | 'denied' | 'error';
+let refreshing: Promise<RefreshResult> | null = null;
+/** Refresh ditolak server (401): berhenti mencoba sampai pengguna masuk kembali (token baru diset). */
+let denied = false;
+let lostNotified = false;
+
+async function refreshRequest(): Promise<RefreshResult> {
+  try {
+    const res = await fetch(`${API_URL}/auth/refresh`, { method: 'POST', credentials: 'include', headers: { 'Idempotency-Key': uuid() } });
+    if (res.status === 401 || res.status === 403) return 'denied';
+    if (!res.ok) return 'error';
+    const body = (await res.json()) as ApiEnvelope<{ accessToken: string }>;
+    setAccessToken(body.data.accessToken);
+    return 'ok';
+  } catch {
+    return 'error';
+  }
+}
+
+/**
+ * Satu refresh bersama per tab (janji dipakai bersama); antartab dikoordinasikan dengan Web Locks API
+ * agar dua tab tidak merotasi token yang sama bersamaan. Tanpa Web Locks, berjalan tanpa kunci
+ * (server memberi masa tenggang singkat untuk token yang baru dirotasi).
+ */
+function refreshOnce(): Promise<RefreshResult> {
+  if (denied) return Promise.resolve('denied');
   refreshing ??= (async () => {
     try {
-      const res = await fetch(`${API_URL}/auth/refresh`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Idempotency-Key': uuid() },
-      });
-      if (!res.ok) return false;
-      const body = (await res.json()) as ApiEnvelope<{ accessToken: string }>;
-      setAccessToken(body.data.accessToken);
-      return true;
-    } catch {
-      return false;
+      const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+      const r = locks ? await locks.request('akreditasi-refresh-session', refreshRequest) : await refreshRequest();
+      if (r === 'denied') denied = true;
+      return r;
     } finally {
       setTimeout(() => { refreshing = null; }, 0);
     }
   })();
   return refreshing;
+}
+
+export async function refreshSession(): Promise<boolean> {
+  return (await refreshOnce()) === 'ok';
+}
+
+/** Sesi hilang: panggil penangan sekali saja sampai pengguna masuk kembali. */
+function notifyAuthLost(): void {
+  if (lostNotified) return;
+  lostNotified = true;
+  onAuthLost?.();
 }
 
 export interface RequestOptions {
@@ -113,11 +141,13 @@ async function raw(method: string, path: string, opts: RequestOptions, retried: 
   try {
     res = await fetch(url, { method, headers, body, credentials: 'include' });
   } catch {
-    throw new ApiRequestError(0, 'NETWORK', 'Tidak dapat terhubung ke server. Periksa koneksi Anda.');
+    throw new ApiRequestError(0, 'NETWORK', 'Tidak dapat terhubung ke server. Periksa koneksi Bapak/Ibu.');
   }
   if (res.status === 401 && !retried && !opts.noAuthRetry) {
-    if (await refreshSession()) return raw(method, path, opts, true);
-    onAuthLost?.();
+    const r = await refreshOnce();
+    if (r === 'ok') return raw(method, path, opts, true);
+    if (r === 'denied') notifyAuthLost(); // galat jaringan saat refresh tidak mengeluarkan pengguna
+
   }
   return res;
 }

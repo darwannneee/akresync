@@ -10,6 +10,8 @@ import { AppError, unauthorized } from '../errors.js';
 import { envelope, mount, parse } from '../lib/http.js';
 
 const COOKIE = 'refresh_token';
+/** Token yang baru dirotasi masih diterima sebentar (refresh hampir bersamaan dari tab/permintaan lain). Pencabutan karena keluar tidak termasuk. */
+export const REFRESH_ROTATION_GRACE_SECONDS = 30;
 
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(1), role: z.enum(APP_ROLES).optional() });
 
@@ -63,11 +65,15 @@ export function authRoutes(ctx: AppContext, router: Router, auth: RequestHandler
     const token = req.cookies?.[COOKIE] as string | undefined;
     if (!token) throw unauthorized('Refresh token tidak ada');
     const hash = hashRefreshToken(token);
-    // Rotasi: cabut token lama secara atomik; token yang sudah dicabut tidak bisa dipakai lagi.
+    // Rotasi: cabut token lama secara atomik dan catat waktu rotasinya. Token yang sudah dicabut tidak dapat dipakai lagi,
+    // kecuali dalam masa tenggang singkat setelah DIROTASI (bukan setelah keluar/logout atau pencabutan lain).
     const row = await q1<{ user_id: string }>(
       ctx.pool,
-      `UPDATE refresh_tokens SET revoked_at = now() WHERE token_hash = $1 AND revoked_at IS NULL AND expires_at > now() RETURNING user_id`,
-      [hash],
+      `UPDATE refresh_tokens SET revoked_at = COALESCE(revoked_at, now()), rotated_at = COALESCE(rotated_at, now())
+       WHERE token_hash = $1 AND expires_at > now()
+         AND (revoked_at IS NULL OR rotated_at > now() - make_interval(secs => $2))
+       RETURNING user_id`,
+      [hash, REFRESH_ROTATION_GRACE_SECONDS],
     );
     if (!row) {
       res.clearCookie(COOKIE, { ...cookieOpts(), maxAge: undefined });

@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { API_URL, getAccessToken, onAccessTokenChange, refreshSession } from './client';
+import { API_URL, getAccessToken, onAccessTokenChange } from './client';
 import { AUDIT_KIND_LABEL, RECORD_LABEL } from '../lib/labels';
 
 export interface Notification { id: number; title: string; detail?: string; submissionId?: string; at: string; unread: boolean; tone: 'chain' | 'audit' | 'warn' }
@@ -38,8 +38,6 @@ export function useEventStream(enabled: boolean): void {
   useEffect(() => {
     if (!enabled) return;
     let es: EventSource | null = null;
-    let retry: ReturnType<typeof setTimeout> | null = null;
-    let delay = 2000;
     let stopped = false;
     const handler = (type: 'audit_status' | 'record_committed') => (ev: MessageEvent<string>) => {
       let data: Record<string, unknown> = {};
@@ -60,20 +58,15 @@ export function useEventStream(enabled: boolean): void {
       if (!token) return;
       es?.close();
       es = new EventSource(`${API_URL}/events/stream?token=${encodeURIComponent(token)}`);
-      es.onopen = () => { delay = 2000; };
       es.addEventListener('audit_status', handler('audit_status') as EventListener);
       es.addEventListener('record_committed', handler('record_committed') as EventListener);
-      // Token akses kedaluwarsa membuat sambungan ditolak: perbarui sesi lalu sambung ulang dengan token baru (jeda bertahap).
-      es.onerror = () => {
-        if (es?.readyState !== EventSource.CLOSED) return;
-        es.close();
-        if (retry) clearTimeout(retry);
-        retry = setTimeout(() => { void refreshSession().then(() => { delay = Math.min(delay * 2, 60_000); open(); }); }, delay);
-      };
+      // Token akses kedaluwarsa membuat sambungan ditolak (readyState CLOSED): tutup saja. Jalur ini tidak memanggil
+      // refresh sendiri; refresh dilakukan oleh permintaan API biasa, dan perubahan token di bawah menyambung ulang sekali.
+      es.onerror = () => { if (es?.readyState === EventSource.CLOSED) { es.close(); es = null; } };
     };
     open();
     // Token diperbarui di tempat lain (refresh otomatis): sambung ulang agar memakai token yang sah.
-    const off = onAccessTokenChange((t) => { if (t) { if (retry) clearTimeout(retry); open(); } else { es?.close(); } });
-    return () => { stopped = true; off(); if (retry) clearTimeout(retry); es?.close(); };
+    const off = onAccessTokenChange((t) => { if (t) open(); else { es?.close(); es = null; } });
+    return () => { stopped = true; off(); es?.close(); };
   }, [enabled, qc]);
 }
