@@ -28,7 +28,7 @@ export function createApp(ctx: AppContext): Express {
   const app = express();
   app.disable('x-powered-by');
   app.use(helmet());
-  app.use(cors({ origin: ctx.config.CORS_ORIGINS.split(',').map((s) => s.trim()), credentials: true, exposedHeaders: ['X-Chain-Verified', 'X-Decision-Tx', 'X-Content-Sha256', 'X-Integrity-Verified'] }));
+  app.use(cors({ origin: ctx.config.CORS_ORIGINS.split(',').map((s) => s.trim()), credentials: true, exposedHeaders: ['X-Chain-Verified', 'X-Decision-Tx', 'X-Content-Sha256', 'X-Integrity-Verified', 'X-Decision-Version', 'X-Decision-Current-Version'] }));
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
 

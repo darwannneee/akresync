@@ -144,13 +144,18 @@ export function finalizationRoutes(ctx: AppContext, router: Router, auth: Reques
     const dec = await q1(ctx.pool, 'SELECT * FROM formal_records WHERE id=$1', [cert.decision_record_id]);
     if (!doc || !dec) throw notFound('Dokumen sertifikat tidak lengkap');
     const plain = await fetchAndDecrypt(ctx, doc);
-    // Validasi ke keputusan on-chain: bandingkan isi keputusan di ledger dengan yang tercetak pada sertifikat.
-    let verified: 'true' | 'false' | 'unavailable' = 'unavailable';
+    // Validasi ke keputusan di ledger: isi keputusan yang tercetak pada sertifikat (catatan yang dipakai saat terbit)
+    // dibandingkan dengan versi TERKINI catatan tersebut di ledger. Koreksi yang tidak mengubah isi tidak membatalkan sertifikat;
+    // koreksi yang mengubah isi menandai sertifikat usang ('outdated') dan perlu diterbitkan ulang.
+    let verified: 'true' | 'false' | 'outdated' | 'unavailable' = 'unavailable';
+    let currentVersion = Number(dec.version);
     try {
-      const onChain = await ctx.chain.evaluate<{ payload: DecisionPayload; txId: string }>(user.id, CHAIN_FUNCTIONS.GetRecord, [fromDbKey(dec.record_key)]);
+      const onChain = await ctx.chain.evaluate<{ payload: DecisionPayload; txId: string; version: number }>(user.id, CHAIN_FUNCTIONS.GetRecord, [fromDbKey(dec.record_key)]);
       const a = onChain?.payload;
       const b = dec.payload as DecisionPayload;
-      verified = a && a.rank === b.rank && a.decreeNumber === b.decreeNumber && Number(a.totalScore) === Number(b.totalScore) && a.validFrom === b.validFrom && a.validUntil === b.validUntil && onChain.txId === dec.tx_id ? 'true' : 'false';
+      currentVersion = Number(onChain?.version ?? currentVersion);
+      const same = !!a && a.rank === b.rank && a.decreeNumber === b.decreeNumber && Number(a.totalScore) === Number(b.totalScore) && (a.validFrom ?? null) === (b.validFrom ?? null) && (a.validUntil ?? null) === (b.validUntil ?? null);
+      verified = same ? (currentVersion === Number(dec.version) && onChain.txId !== dec.tx_id ? 'false' : 'true') : currentVersion > Number(dec.version) ? 'outdated' : 'false';
     } catch {
       verified = 'unavailable';
     }
@@ -158,6 +163,8 @@ export function finalizationRoutes(ctx: AppContext, router: Router, auth: Reques
     res.setHeader('Content-Disposition', `attachment; filename="${sanitizeFileName(doc.file_name)}"`);
     res.setHeader('X-Chain-Verified', verified);
     res.setHeader('X-Decision-Tx', dec.tx_id ?? '');
+    res.setHeader('X-Decision-Version', String(dec.version));
+    res.setHeader('X-Decision-Current-Version', String(currentVersion));
     res.setHeader('X-Content-Sha256', String(doc.sha256_plain).trim());
     res.send(plain);
   });

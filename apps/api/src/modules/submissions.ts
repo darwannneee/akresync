@@ -50,6 +50,68 @@ const adminSchema = z.object({
   notes: z.string().trim().max(5000).optional(),
 });
 
+const UPPS_RESULT_STAGES = ['al_submitted', 'responses_completed', 'final_verified', 'decided', 'released'];
+
+/** Versi tertinggi yang sudah ter-commit untuk satu jenis catatan (kunci terbaru). */
+function latestCommitted(rows: any[], type: string): any | null {
+  const of = rows.filter((r) => r.record_type === type && r.status === 'committed');
+  if (!of.length) return null;
+  return of.reduce((a, b) => (b.seq > a.seq || (b.seq === a.seq && b.version > a.version) ? b : a));
+}
+
+/**
+ * Alasan penolakan penugasan per penawaran: dari catatan tanggapan REJECT (isi alasan tersimpan off-chain).
+ * UPPS tidak melihat alasan asesor; asesor hanya melihat alasannya sendiri.
+ */
+export function rejectionReasonsByOffer(records: any[], user: Pick<AuthUser, 'id' | 'role'>): Map<string, { reason: string | null; role: string }> {
+  const out = new Map<string, { reason: string | null; role: string }>();
+  if (user.role === 'upps') return out;
+  const byKey = new Map<string, any>();
+  for (const r of records) {
+    if (r.record_type !== 'ASSIGNMENT_RESPONSE' || r.status !== 'committed') continue;
+    const prev = byKey.get(r.record_key);
+    if (!prev || r.version > prev.version) byKey.set(r.record_key, r);
+  }
+  for (const r of byKey.values()) {
+    const p = r.payload as { response?: string; responderRole?: string };
+    const oc = (r.off_chain ?? {}) as { offerId?: string; reason?: string | null; responseReason?: string | null };
+    if (p.response !== 'REJECT' || !oc.offerId) continue;
+    if (user.role === 'asesor' && r.actor_user_id !== user.id) continue;
+    const reason = (r.version > 1 ? oc.responseReason : oc.reason) ?? null;
+    out.set(oc.offerId, { reason, role: p.responderRole === 'upps' ? 'upps' : 'asesor' });
+  }
+  return out;
+}
+
+/** Peristiwa audit yang menjadi prasyarat chaincode; status terbarunya disertakan pada daftar pengajuan. */
+const GATE_KINDS = ['PaymentVerified', 'AssignmentRejectionReviewed', 'AKConsistencyApproved', 'ALScheduleApproved', 'ResponsesCompleted'];
+
+type GateMap = Map<string, { kind: string; status: string }[]> & { pending: Map<string, number>; failed: Map<string, number> };
+
+export async function auditGateSummary(db: Queryable, ids: string[]): Promise<GateMap> {
+  const out = new Map() as GateMap;
+  out.pending = new Map();
+  out.failed = new Map();
+  if (!ids.length) return out;
+  const gate = await q(
+    db,
+    `SELECT DISTINCT ON (o.submission_id, o.type) o.submission_id, o.type AS kind, a.status
+     FROM outbox o JOIN audit_status a ON a.event_id = o.id
+     WHERE o.submission_id = ANY($1::uuid[]) AND o.type = ANY($2::text[])
+     ORDER BY o.submission_id, o.type, o.created_at DESC`,
+    [ids, GATE_KINDS],
+  );
+  for (const g of gate) out.set(g.submission_id, [...(out.get(g.submission_id) ?? []), { kind: g.kind, status: g.status }]);
+  const counts = await q(
+    db,
+    `SELECT o.submission_id, a.status, count(*)::int AS n FROM outbox o JOIN audit_status a ON a.event_id = o.id
+     WHERE o.submission_id = ANY($1::uuid[]) AND a.status <> 'committed' GROUP BY o.submission_id, a.status`,
+    [ids],
+  );
+  for (const c of counts) (c.status === 'failed' ? out.failed : out.pending).set(c.submission_id, c.n);
+  return out;
+}
+
 export async function buildDetail(ctx: AppContext, user: AuthUser, id: string) {
   const sub = await loadSubmissionForUser(ctx.pool, user, id);
   const full = (await q1(ctx.pool, `${SUB_SELECT} WHERE s.id = $1`, [id]))!;
@@ -77,10 +139,12 @@ export async function buildDetail(ctx: AppContext, user: AuthUser, id: string) {
     ),
     q1(ctx.pool, `SELECT id, certificate_no, document_id, issued_at FROM certificates WHERE submission_id=$1`, [id]),
     user.role === 'upps'
-      ? Promise.resolve([])
+      ? q(ctx.pool, `SELECT a.id, a.offer_id, a.assessor_id, u.full_name AS assessor_name, a.phase, a.status, a.total_score, a.minutes_document_id, a.submitted_at FROM assessments a JOIN users u ON u.id=a.assessor_id WHERE a.submission_id=$1 AND a.phase='AL' AND a.status='submitted'`, [id])
       : q(ctx.pool, `SELECT a.id, a.offer_id, a.assessor_id, u.full_name AS assessor_name, a.phase, a.version, a.status, a.scores, a.total_score, a.score_summary_sha256, a.minutes_document_id, a.chain_record_key, a.submitted_at FROM assessments a JOIN users u ON u.id=a.assessor_id WHERE a.submission_id=$1 ${user.role === 'asesor' ? 'AND a.assessor_id = $2' : ''}`, user.role === 'asesor' ? [id, user.id] : [id]),
   ]);
-  const hideOffchain = (r: any) => (user.role === 'upps' || user.role === 'asesor' ? { ...r, off_chain: undefined } : r);
+  // Isi catatan (alasan/catatan verifikasi) disembunyikan dari UPPS dan asesor, kecuali catatan yang ditulis pengguna sendiri.
+  const restricted = user.role === 'upps' || user.role === 'asesor';
+  const hideOffchain = (r: any) => (restricted && r.actor_user_id !== user.id ? { ...r, off_chain: undefined } : r);
   // Status audit per dokumen: event DocumentVersionSaved terbaru dengan aggregate_id = id versi dokumen.
   const auditByDocument = new Map<string, any>();
   for (const a of audit as any[]) if (a.aggregate_type === 'document_version') auditByDocument.set(a.aggregate_id, a);
@@ -90,15 +154,27 @@ export async function buildDetail(ctx: AppContext, user: AuthUser, id: string) {
   };
   // Tabel on-chain hanya memuat catatan yang tidak gagal; percobaan ditolak chain dilaporkan terpisah.
   const onChain = formal.filter((f: any) => f.status !== 'failed');
+  const latestOf = (type: string) => latestCommitted(onChain, type);
+  const adminRec = latestOf('ADMIN_VERIFICATION');
+  const finalRec = latestOf('FINAL_VERIFICATION');
+  const rejectionByOffer = rejectionReasonsByOffer(onChain, user);
   const rejectedAttempts = formal.filter((f: any) => f.status === 'failed');
   return {
     ...submissionDto(full),
     documents: documents.map(docWithAudit),
     payments: payments.map((p) => ({ ...camel(p), amount: Number(p.amount) })),
-    offers: offers.map((o) => ({ ...camel(o), rejectionReason: null })),
+    offers: offers.map((o) => ({ ...camel(o), rejectionReason: rejectionByOffer.get(o.id)?.reason ?? null, rejectionBy: rejectionByOffer.get(o.id)?.role ?? null })),
+    // Catatan verifikasi kelengkapan terbaru: dikirim juga ke UPPS pemilik agar dapat memperbaiki dokumen.
+    adminVerification: adminRec
+      ? { result: (adminRec.payload as AdminVerificationPayload).result, notes: (adminRec.off_chain as any)?.notes ?? null, version: adminRec.version, recordedAt: adminRec.committed_at ?? adminRec.created_at }
+      : null,
+    // Catatan verifikasi akhir KEA: untuk Majelis (dan pihak internal), tidak untuk UPPS/asesor.
+    finalVerification: finalRec && !restricted
+      ? { notes: (finalRec.off_chain as any)?.notes ?? null, version: finalRec.version, recordedAt: finalRec.committed_at ?? finalRec.created_at }
+      : null,
     alSchedules: schedules.map(camel),
     responses: responses.map(camel),
-    assessments: assessments.map((a: any) => ({ ...camel(a), totalScore: asNumber(a.total_score) })),
+    assessments: assessments.map((a: any) => ({ ...camel(a), totalScore: asNumber(a.total_score) })).filter((a: any) => user.role !== 'upps' || UPPS_RESULT_STAGES.includes(full.stage)),
     rejectedAttempts: rejectedAttempts.map((f: any) => ({ id: f.id, recordType: f.record_type, version: f.version, error: f.error, createdAt: f.created_at })),
     records: onChain.map((f: any) => {
       const oc = f.off_chain as Record<string, any> | null;
@@ -146,7 +222,8 @@ export function submissionRoutes(ctx: AppContext, router: Router, auth: RequestH
     }
     const rows = await q(ctx.pool, `${SUB_SELECT} ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY s.updated_at DESC LIMIT 500`, params);
     const scores = user.role === 'sek_keu' ? new Map() : await ctx.ai.scoreSummaries(ctx.pool, rows.map((r) => r.id));
-    res.json(envelope(rows.map((r) => ({ ...submissionDto(r), aiScore: scores.get(r.id) ?? null }))));
+    const gates = await auditGateSummary(ctx.pool, rows.map((r) => r.id));
+    res.json(envelope(rows.map((r) => ({ ...submissionDto(r), aiScore: scores.get(r.id) ?? null, gateAudit: gates.get(r.id) ?? [], auditPending: gates.pending.get(r.id) ?? 0, auditFailed: gates.failed.get(r.id) ?? 0 }))));
   });
 
   mount(router, auth, API_ROUTES.getSubmission, async (req, res) => {
