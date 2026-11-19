@@ -1,4 +1,4 @@
-import type { AccreditationRank, AkStatus, AlScheduleStatus, AppRole, AuditStatus, SubmissionStage } from '@akreditasi/shared';
+import { INSTRUMENT_DOKTOR_2025, MAX_TOTAL_SCORE, type AccreditationRank, type AkStatus, type AlScheduleStatus, type AppRole, type AuditStatus, type SubmissionStage } from '@akreditasi/shared';
 
 /* ============ Tahap & status ============ */
 export const STAGE_LABEL: Record<SubmissionStage, string> = {
@@ -155,6 +155,9 @@ export const fmtRupiah = (n: number | string) => new Intl.NumberFormat('id-ID', 
 export const fmtBytes = (n: number) => (n > 1048576 ? `${(n / 1048576).toFixed(1).replace('.', ',')} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 export const fmtNumber = (n: number | string | null | undefined, digits = 2) =>
   n === null || n === undefined || n === '' ? '—' : new Intl.NumberFormat('id-ID', { maximumFractionDigits: digits }).format(Number(n));
+/** Skor total berbobot (penilaian lengkap) → rata-rata berbobot skala 0..4: total / Σ bobot. */
+export const scoreFromTotal = (total: number | string | null | undefined): number | null =>
+  total === null || total === undefined || total === '' || !Number.isFinite(Number(total)) ? null : Math.round((Number(total) / (MAX_TOTAL_SCORE / INSTRUMENT_DOKTOR_2025.scale.max)) * 100) / 100;
 /** Skor pada skala butir dengan dua desimal tetap, mis. "3,12". */
 export const fmtScore = (n: number | null | undefined) =>
   n === null || n === undefined || !Number.isFinite(n) ? '—' : new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);

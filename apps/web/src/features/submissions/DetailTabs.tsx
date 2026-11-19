@@ -1,11 +1,10 @@
 import { useState, type ReactNode } from 'react';
 import { Download, ScrollText, Users } from 'lucide-react';
-import { MAX_TOTAL_SCORE } from '@akreditasi/shared';
 import type { AuditEventView, SubmissionDetail, User } from '../../api/types';
 import { Button, Card, EmptyState, Notice, ScoreFigure, StatusDot, cx } from '../../components/ui';
 import {
   ASSESS_STATUS_LABEL, AUDIT_KIND_LABEL, AUDIT_PHASE_LABEL, MODE_LABEL, OFFER_STATUS_LABEL, PAYMENT_STATUS_LABEL, PHASE_LABEL, RECORD_LABEL, RESPONSE_LABEL, SCHEDULE_STATUS_LABEL,
-  auditPhase, fmtDateRange, fmtDateTime, fmtNumber, fmtRupiah, rankLabel, roleName,
+  auditPhase, fmtDateRange, fmtDateTime, fmtNumber, fmtRupiah, fmtScore, rankLabel, roleName, scoreFromTotal,
 } from '../../lib/labels';
 import { recordTime } from '../../lib/workflow';
 import { useToast } from '../../components/Toast';
@@ -61,7 +60,7 @@ export function DecisionSummary({ s }: { s: SubmissionDetail }) {
   };
   return (
     <Card title="Keputusan akreditasi" actions={<StatusDot tone="ok">Tercatat permanen</StatusDot>}>
-      {p && <Defs items={[['Peringkat', <b key="r" className="text-[17px] font-semibold text-navy-900">{rankLabel(p.rank)}</b>], ['Nomor Surat Keputusan', p.decreeNumber], ['Skor total', fmtNumber(p.totalScore)], ['Masa berlaku', p.validFrom ? fmtDateRange(p.validFrom, p.validUntil ?? undefined) : 'Tidak ada']]} />}
+      {p && <Defs items={[['Peringkat', <b key="r" className="text-[17px] font-semibold text-navy-900">{rankLabel(p.rank)}</b>], ['Nomor Surat Keputusan', p.decreeNumber], ['Skor', `${fmtScore(scoreFromTotal(p.totalScore))} / 4,00 (total ${fmtNumber(p.totalScore)})`], ['Masa berlaku', p.validFrom ? fmtDateRange(p.validFrom, p.validUntil ?? undefined) : 'Tidak ada']]} />}
       <div className="mt-5 space-y-3">
         {outdated && <Notice tone="warn" title="Sertifikat perlu diterbitkan ulang">Keputusan akreditasi telah dikoreksi setelah sertifikat ini terbit, dan isinya berubah. Hubungi Sekretariat Administrasi untuk penerbitan ulang; sertifikat lama tidak lagi sesuai dengan keputusan terkini.</Notice>}
         {s.certificate
@@ -134,7 +133,7 @@ export function SummaryTab({ s, audit, user, onHistory }: { s: SubmissionDetail;
         )}
         <div className="grid gap-4 sm:grid-cols-3">
           <Stat label="Skor AI dokumen">{s.aiScore?.totals.weighted != null ? <ScoreFigure value={s.aiScore.totals.weighted} max={s.aiScore.totals.scaleMax} className="flex-wrap" /> : <Dash />}</Stat>
-          <Stat label="Skor AK asesor">{akAvg !== null ? <ScoreFigure value={akAvg} max={MAX_TOTAL_SCORE} className="flex-wrap" /> : <Dash />}</Stat>
+          <Stat label="Skor AK asesor">{akAvg !== null ? <ScoreFigure value={scoreFromTotal(akAvg)} className="flex-wrap" /> : <Dash />}</Stat>
           <Stat label="Lama proses">{days !== null ? <span className="inline-flex items-baseline gap-1.5 tabular-nums"><span className="text-[24px] font-semibold leading-none text-ink">{days}</span><span className="text-sm text-faint">hari</span></span> : <Dash />}</Stat>
         </div>
         <Defs items={[
@@ -201,7 +200,7 @@ export function AssessmentTab({ s }: { s: SubmissionDetail }) {
         ) : <Empty>Belum ada penawaran pasangan asesor.</Empty>}
       </Section>
 
-      <Section title="Hasil penilaian" aside={`Skor total pada skala 0 sampai ${fmtNumber(MAX_TOTAL_SCORE)}`}>
+      <Section title="Hasil penilaian" aside="Rata-rata berbobot, skala 0 sampai 4">
         {assessments.length ? (
           <Rows>
             {assessments.map((a) => (
@@ -210,7 +209,7 @@ export function AssessmentTab({ s }: { s: SubmissionDetail }) {
                   <div className="font-medium text-ink">{a.assessorName ?? a.assessorId}</div>
                   <div className="flex flex-wrap items-center gap-x-3 text-[13px] text-faint"><span>{PHASE_LABEL[a.phase]}</span><StatusDot tone={a.status === 'submitted' ? 'ok' : 'warn'} className="!text-[13px]">{ASSESS_STATUS_LABEL[a.status]}</StatusDot>{a.submittedAt && <span>{fmtDateTime(a.submittedAt)}</span>}</div>
                 </div>
-                {a.totalScore != null ? <ScoreFigure value={Number(a.totalScore)} max={MAX_TOTAL_SCORE} size="sm" /> : <span className="text-faint">—</span>}
+                {a.totalScore != null ? <span className="text-right"><ScoreFigure value={scoreFromTotal(a.totalScore)} size="sm" /><span className="block text-[12.5px] text-faint">total {fmtNumber(a.totalScore)}</span></span> : <span className="text-faint">—</span>}
               </li>
             ))}
           </Rows>

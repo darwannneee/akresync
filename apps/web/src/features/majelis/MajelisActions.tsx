@@ -1,6 +1,5 @@
 import { useId } from 'react';
 import { useForm } from 'react-hook-form';
-import { MAX_TOTAL_SCORE } from '@akreditasi/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ACCREDITATION_RANKS } from '@akreditasi/shared';
@@ -8,7 +7,7 @@ import { api } from '../../api/client';
 import { Button, Field, Input, ModalActions } from '../../components/ui';
 import { FormSection, KeyList, RadioCards, useConfirmed } from '../common/forms';
 import { useAction } from '../common/useAction';
-import { RANK_LABEL, fmtDate, fmtNumber } from '../../lib/labels';
+import { RANK_LABEL, fmtDate, fmtNumber, fmtScore, scoreFromTotal } from '../../lib/labels';
 import type { ActionProps } from '../submissions/types';
 
 const schema = z.object({
@@ -46,8 +45,8 @@ export function DecisionForm({ s }: ActionProps) {
         </FormSection>
       )}
       {results.length > 0 && (
-        <FormSection title="Hasil penilaian" hint={`Skor total pada skala 0 sampai ${fmtNumber(MAX_TOTAL_SCORE)}.`}>
-          <KeyList items={results.map((a) => [`${a.phase === 'AK' ? 'Asesmen Kecukupan' : 'Asesmen Lapangan'} · ${a.assessorName ?? 'Asesor'}`, <b key={a.id} className="font-semibold tabular-nums">{fmtNumber(a.totalScore)}</b>] as [string, React.ReactNode])} />
+        <FormSection title="Hasil penilaian" hint="Rata-rata berbobot pada skala 0 sampai 4; skor total berbobot dalam kurung.">
+          <KeyList items={results.map((a) => [`${a.phase === 'AK' ? 'Asesmen Kecukupan' : 'Asesmen Lapangan'} · ${a.assessorName ?? 'Asesor'}`, <span key={a.id} className="tabular-nums"><b className="font-semibold">{fmtScore(scoreFromTotal(a.totalScore))}</b> <span className="text-faint">/ 4,00 ({fmtNumber(a.totalScore)})</span></span>] as [string, React.ReactNode])} />
         </FormSection>
       )}
       <RadioCards name="rank" legend="Peringkat akreditasi" value={rank} onChange={(v) => f.setValue('rank', v as V['rank'], { shouldValidate: true })} options={ACCREDITATION_RANKS.map((r) => ({ value: r, label: RANK_LABEL[r] }))} />

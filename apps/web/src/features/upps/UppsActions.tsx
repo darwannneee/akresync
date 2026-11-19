@@ -4,58 +4,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../api/client';
 import { Download } from 'lucide-react';
-import { Button, Field, ModalActions, Notice, StepSection, Textarea } from '../../components/ui';
+import { Button, Field, ModalActions, Notice, Textarea } from '../../components/ui';
 import { FormSection, KeyList, RadioCards, SingleUpload, useConfirmed } from '../common/forms';
 import { useAction, useDownload } from '../common/useAction';
-import { DOC_TYPE_LABEL, PAYMENT_STATUS_LABEL, fmtBytes, fmtDateTime, fmtNumber, fmtRupiah } from '../../lib/labels';
-import { AiProgressCard } from '../ai/ProgressCard';
+import { PAYMENT_STATUS_LABEL, fmtBytes, fmtDateTime, fmtNumber, fmtRupiah, fmtScore, scoreFromTotal } from '../../lib/labels';
 import type { ActionProps } from '../submissions/types';
-
-/** Penyusunan pengajuan: LED, LKPS, pendukung, lalu kirim. Juga dipakai untuk perbaikan dokumen. */
-export function ComposeSubmission({ s }: ActionProps) {
-  const id = s.id;
-  const rev = s.stage === 'admin_revision';
-  const docs = (s.documents ?? []).filter((d) => d.setVersion === s.documentSetVersion);
-  const of = (t: string) => docs.filter((d) => d.docType === t);
-  const hasMain = of('LED').length > 0 && of('LKPS').length > 0;
-  const upload = useAction((v: { file: File; docType: string }) => {
-    const f = new FormData(); f.append('file', v.file); f.append('docType', v.docType);
-    return api.upload(`/submissions/${id}/documents`, f);
-  }, { title: 'Dokumen berhasil diunggah', submissionId: id });
-  const submit = useAction(() => api.post(`/submissions/${id}/submit`), { title: rev ? 'Perbaikan dokumen telah dikirim' : 'Pengajuan resmi telah dikirim', submissionId: id });
-  const confirm = useConfirmed<null>({
-    run: () => submit.mutate(undefined), pending: submit.isPending, title: rev ? 'Kirim perbaikan dokumen?' : 'Kirim pengajuan resmi?', confirmLabel: rev ? 'Ya, kirim perbaikan' : 'Ya, kirim pengajuan',
-    summary: () => [['Program studi', s.programName ? `${s.programName}${s.programLevel ? ` (${s.programLevel})` : ''}` : '—'], ['Institusi', s.institutionName], ['Dokumen utama', `LED: ${of('LED')[0]?.fileName ?? '—'}; LKPS: ${of('LKPS')[0]?.fileName ?? '—'}`], ['Dokumen pendukung', `${of('SUPPORT').length} berkas`], ['Versi himpunan dokumen', s.documentSetVersion]],
-  });
-  const slot = (n: number, type: 'LED' | 'LKPS' | 'SUPPORT', hint: string, optional?: boolean) => {
-    const list = of(type);
-    return (
-      <StepSection n={n} title={`${DOC_TYPE_LABEL[type]}${optional ? ' (opsional)' : ''}`} done={list.length > 0 && !optional} hint={hint}>
-        {list.length > 0 && <div className="mb-3"><Notice tone="success">{list.map((d) => `${d.fileName} (${fmtBytes(d.sizeBytes)})`).join('; ')} sudah terunggah.{!optional && ' Unggah berkas baru bila ingin menggantinya.'}</Notice></div>}
-        <SingleUpload label={list.length ? 'Ganti atau tambah berkas' : 'Pilih berkas'} hint={type === 'SUPPORT' ? undefined : type === 'LED' ? 'Format PDF (bukan hasil pindai). Isinya diperiksa otomatis saat diunggah; berkas yang bukan LED akan ditolak.' : 'Format Excel (.xlsx). Isinya diperiksa otomatis saat diunggah; berkas yang bukan LKPS akan ditolak.'} submitLabel={`Unggah ${type === 'SUPPORT' ? 'dokumen pendukung' : type}`} pending={upload.isPending && upload.variables?.docType === type} onSubmit={(file) => upload.mutate({ file, docType: type })} />
-      </StepSection>
-    );
-  };
-  return (
-    <div className="space-y-6">
-      {rev && (
-        <Notice tone="warn" title="Sekretariat meminta perbaikan">
-          {s.adminVerification?.notes
-            ? <><span className="block whitespace-pre-wrap">Catatan Sekretariat Administrasi: {s.adminVerification.notes}</span><span className="mt-1 block">Unggah dokumen yang diperbaiki (LED dan LKPS wajib ada pada versi baru), kemudian kirim ulang.</span></>
-            : 'Unggah dokumen yang diperbaiki (LED dan LKPS wajib ada pada versi baru), kemudian kirim ulang.'}
-        </Notice>
-      )}
-      {slot(1, 'LED', 'Dokumen utama berisi evaluasi diri program studi.')}
-      {slot(2, 'LKPS', 'Dokumen utama berisi data kinerja program studi.')}
-      <AiProgressCard p={s.aiProgress} />
-      {slot(3, 'SUPPORT', 'Berkas lain yang menunjang, misalnya surat tugas atau bukti kerja sama.', true)}
-      <StepSection n={4} title={rev ? 'Tinjau dan kirim perbaikan' : 'Tinjau dan kirim pengajuan resmi'} hint={hasMain ? 'Dokumen utama sudah lengkap. Periksa sekali lagi sebelum mengirim.' : 'Tombol kirim aktif setelah LED dan LKPS terunggah.'}>
-        <ModalActions><Button disabled={!hasMain} loading={submit.isPending} onClick={() => confirm.ask(null)}>{rev ? 'Kirim Perbaikan Dokumen' : 'Kirim Pengajuan Resmi'}</Button></ModalActions>
-      </StepSection>
-      {confirm.dialog}
-    </div>
-  );
-}
 
 export function UploadProof({ s }: ActionProps) {
   const pay = s.payments?.[0];
@@ -129,7 +82,7 @@ export function UppsResponse({ s }: ActionProps) {
     }}>
       <FormSection title="Hasil Asesmen Lapangan" hint="Skor total dan Berita Acara. Skor rinci per butir tidak ditampilkan kepada UPPS.">
         {al.length > 0
-          ? <KeyList items={[...al.map((a) => [`Skor total oleh ${a.assessorName ?? 'ketua asesor'}`, <b key={a.id} className="font-semibold tabular-nums">{fmtNumber(a.totalScore)}</b>] as [string, React.ReactNode]), ...(al[0]?.submittedAt ? [['Diserahkan', fmtDateTime(al[0].submittedAt)] as [string, React.ReactNode]] : [])]} />
+          ? <KeyList items={[...al.map((a) => [`Skor oleh ${a.assessorName ?? 'ketua asesor'}`, <span key={a.id} className="tabular-nums"><b className="font-semibold">{fmtScore(scoreFromTotal(a.totalScore))}</b> <span className="text-faint">/ 4,00 (total {fmtNumber(a.totalScore)})</span></span>] as [string, React.ReactNode]), ...(al[0]?.submittedAt ? [['Diserahkan', fmtDateTime(al[0].submittedAt)] as [string, React.ReactNode]] : [])]} />
           : <p className="text-[14px] text-faint">Hasil Asesmen Lapangan belum dapat ditampilkan. Muat ulang halaman bila perlu.</p>}
         {minutes && <Button variant="ghost" size="sm" className="-ml-3 mt-2" icon={<Download size={15} />} onClick={() => download(`/documents/${minutes.id}/download`, minutes.fileName)}>Unduh Berita Acara ({fmtBytes(minutes.sizeBytes)})</Button>}
       </FormSection>
