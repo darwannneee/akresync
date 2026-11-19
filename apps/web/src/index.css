@@ -42,9 +42,6 @@
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
 
-/* Recharts: sembunyikan garis fokus bawaan pada permukaan grafik */
-.recharts-wrapper, .recharts-surface { outline: none; }
-
 /* ---------- Cetak ---------- */
 @media print {
   @page { size: A4; margin: 14mm; }

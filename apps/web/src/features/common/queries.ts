@@ -58,5 +58,5 @@ export const useLevels = () =>
 export const useProgramNames = () =>
   useQuery({ queryKey: ['ref-program-names'], staleTime: Infinity, queryFn: async () => (await api.get<ProgramNameRef[]>('/ref/program-names')).data ?? [] });
 
-export const useDashboardStats = () =>
-  useQuery({ queryKey: ['dashboard-stats'], staleTime: 30_000, queryFn: async () => (await api.get<DashboardStats>('/dashboard/stats')).data });
+export const useDashboardStats = (enabled = true) =>
+  useQuery({ queryKey: ['dashboard-stats'], staleTime: 30_000, enabled, queryFn: async () => (await api.get<DashboardStats>('/dashboard/stats')).data });

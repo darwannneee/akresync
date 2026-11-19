@@ -8,6 +8,7 @@ import { SubmissionDetailPage } from '../pages/SubmissionDetailPage';
 import { UppsVerificationDetail, UppsVerificationList } from '../features/sekretariat/UppsVerification';
 import { ScoringPage } from '../features/asesor/ScoringPage';
 import { ComposePage } from '../pages/ComposePage';
+import { MonitoringPage } from '../pages/MonitoringPage';
 import { ConsistencyPage } from '../features/kea/ConsistencyPage';
 
 export function AppRoutes() {
@@ -19,6 +20,7 @@ export function AppRoutes() {
       <Route element={<RequireAuth />}>
         <Route element={<Layout />}>
           <Route path="/pengajuan/:id" element={<SubmissionDetailPage />} />
+          <Route element={<RequireAuth roles={['kea', 'majelis', 'sek_adm']} />}><Route path="/pemantauan" element={<MonitoringPage />} /></Route>
           <Route element={<RequireAuth roles={['upps']} />}>
             <Route path="/upps" element={<DashboardPage />} />
             <Route path="/upps/baru" element={<NewDraftPage />} />

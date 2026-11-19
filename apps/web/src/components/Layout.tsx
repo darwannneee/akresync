@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, ChevronDown, FilePlus2, House, Landmark, LogOut, Menu, Search, UserCheck, X } from 'lucide-react';
+import { Activity, Bell, ChevronDown, FilePlus2, House, Landmark, LogOut, Menu, Search, UserCheck, X } from 'lucide-react';
 import { ROLE_HOME, type AppRole } from '@akreditasi/shared';
 import { useAuth } from '../auth/AuthContext';
 import { notifications, useEventStream, useNotifications } from '../api/sse';
@@ -14,10 +14,13 @@ interface NavLeaf { to: string; label: string; icon: Icon; badge?: 'tasks' | 're
 interface NavItem extends Partial<NavLeaf> { label: string; icon: Icon; children?: NavLeaf[] }
 interface NavGroup { label: string; items: NavItem[] }
 
+export const MONITOR_ROLES: AppRole[] = ['kea', 'majelis', 'sek_adm'];
+
 function navFor(role: AppRole): NavGroup[] {
   const groups: NavGroup[] = [{ label: 'Utama', items: [{ to: ROLE_HOME[role], label: 'Beranda', icon: House, badge: 'tasks' }] }];
   if (role === 'upps') groups.push({ label: 'Akreditasi', items: [{ to: '/upps/baru', label: 'Ajukan akreditasi', icon: FilePlus2 }] });
   if (role === 'sek_adm') groups.push({ label: 'Akun', items: [{ to: '/sekretariat/administrasi/akun-upps', label: 'Verifikasi akun UPPS', icon: UserCheck, badge: 'registrations' }] });
+  if (MONITOR_ROLES.includes(role)) groups.push({ label: 'Pemantauan', items: [{ to: '/pemantauan', label: 'Pemantauan', icon: Activity }] });
   return groups;
 }
 

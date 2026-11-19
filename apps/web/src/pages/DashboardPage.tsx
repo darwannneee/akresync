@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CalendarCheck, ChevronRight, ClipboardCheck, FileCheck2, FileUp, Gavel, Plus, Search, Users } from 'lucide-react';
+import { CalendarCheck, ClipboardCheck, FileCheck2, FileUp, Gavel, Plus, Search, Users } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { Button, ButtonLink, Card, DataTable, FormError, Notice, Select, Skeleton, StatusDot } from '../components/ui';
-import { ActivityCard, AiCard, IntegrityCard, ProofCard, RanksCard, RunningCard, STAGE_STEPS, StagesCard, SummaryCard, TrendCard } from '../features/dashboard/panels';
+import { Button, ButtonLink, Card, DataTable, FormError, Select, Skeleton, StatusDot } from '../components/ui';
+import { MonitorLinkCard, RunningCard, STAGE_STEPS } from '../features/dashboard/panels';
 import { useDashboardStats } from '../features/common/queries';
 import { useTaskQueue, type TaskItem } from '../features/common/useTasks';
 import { errorMessage } from '../api/client';
@@ -38,10 +38,10 @@ function TaskRow({ t }: { t: TaskItem }) {
 export function DashboardPage() {
   const { user } = useAuth();
   const [params] = useSearchParams();
-  const { rows, tasks, counts, loading, query } = useTaskQueue();
+  const { rows, tasks, loading, query } = useTaskQueue();
   const pendingRegs = usePendingRegistrationCount(user?.role === 'sek_adm');
-  const statsQ = useDashboardStats();
-  const stats = statsQ.data;
+  const technical = !!user && ['kea', 'majelis', 'sek_adm'].includes(user.role);
+  const statsQ = useDashboardStats(technical);
   const [stage, setStage] = useState('');
   const [text, setText] = useState(params.get('q') ?? '');
   const [page, setPage] = useState(1);
@@ -52,8 +52,6 @@ export function DashboardPage() {
     return rows.filter((s) => (stage === '' || String(currentIndex(s)) === stage) && (!q || `${s.programName ?? ''} ${s.institutionName ?? ''} ${s.id} ${shortId(s.id)}`.toLowerCase().includes(q)));
   }, [rows, stage, text]);
   if (!user) return null;
-  // Metrik teknis (blok, jeda audit, AI) hanya untuk peran yang memerlukannya.
-  const technical = ['kea', 'majelis', 'sek_adm'].includes(user.role);
   const upps = user.role === 'upps';
   const mine = new Set(tasks.map((t) => t.submission.id));
   const tone = (s: SubmissionSummary) => s.stage === 'released' ? 'ok' : s.stage === 'admin_rejected' ? 'bad' : mine.has(s.id) ? 'navy' : 'warn';
@@ -62,6 +60,9 @@ export function DashboardPage() {
   const visible = filtered.slice((cur - 1) * PAGE, cur * PAGE);
   const showAi = filtered.some((x) => x.aiScore);
   const first = loading && !rows.length;
+  const running = upps ? <RunningCard rows={rows} /> : null;
+  const hasRunning = upps && rows.some((s) => !['draft', 'released', 'admin_rejected'].includes(s.stage));
+  const side = technical || hasRunning;
   return (
     <div>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -79,7 +80,7 @@ export function DashboardPage() {
         </div>
       )}
       <div className="grid gap-6 lg:grid-cols-12">
-        <div className="min-w-0 space-y-6 lg:col-span-8">
+        <div className={side ? 'min-w-0 space-y-6 lg:col-span-8' : 'min-w-0 space-y-6 lg:col-span-12'}>
           <Card id="tugas-saya" title="Perlu Bapak/Ibu kerjakan" actions={first ? undefined : `${tasks.length} tugas`} flush>
             {first ? <div className="space-y-3 p-[22px]"><Skeleton className="h-11" /><Skeleton className="h-11" /></div>
               : !tasks.length ? <p className="px-[22px] py-6 text-muted">Tidak ada tugas saat ini. Daftar ini terisi otomatis bila ada pengajuan yang memerlukan tindakan Bapak/Ibu.</p>
@@ -146,29 +147,13 @@ export function DashboardPage() {
           </Card>
         </div>
 
-        <div className="min-w-0 space-y-6 lg:col-span-4">
-          {upps && <RunningCard rows={rows} />}
-          {technical && <SummaryCard stats={stats} actionCount={counts.action} />}
-          <ProofCard stats={stats} loading={statsQ.isLoading} />
-          {statsQ.isError && <Notice tone="warn" title="Statistik belum dapat dimuat">{errorMessage(statsQ.error)}</Notice>}
-        </div>
-      </div>
-
-      {stats && (
-        <details className="group mt-8">
-          <summary className="inline-flex cursor-pointer list-none items-center gap-2 rounded-[10px] px-1 py-1 text-[14.5px] font-semibold text-navy-700 hover:text-navy-800">
-            <ChevronRight size={16} aria-hidden className="transition-transform group-open:rotate-90" />Statistik lengkap
-          </summary>
-          <div className="mt-4 grid items-stretch gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2 [&>section]:h-full"><StagesCard stats={stats} title={upps ? 'Pengajuan saya per tahap' : 'Pengajuan per tahap'} /></div>
-            <RanksCard stats={stats} />
-            <div className="lg:col-span-2 [&>section]:h-full"><TrendCard stats={stats} /></div>
-            <IntegrityCard stats={stats} detailed={technical} />
-            {technical && <AiCard stats={stats} />}
-            <div className={technical ? 'lg:col-span-2 [&>section]:h-full' : 'lg:col-span-3 [&>section]:h-full'}><ActivityCard stats={stats} wide={!technical} /></div>
+        {side && (
+          <div className="min-w-0 space-y-6 lg:col-span-4">
+            {running}
+            {technical && <MonitorLinkCard stats={statsQ.data} loading={statsQ.isLoading} />}
           </div>
-        </details>
-      )}
+        )}
+      </div>
     </div>
   );
 }
