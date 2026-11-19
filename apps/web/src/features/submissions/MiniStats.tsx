@@ -1,8 +1,7 @@
+import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Clock3, Database, Link2, ShieldCheck } from 'lucide-react';
 import { api } from '../../api/client';
 import type { AuditEventView, SubmissionDetail, User } from '../../api/types';
-import { StatWidget } from '../../components/ui';
 import { countAudit, fmtBytes, fmtDuration, fmtNumber } from '../../lib/labels';
 
 const METRIC_ROLES = ['kea', 'majelis', 'sek_adm'];
@@ -21,15 +20,26 @@ export function MiniStats({ s, audit, user }: { s: SubmissionDetail; audit: Audi
   const recordTx = (s.records ?? []).length;
   const totalTx = recordTx + committed;
   const auditTotal = audit.length;
+  const restricted = 'Tersedia bagi KEA, Majelis, dan Sekretariat';
   return (
-    <section aria-label="Statistik pengajuan" className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-      <StatWidget tone="chain" icon={<Link2 size={20} />} label="Transaksi tercatat permanen" value={fmtNumber(totalTx, 0)} hint={`${fmtNumber(recordTx, 0)} catatan resmi, ${fmtNumber(committed, 0)} audit`} />
-      <StatWidget tone="primary" icon={<Database size={20} />} label="Ukuran data tercatat" value={m ? fmtBytes(metric(m, 'payload_bytes_sum_total')) : allowed ? '…' : '—'}
-        hint={m ? `Rerata ${fmtBytes(metric(m, 'payload_bytes_avg_total'))} per catatan` : allowed ? 'Memuat' : 'Tersedia bagi KEA, Majelis, dan Sekretariat'} />
-      <StatWidget tone="warn" icon={<Clock3 size={20} />} label="Jeda audit rerata" value={m ? fmtDuration(metric(m, 'audit_lag_avg_ms') / 1000) : allowed ? '…' : '—'}
-        hint={m ? `Terlama ${fmtDuration(metric(m, 'audit_lag_max_ms') / 1000)}` : allowed ? 'Memuat' : 'Tersedia bagi KEA, Majelis, dan Sekretariat'} />
-      <StatWidget tone={failed || retrying ? 'warn' : 'success'} icon={<ShieldCheck size={20} />} label="Jejak audit tercatat" value={`${fmtNumber(committed, 0)}/${fmtNumber(auditTotal, 0)}`}
+    <section aria-label="Statistik pencatatan" className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <Tile label="Transaksi tercatat permanen" value={fmtNumber(totalTx, 0)} hint={`${fmtNumber(recordTx, 0)} catatan resmi, ${fmtNumber(committed, 0)} audit`} />
+      <Tile label="Ukuran data tercatat" value={m ? fmtBytes(metric(m, 'payload_bytes_sum_total')) : allowed ? '…' : '—'}
+        hint={m ? `Rerata ${fmtBytes(metric(m, 'payload_bytes_avg_total'))} per catatan` : allowed ? 'Memuat' : restricted} />
+      <Tile label="Jeda audit rerata" value={m ? fmtDuration(metric(m, 'audit_lag_avg_ms') / 1000) : allowed ? '…' : '—'}
+        hint={m ? `Terlama ${fmtDuration(metric(m, 'audit_lag_max_ms') / 1000)}` : allowed ? 'Memuat' : restricted} />
+      <Tile label="Jejak audit tercatat" value={`${fmtNumber(committed, 0)}/${fmtNumber(auditTotal, 0)}`}
         hint={failed ? `${failed} gagal permanen, hubungi administrator` : retrying ? `${retrying} gagal sementara, dicoba ulang otomatis` : pending ? `${pending} sedang dicatat` : 'Seluruhnya tercatat permanen'} />
     </section>
+  );
+}
+
+function Tile({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) {
+  return (
+    <div className="rounded-xl border border-line p-4">
+      <div className="text-[13px] text-faint">{label}</div>
+      <div className="mt-1 text-[20px] font-semibold tabular-nums text-ink">{value}</div>
+      {hint && <div className="mt-0.5 text-[13px] text-faint">{hint}</div>}
+    </div>
   );
 }

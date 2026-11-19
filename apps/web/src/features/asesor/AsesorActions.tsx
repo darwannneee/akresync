@@ -1,7 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import { api } from '../../api/client';
-import { Badge, ButtonLink, Notice, StepSection } from '../../components/ui';
-import { NotesForm, SingleUpload } from '../common/forms';
+import { ButtonLink, Notice, StatusDot } from '../../components/ui';
+import { NotesForm } from '../common/forms';
 import { useAction } from '../common/useAction';
 import { OfferResponseForm } from '../upps/UppsActions';
 import { ASSESS_STATUS_LABEL } from '../../lib/labels';
@@ -26,7 +26,7 @@ export function AkScoring({ s, user }: ActionProps) {
   const notes = (s.offers ?? []).slice(-1)[0]?.consistencyNotes;
   return (
     <div className="space-y-4">
-      <p className="text-base">Status penilaian Bapak/Ibu: {mine ? <Badge tone={mine.status === 'submitted' && !rescore ? 'success' : 'warn'}>{rescore ? 'Dikembalikan, perlu dinilai ulang' : ASSESS_STATUS_LABEL[mine.status]}</Badge> : <Badge>Belum dimulai</Badge>}</p>
+      <StatusDot tone={!mine ? 'gray' : rescore ? 'warn' : mine.status === 'submitted' ? 'ok' : 'navy'}>Penilaian Bapak/Ibu: {!mine ? 'belum dimulai' : rescore ? 'dikembalikan, perlu dinilai ulang' : ASSESS_STATUS_LABEL[mine.status]}</StatusDot>
       {returned && <Notice tone="warn" title="Dikembalikan oleh KEA">{notes ?? 'Mohon periksa kembali penilaian Bapak/Ibu.'}</Notice>}
       <ButtonLink to={`/asesor/pengajuan/${s.id}/penilaian/AK`} icon={<ArrowRight size={16} />}>{rescore ? 'Nilai ulang' : mine ? 'Lanjutkan penilaian' : 'Mulai penilaian'}</ButtonLink>
     </div>
@@ -34,19 +34,16 @@ export function AkScoring({ s, user }: ActionProps) {
 }
 
 export function AlAssessment({ s, user }: ActionProps) {
-  const minutes = useAction((v: { file: File }) => { const f = new FormData(); f.append('file', v.file); return api.upload(`/submissions/${s.id}/al-minutes`, f); }, { title: 'Berita Acara telah diunggah', submissionId: s.id });
   const hasMinutes = (s.documents ?? []).some((d) => d.docType === 'AL_MINUTES');
   const myAl = (s.assessments ?? []).find((a) => a.phase === 'AL' && a.assessorId === user.id);
   return (
-    <div className="space-y-6">
-      <StepSection n={1} title="Isi penilaian Asesmen Lapangan" done={myAl?.status === 'submitted'} hint="Isi skor setiap butir pada seluruh kriteria. Penilaian dapat diisi sebelum Berita Acara diunggah.">
-        <ButtonLink to={`/asesor/pengajuan/${s.id}/penilaian/AL`} icon={<ArrowRight size={16} />}>{myAl ? 'Lanjutkan penilaian' : 'Isi penilaian'}</ButtonLink>
-      </StepSection>
-      <StepSection n={2} title="Unggah Berita Acara Asesmen Lapangan" done={hasMinutes} hint="Berkas ditandatangani setelah kunjungan lapangan selesai. Wajib ada sebelum hasil diserahkan.">
-        {hasMinutes && <div className="mb-3"><Notice tone="success">Berita Acara sudah terunggah. Unggah berkas baru bila ingin menggantinya.</Notice></div>}
-        <SingleUpload label="Berita Acara" submitLabel={hasMinutes ? 'Unggah ulang Berita Acara' : 'Unggah Berita Acara'} pending={minutes.isPending} onSubmit={(file) => minutes.mutate({ file })} />
-      </StepSection>
-      <StepSection n={3} title="Serahkan hasil" hint={hasMinutes ? 'Dilakukan pada halaman penilaian setelah seluruh butir terisi.' : 'Terbuka setelah seluruh butir terisi dan Berita Acara diunggah.'} />
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-x-6 gap-y-2">
+        <StatusDot tone={myAl?.status === 'submitted' ? 'ok' : myAl ? 'navy' : 'gray'}>Penilaian: {myAl ? ASSESS_STATUS_LABEL[myAl.status] : 'belum dimulai'}</StatusDot>
+        <StatusDot tone={hasMinutes ? 'ok' : 'gray'}>Berita Acara: {hasMinutes ? 'sudah diunggah' : 'belum diunggah'}</StatusDot>
+      </div>
+      <p className="text-[14px] text-faint">Skor, Berita Acara, dan penyerahan hasil dikerjakan pada halaman penilaian. Berita Acara wajib ada sebelum hasil diserahkan.</p>
+      <ButtonLink to={`/asesor/pengajuan/${s.id}/penilaian/AL`} icon={<ArrowRight size={16} />}>{myAl ? 'Lanjutkan penilaian' : 'Buka penilaian lapangan'}</ButtonLink>
     </div>
   );
 }

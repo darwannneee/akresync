@@ -155,6 +155,9 @@ export const fmtRupiah = (n: number | string) => new Intl.NumberFormat('id-ID', 
 export const fmtBytes = (n: number) => (n > 1048576 ? `${(n / 1048576).toFixed(1).replace('.', ',')} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 export const fmtNumber = (n: number | string | null | undefined, digits = 2) =>
   n === null || n === undefined || n === '' ? '—' : new Intl.NumberFormat('id-ID', { maximumFractionDigits: digits }).format(Number(n));
+/** Skor pada skala butir dengan dua desimal tetap, mis. "3,12". */
+export const fmtScore = (n: number | null | undefined) =>
+  n === null || n === undefined || !Number.isFinite(n) ? '—' : new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 export const short = (s?: string | null, head = 8, tail = 4) => (!s ? '—' : s.length > head + tail + 1 ? `${s.slice(0, head)}…${tail ? s.slice(-tail) : ''}` : s);
 export const shortId = (id: string) => id.slice(0, 8).toUpperCase();
 

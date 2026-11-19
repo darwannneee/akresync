@@ -191,8 +191,6 @@ export interface NextAction {
 }
 const A = (key: ActionKey, role: AppRole, title: string, button: string, wait: string, storage: StorageClass, why: string, to?: NextAction['to']): NextAction => ({ key, role, title, button, wait, storage, why, to });
 
-const WHY_C = 'Tindakan ini dicatat permanen dan tidak dapat dihapus; koreksi hanya dapat dilakukan melalui catatan baru yang disertai alasan.';
-const WHY_A = 'Tindakan ini tersimpan di sistem dan jejak auditnya dicatat permanen.';
 
 /** Tugas suatu peran pada pengajuan. `uid` mengikat tugas asesor ke pengguna tertentu; tanpa `uid` dianggap peran secara umum. */
 export function dutiesFor(d: Detail, role: AppRole, uid?: string): NextAction[] {
@@ -201,36 +199,37 @@ export function dutiesFor(d: Detail, role: AppRole, uid?: string): NextAction[] 
   const offers = d.offers ?? [];
   switch (role) {
     case 'upps': {
-      if (d.stage === 'draft') out.push(A('compose_submission', 'upps', 'Lengkapi dokumen dan kirim pengajuan', 'Lengkapi pengajuan', 'melengkapi dan mengirim pengajuan', 'C', `Unggah LED dan LKPS, lalu kirim pengajuan resmi. ${WHY_C}`));
-      if (d.stage === 'admin_revision') out.push(A('compose_submission', 'upps', 'Perbaiki dokumen sesuai catatan Sekretariat', 'Perbaiki dokumen', 'memperbaiki dokumen', 'C', `Sekretariat meminta perbaikan. Unggah dokumen yang telah diperbaiki, lalu kirim ulang. ${WHY_C}`));
-      if (d.stage === 'invoice_issued' || isPaymentRejected(d)) out.push(A('upload_proof', 'upps', 'Unggah bukti pembayaran', 'Unggah bukti pembayaran', 'mengunggah bukti pembayaran', 'A', `Tagihan telah terbit. Unggah bukti pembayaran agar Sekretariat Keuangan dapat memverifikasinya. ${WHY_A}`));
+      const compose = (id: string) => `/upps/pengajuan/${id}/susun`;
+      if (d.stage === 'draft') out.push(A('compose_submission', 'upps', 'Lengkapi dokumen dan kirim pengajuan', 'Lanjutkan', 'melengkapi dan mengirim pengajuan', 'C', `Unggah LED dan LKPS, lalu kirim pengajuan resmi.`, compose));
+      if (d.stage === 'admin_revision') out.push(A('compose_submission', 'upps', 'Perbaiki dokumen sesuai catatan Sekretariat', 'Perbaiki dokumen', 'memperbaiki dokumen', 'C', `Sekretariat meminta perbaikan. Unggah dokumen yang telah diperbaiki, lalu kirim ulang.`, compose));
+      if (d.stage === 'invoice_issued' || isPaymentRejected(d)) out.push(A('upload_proof', 'upps', 'Unggah bukti pembayaran', 'Unggah bukti pembayaran', 'mengunggah bukti pembayaran', 'A', `Tagihan telah terbit. Unggah bukti pembayaran agar Sekretariat Keuangan dapat memverifikasinya.`));
       const o = [...offers].reverse().find((x) => x.status === 'offered');
-      if (o && !o.uppsResponse) out.push(A('respond_offer_upps', 'upps', 'Tanggapi penawaran pasangan asesor', 'Tanggapi penawaran', 'menanggapi penawaran asesor', 'C', `KEA mengusulkan pasangan asesor. Penugasan berlaku bila kedua asesor dan UPPS menerima. ${WHY_C}`));
+      if (o && !o.uppsResponse) out.push(A('respond_offer_upps', 'upps', 'Tanggapi penawaran pasangan asesor', 'Tanggapi penawaran', 'menanggapi penawaran asesor', 'C', `KEA mengusulkan pasangan asesor. Penugasan berlaku bila kedua asesor dan UPPS menerima.`));
       if (d.stage === 'al_submitted' && !uppsAccepted(d) && (!uppsResponded(d) || leadResolved(d)))
-        out.push(A('upps_response', 'upps', 'Sampaikan tanggapan atas hasil Asesmen Lapangan', 'Sampaikan tanggapan', 'menyampaikan tanggapan atas hasil asesmen', 'A', `Bapak/Ibu dapat menerima hasil atau mengajukan keberatan beserta uraiannya. ${WHY_A}`));
+        out.push(A('upps_response', 'upps', 'Sampaikan tanggapan atas hasil Asesmen Lapangan', 'Sampaikan tanggapan', 'menyampaikan tanggapan atas hasil asesmen', 'A', `Bapak/Ibu dapat menerima hasil atau mengajukan keberatan beserta uraiannya.`));
       break;
     }
     case 'sek_adm': {
-      if (d.stage === 'submitted') out.push(A('admin_verify', 'sek_adm', 'Verifikasi kelengkapan dokumen', 'Verifikasi kelengkapan', 'memverifikasi kelengkapan dokumen', 'C', `Periksa LED dan LKPS, lalu catat hasilnya. ${WHY_C}`));
+      if (d.stage === 'submitted') out.push(A('admin_verify', 'sek_adm', 'Verifikasi kelengkapan dokumen', 'Verifikasi kelengkapan', 'memverifikasi kelengkapan dokumen', 'C', `Periksa LED dan LKPS, lalu catat hasilnya.`));
       if (d.alSchedules ? d.alSchedules.some((x) => x.status === 'proposed') : d.alScheduleStatus === 'proposed')
-        out.push(A('decide_schedule', 'sek_adm', 'Putuskan usulan jadwal Asesmen Lapangan', 'Putuskan jadwal', 'menyetujui jadwal Asesmen Lapangan', 'A', `KEA telah mengusulkan jadwal. Setujui atau tolak disertai catatan. ${WHY_A}`));
-      if (d.stage === 'decided' && !d.certificate) out.push(A('issue_certificate', 'sek_adm', 'Terbitkan sertifikat hasil akreditasi', 'Terbitkan sertifikat', 'menerbitkan sertifikat', 'A', `Peringkat telah ditetapkan Majelis. Terbitkan sertifikat dalam bentuk PDF. ${WHY_A}`));
+        out.push(A('decide_schedule', 'sek_adm', 'Putuskan usulan jadwal Asesmen Lapangan', 'Putuskan jadwal', 'menyetujui jadwal Asesmen Lapangan', 'A', `KEA telah mengusulkan jadwal. Setujui atau tolak disertai catatan.`));
+      if (d.stage === 'decided' && !d.certificate) out.push(A('issue_certificate', 'sek_adm', 'Terbitkan sertifikat hasil akreditasi', 'Terbitkan sertifikat', 'menerbitkan sertifikat', 'A', `Peringkat telah ditetapkan Majelis. Terbitkan sertifikat dalam bentuk PDF.`));
       break;
     }
     case 'sek_keu': {
-      if (d.stage === 'admin_verified') out.push(A('issue_invoice', 'sek_keu', 'Terbitkan tagihan', 'Terbitkan tagihan', 'menerbitkan tagihan', 'A', `Dokumen telah dinyatakan lengkap. Tetapkan jumlah tagihan bagi UPPS. ${WHY_A}`));
-      if (d.stage === 'payment_proof_uploaded') out.push(A('verify_payment', 'sek_keu', 'Verifikasi bukti pembayaran', 'Verifikasi pembayaran', 'memverifikasi pembayaran', 'A', `UPPS telah mengunggah bukti pembayaran. Periksa dan catat hasilnya. ${WHY_A}`));
+      if (d.stage === 'admin_verified') out.push(A('issue_invoice', 'sek_keu', 'Terbitkan tagihan', 'Terbitkan tagihan', 'menerbitkan tagihan', 'A', `Dokumen telah dinyatakan lengkap. Tetapkan jumlah tagihan bagi UPPS.`));
+      if (d.stage === 'payment_proof_uploaded') out.push(A('verify_payment', 'sek_keu', 'Verifikasi bukti pembayaran', 'Verifikasi pembayaran', 'memverifikasi pembayaran', 'A', `UPPS telah mengunggah bukti pembayaran. Periksa dan catat hasilnya.`));
       break;
     }
     case 'kea': {
       if (inBranch(d)) {
-        if (d.akStatus === 'not_started') out.push(A('offer', 'kea', 'Tawarkan pasangan asesor', 'Tawarkan asesor', 'menawarkan pasangan asesor', 'C', `Pilih dua asesor dan tetapkan ketua asesor. ${WHY_C}`));
-        if (d.akStatus === 'offer_rejected' && rejectionPending(d)) out.push(A('review_rejection', 'kea', 'Tinjau penolakan penawaran asesor', 'Tinjau penolakan', 'meninjau penolakan penawaran', 'A', `Penawaran ditolak. Catat tinjauan sebelum menawarkan pasangan lain. ${WHY_A}`));
-        if (d.akStatus === 'offer_rejected' && !rejectionPending(d)) out.push(A('reoffer', 'kea', 'Tawarkan ulang pasangan asesor', 'Tawarkan ulang', 'menawarkan ulang pasangan asesor', 'C', `Tinjauan telah dicatat. Pilih pasangan asesor yang baru. ${WHY_C}`));
-        if (d.akStatus === 'ak_complete') out.push(A('consistency', 'kea', 'Periksa konsistensi hasil Asesmen Kecukupan', 'Periksa konsistensi', 'memeriksa konsistensi hasil AK', 'A', `Kedua asesor telah menyerahkan penilaian. Setujui atau kembalikan untuk dinilai ulang. ${WHY_A}`));
-        if (d.alScheduleStatus === 'not_started' || d.alScheduleStatus === 'rejected') out.push(A('propose_schedule', 'kea', d.alScheduleStatus === 'rejected' ? 'Usulkan ulang jadwal Asesmen Lapangan' : 'Usulkan jadwal Asesmen Lapangan', 'Usulkan jadwal', 'mengusulkan jadwal Asesmen Lapangan', 'A', `Tentukan tanggal, lokasi, dan moda pelaksanaan. ${WHY_A}`));
+        if (d.akStatus === 'not_started') out.push(A('offer', 'kea', 'Tawarkan pasangan asesor', 'Tawarkan asesor', 'menawarkan pasangan asesor', 'C', `Pilih dua asesor dan tetapkan ketua asesor.`));
+        if (d.akStatus === 'offer_rejected' && rejectionPending(d)) out.push(A('review_rejection', 'kea', 'Tinjau penolakan penawaran asesor', 'Tinjau penolakan', 'meninjau penolakan penawaran', 'A', `Penawaran ditolak. Catat tinjauan sebelum menawarkan pasangan lain.`));
+        if (d.akStatus === 'offer_rejected' && !rejectionPending(d)) out.push(A('reoffer', 'kea', 'Tawarkan ulang pasangan asesor', 'Tawarkan ulang', 'menawarkan ulang pasangan asesor', 'C', `Tinjauan telah dicatat. Pilih pasangan asesor yang baru.`));
+        if (d.akStatus === 'ak_complete') out.push(A('consistency', 'kea', 'Periksa konsistensi hasil Asesmen Kecukupan', 'Periksa konsistensi', 'memeriksa konsistensi hasil AK', 'A', `Kedua asesor telah menyerahkan penilaian. Setujui atau kembalikan untuk dinilai ulang.`, (id) => `/kea/pengajuan/${id}/konsistensi`));
+        if (d.alScheduleStatus === 'not_started' || d.alScheduleStatus === 'rejected') out.push(A('propose_schedule', 'kea', d.alScheduleStatus === 'rejected' ? 'Usulkan ulang jadwal Asesmen Lapangan' : 'Usulkan jadwal Asesmen Lapangan', 'Usulkan jadwal', 'mengusulkan jadwal Asesmen Lapangan', 'A', `Tentukan tanggal, lokasi, dan moda pelaksanaan.`));
       }
-      if (d.stage === 'responses_completed') out.push(A('final_verify', 'kea', 'Catat verifikasi akhir', 'Verifikasi akhir', 'mencatat verifikasi akhir', 'C', `Tanggapan UPPS telah selesai. Periksa hasil AL dan kedua hasil AK, lalu catat verifikasi akhir. ${WHY_C}`));
+      if (d.stage === 'responses_completed') out.push(A('final_verify', 'kea', 'Catat verifikasi akhir', 'Verifikasi akhir', 'mencatat verifikasi akhir', 'C', `Tanggapan UPPS telah selesai. Periksa hasil AL dan kedua hasil AK, lalu catat verifikasi akhir.`));
       break;
     }
     case 'asesor': {
@@ -245,17 +244,17 @@ export function dutiesFor(d: Detail, role: AppRole, uid?: string): NextAction[] 
       const akOpen = returned
         ? (uid === undefined ? akList.some((a) => needsRescore(d, a)) : !myAk || myAk.status !== 'submitted' || needsRescore(d, myAk))
         : (uid === undefined ? akSubmittedCount < 2 : myAk?.status !== 'submitted');
-      if (inPair && last?.status === 'offered' && !myResp) out.push(A('respond_offer', 'asesor', 'Tanggapi penawaran penugasan', 'Tanggapi penugasan', 'menanggapi penawaran penugasan', 'C', `KEA menugaskan Bapak/Ibu sebagai asesor. Terima atau tolak disertai alasan. ${WHY_C}`));
+      if (inPair && last?.status === 'offered' && !myResp) out.push(A('respond_offer', 'asesor', 'Tanggapi penawaran penugasan', 'Tanggapi penugasan', 'menanggapi penawaran penugasan', 'C', `KEA menugaskan Bapak/Ibu sebagai asesor. Terima atau tolak disertai alasan.`));
       if (inPair && ['effective', 'ak_partial', 'consistency_returned'].includes(d.akStatus) && akOpen) {
         out.push(A('ak_scoring', 'asesor', returned ? 'Nilai ulang Asesmen Kecukupan' : 'Isi penilaian Asesmen Kecukupan', returned ? 'Nilai ulang' : myAk ? 'Lanjutkan penilaian' : 'Mulai penilaian', 'menyerahkan penilaian Asesmen Kecukupan', 'C',
-          returned ? `KEA mengembalikan hasil untuk dinilai ulang. Baca catatan KEA, perbaiki skor pada halaman penilaian, lalu serahkan ulang. ${WHY_C}` : `Isi skor setiap butir pada seluruh kriteria, lalu serahkan hasil. ${WHY_C}`, (id) => `/asesor/pengajuan/${id}/penilaian/AK`));
+          returned ? `KEA mengembalikan hasil untuk dinilai ulang. Baca catatan KEA, perbaiki skor pada halaman penilaian, lalu serahkan ulang.` : `Isi skor setiap butir pada seluruh kriteria, lalu serahkan hasil.`, (id) => `/asesor/pengajuan/${id}/penilaian/AK`));
       }
-      if (isLead && inBranch(d) && branchesDone(d)) out.push(A('al_assessment', 'asesor', 'Laksanakan Asesmen Lapangan: isi penilaian, unggah berita acara, lalu serahkan', 'Buka langkah asesmen lapangan', 'menyerahkan hasil Asesmen Lapangan', 'C', `Isi skor penilaian, unggah berita acara, kemudian serahkan hasil. Penyerahan mensyaratkan berita acara. ${WHY_C}`));
-      if (isLead && hasObjection(d) && !leadResolved(d)) out.push(A('lead_response', 'asesor', 'Tanggapi keberatan UPPS', 'Tanggapi keberatan', 'menanggapi keberatan UPPS', 'A', `UPPS mengajukan keberatan atas hasil asesmen. Sampaikan respons ketua asesor. ${WHY_A}`));
+      if (isLead && inBranch(d) && branchesDone(d)) out.push(A('al_assessment', 'asesor', 'Laksanakan Asesmen Lapangan: isi penilaian, unggah berita acara, lalu serahkan', 'Buka penilaian lapangan', 'menyerahkan hasil Asesmen Lapangan', 'C', `Isi skor penilaian, unggah berita acara, kemudian serahkan hasil. Penyerahan mensyaratkan berita acara.`, (id) => `/asesor/pengajuan/${id}/penilaian/AL`));
+      if (isLead && hasObjection(d) && !leadResolved(d)) out.push(A('lead_response', 'asesor', 'Tanggapi keberatan UPPS', 'Tanggapi keberatan', 'menanggapi keberatan UPPS', 'A', `UPPS mengajukan keberatan atas hasil asesmen. Sampaikan respons ketua asesor.`));
       break;
     }
     case 'majelis': {
-      if (d.stage === 'final_verified') out.push(A('decision', 'majelis', 'Tetapkan peringkat akreditasi', 'Tetapkan peringkat', 'menetapkan peringkat akreditasi', 'C', `Verifikasi akhir telah selesai. Tetapkan peringkat, nomor Surat Keputusan, dan masa berlaku. ${WHY_C}`));
+      if (d.stage === 'final_verified') out.push(A('decision', 'majelis', 'Tetapkan peringkat akreditasi', 'Tetapkan peringkat', 'menetapkan peringkat akreditasi', 'C', `Verifikasi akhir telah selesai. Tetapkan peringkat, nomor Surat Keputusan, dan masa berlaku.`));
       break;
     }
   }

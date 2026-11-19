@@ -4,7 +4,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Circle, Clock, Copy, FileText, HelpCircle, Home, Info, Link2, Loader2, Lock, Search, UploadCloud, X, XCircle } from 'lucide-react';
+import { AlertTriangle, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Circle, Clock, Copy, FileText, HelpCircle, Info, Link2, Loader2, Lock, Search, UploadCloud, X, XCircle } from 'lucide-react';
 import { ROLE_HOME, type AuditStatus } from '@akreditasi/shared';
 import { useAuth } from '../auth/AuthContext';
 import { AUDIT_PHASE_LABEL, auditPhase } from '../lib/labels';
@@ -16,28 +16,29 @@ export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Bool
 /* ---------- Button ---------- */
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
 const VARIANTS: Record<Variant, string> = {
-  primary: 'border border-navy-700 bg-navy-700 text-white shadow-sm hover:bg-navy-800 hover:border-navy-800 active:bg-navy-900',
-  secondary: 'border border-slate-300 bg-white text-ink shadow-sm hover:bg-slate-50 hover:border-slate-400',
-  danger: 'border border-bad bg-bad text-white shadow-sm hover:bg-red-800 hover:border-red-800',
+  primary: 'border border-navy-700 bg-navy-700 text-white hover:bg-navy-800 hover:border-navy-800 active:bg-navy-900 disabled:border-[#EEF0F3] disabled:bg-[#EEF0F3] disabled:text-slate-400',
+  secondary: 'border border-[#D5D9E0] bg-white text-ink hover:bg-slate-50',
+  danger: 'border border-bad bg-bad text-white hover:bg-red-800 hover:border-red-800',
   ghost: 'border border-transparent text-navy-700 hover:bg-navy-50',
 };
+type Size = 'sm' | 'md' | 'lg';
+const SIZES: Record<Size, string> = { sm: 'min-h-[36px] px-3.5 py-1 text-sm', md: 'min-h-[42px] px-[1.1rem] py-2 text-[14.5px]', lg: 'min-h-[48px] px-5 py-2 text-[15.5px]' };
+const BTN_BASE = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] font-semibold transition-colors duration-150';
 export function Button({ variant = 'primary', size = 'md', loading, className, children, disabled, icon, ...rest }:
-  ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: 'sm' | 'md'; loading?: boolean; icon?: ReactNode }) {
+  ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size; loading?: boolean; icon?: ReactNode }) {
   return (
     <button type="button" {...rest} disabled={disabled || loading} aria-busy={loading || undefined}
-      className={cx('inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60',
-        size === 'sm' ? 'min-h-[36px] px-3.5 py-1' : 'min-h-[42px] px-4 py-2', VARIANTS[variant], className)}>
+      className={cx(BTN_BASE, 'disabled:cursor-not-allowed disabled:opacity-70', SIZES[size], VARIANTS[variant], className)}>
       {loading ? <Loader2 size={15} className="animate-spin" aria-hidden /> : icon}
       {children}
     </button>
   );
 }
-export const buttonClass = (variant: Variant = 'primary', size: 'sm' | 'md' = 'md', extra?: string) =>
-  cx('inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors duration-150', size === 'sm' ? 'min-h-[36px] px-3.5 py-1' : 'min-h-[42px] px-4 py-2', VARIANTS[variant], extra);
+export const buttonClass = (variant: Variant = 'primary', size: Size = 'md', extra?: string) => cx(BTN_BASE, SIZES[size], VARIANTS[variant], extra);
 
 /** Tautan bergaya tombol: satu elemen <a>, bukan tombol di dalam tautan. */
 export function ButtonLink({ to, variant = 'primary', size = 'md', className, children, icon, ...rest }:
-  Omit<ComponentProps<typeof Link>, 'className'> & { variant?: Variant; size?: 'sm' | 'md'; className?: string; icon?: ReactNode }) {
+  Omit<ComponentProps<typeof Link>, 'className'> & { variant?: Variant; size?: Size; className?: string; icon?: ReactNode }) {
   return (
     <Link to={to} {...rest}
       className={buttonClass(variant, size, className)}>
@@ -54,15 +55,15 @@ export function Card({ title, description, actions, children, className, flush, 
   return (
     <section id={id} className={cx('card', className)}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-4">
+        <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-[#EEF0F3] px-[22px] py-[18px]">
           <div className="min-w-0">
             {title && <h2 className="text-base font-semibold leading-snug text-ink">{title}</h2>}
-            {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
+            {description && <p className="mt-0.5 text-[13.5px] text-faint">{description}</p>}
           </div>
-          {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+          {actions && <div className="flex flex-wrap items-center gap-2 text-[13.5px] text-faint">{actions}</div>}
         </header>
       )}
-      <div className={flush ? '' : 'p-4 sm:p-5'}>{children}</div>
+      <div className={flush ? '' : 'p-[22px]'}>{children}</div>
     </section>
   );
 }
@@ -249,14 +250,14 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: { tabs:
   };
   const scrollBy = (dir: -1 | 1) => listRef.current?.scrollBy({ left: dir * 200, behavior: 'smooth' });
   return (
-    <div className="no-print relative border-b border-slate-200">
+    <div className="no-print relative border-b border-line">
       <div ref={listRef} role="tablist" aria-label={label} onScroll={measure} style={edge.overflowing ? { paddingInline: TAB_EDGE_PAD, scrollPaddingInline: TAB_EDGE_PAD } : undefined} className="flex gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {tabs.map((t, i) => (
           <button key={t.id} id={`tab-${t.id}`} role="tab" type="button" aria-selected={t.id === value} aria-controls={`panel-${t.id}`} tabIndex={t.id === value ? 0 : -1}
             onClick={() => onChange(t.id)} onKeyDown={(e) => onKey(e, i)}
-            className={cx('min-h-[44px] shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors',
-              t.id === value ? 'border-navy-700 font-semibold text-navy-700' : 'border-transparent font-medium text-muted hover:border-slate-300 hover:text-ink')}>
-            {t.label}{t.count !== undefined && <span className={cx('ml-1.5 rounded-full px-1.5 py-0.5 text-xs tabular-nums', t.id === value ? 'bg-navy-50 text-navy-700' : 'bg-slate-100 text-muted')}>{t.count}</span>}
+            className={cx('mr-6 min-h-[48px] shrink-0 whitespace-nowrap border-b-2 px-0.5 text-[14.5px] transition-colors last:mr-0',
+              t.id === value ? 'border-navy-700 font-semibold text-ink' : 'border-transparent font-medium text-faint hover:text-ink')}>
+            {t.label}{t.count !== undefined && t.count > 0 && <span className="ml-1.5 text-[13px] font-normal tabular-nums text-faint">{t.count}</span>}
           </button>
         ))}
       </div>
@@ -308,8 +309,10 @@ const FormLayoutCtx = createContext<'stack' | 'horizontal'>('stack');
 export const useFormLayout = () => useContext(FormLayoutCtx);
 export const HorizontalForm = ({ children }: { children: ReactNode }) => <FormLayoutCtx.Provider value="horizontal">{children}</FormLayoutCtx.Provider>;
 
-interface ModalCtxValue { footer: HTMLElement | null; close: () => void }
+interface ModalCtxValue { footer: HTMLElement | null; close: () => void; drawer?: boolean }
 const ModalCtx = createContext<ModalCtxValue | null>(null);
+/** True bila komponen berada di dalam Drawer (konfirmasi langsung, tanpa dialog kedua). */
+export const useInDrawer = () => !!useContext(ModalCtx)?.drawer;
 
 /** Tombol aksi formulir. Di dalam modal dipindahkan ke footer (Batal + tombol utama); di luar modal tampil sebaris. */
 export function ModalActions({ children, cancel = true }: { children: ReactNode; cancel?: boolean }) {
@@ -339,6 +342,39 @@ export function Modal({ open, onClose, title, children, footer, wide }: { open: 
           <footer className="flex flex-wrap items-center justify-end gap-2 rounded-b-2xl border-t border-slate-100 bg-slate-50 px-5 py-4 [&:not(:has(button))]:hidden">
             {footer}
             <div ref={setSlot} className="contents" />
+          </footer>
+        </ModalCtx.Provider>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/**
+ * Panel keputusan di sisi kanan. Halaman tetap terlihat di belakang sebagai konteks.
+ * `ModalActions` di dalamnya dipindahkan ke footer; `note` tampil di atas tombol (mis. "Tersimpan permanen").
+ * Formulir dengan `useConfirmed` di dalam Drawer langsung menyimpan tanpa dialog kedua.
+ */
+export function Drawer({ open, onClose, title, subtitle, children, note, footer, width = 'md' }: { open: boolean; onClose: () => void; title: string; subtitle?: ReactNode; children: ReactNode; note?: ReactNode; footer?: ReactNode; width?: 'md' | 'lg' }) {
+  const ref = useDialog(open, onClose);
+  const id = useId();
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  const ctx = useMemo(() => ({ footer: slot, close: onClose, drawer: true }), [slot, onClose]);
+  if (!open) return null;
+  return createPortal(
+    <div className="no-print fixed inset-0 z-[60]">
+      <div className="absolute inset-0 bg-gray-900/30" onMouseDown={onClose} aria-hidden />
+      <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={id}
+        className={cx('drawer-in absolute inset-y-0 right-0 flex w-full flex-col bg-white shadow-2xl outline-none', width === 'lg' ? 'max-w-[680px]' : 'max-w-[520px]')}>
+        <header className="flex items-start justify-between gap-3 border-b border-line px-6 py-5">
+          <div className="min-w-0">{subtitle && <div className="truncate text-[13px] text-faint">{subtitle}</div>}<h2 id={id} className="text-lg font-semibold leading-snug">{title}</h2></div>
+          <button type="button" aria-label="Tutup" onClick={onClose} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-faint hover:bg-slate-100 hover:text-ink"><X size={19} /></button>
+        </header>
+        <ModalCtx.Provider value={ctx}>
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">{children}</div>
+          <footer className="border-t border-line px-6 py-4 [&:not(:has(button))]:hidden">
+            {note && <p className="mb-3 flex items-start gap-2 text-[13px] text-faint"><Lock size={14} className="mt-0.5 shrink-0" aria-hidden />{note}</p>}
+            <div className="flex flex-wrap items-center justify-end gap-2">{footer}<div ref={setSlot} className="contents" /></div>
           </footer>
         </ModalCtx.Provider>
       </div>
@@ -414,7 +450,7 @@ export function Field({ label, error, hint, required, children, className, layou
 export const FormRow = (p: Omit<Parameters<typeof Field>[0], 'layout'>) => <Field {...p} layout="horizontal" />;
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>((p, r) => <input ref={r} {...p} className={cx('input', p.className)} />);
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>((p, r) => <textarea ref={r} rows={3} {...p} className={cx('input', p.className)} />);
-export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>((p, r) => <select ref={r} {...p} className={cx('input pr-8', p.className)} />);
+export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>((p, r) => <select ref={r} {...p} className={cx('input select-chevron', p.className)} />);
 Input.displayName = 'Input'; Textarea.displayName = 'Textarea'; Select.displayName = 'Select';
 
 /* ---------- FileInput: dropzone (seret dan lepas + tombol Pilih File) ---------- */
@@ -535,10 +571,10 @@ export function StepIndicator({ steps, className }: { steps: StepItem[]; classNa
 export function StepSection({ n, title, done, children, hint }: { n: number; title: string; done?: boolean; hint?: ReactNode; children?: ReactNode }) {
   return (
     <section>
-      <h3 className="flex items-center gap-2.5 border-b border-slate-100 pb-2 text-base font-semibold">
-        <span className={cx('grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-semibold text-white', done ? 'bg-ok' : 'bg-navy-700')}>{done ? <Check size={13} aria-hidden /> : n}</span>{title}
+      <h3 className="flex items-center gap-2.5 text-[15px] font-semibold">
+        <span className={cx('grid h-6 w-6 shrink-0 place-items-center rounded-full text-[12px] font-semibold', done ? 'bg-ok-bg text-ok' : 'bg-navy-50 text-navy-700')}>{done ? <Check size={13} aria-hidden /> : n}</span>{title}
       </h3>
-      {hint && <p className="mt-1.5 text-sm text-muted">{hint}</p>}
+      {hint && <p className="mt-1 text-[14px] text-faint">{hint}</p>}
       {children && <div className="mt-3">{children}</div>}
     </section>
   );
@@ -553,19 +589,21 @@ export function PageHeader({ title, crumbs = [], actions, description }: { title
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
       <div className="min-w-0">
-        <nav aria-label="Jejak halaman" className="min-w-0">
-          <ol className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm text-muted">
-            <li><Link to={home} aria-label="Beranda" className="inline-flex items-center text-slate-500 hover:text-navy-700"><Home size={15} aria-hidden /></Link></li>
-            {crumbs.map((c, i) => (
-              <li key={i} className="flex min-w-0 items-center gap-1.5">
-                <ChevronRight size={14} aria-hidden className="text-slate-400" />
-                {c.to && i < crumbs.length - 1 ? <Link to={c.to} className="truncate hover:text-navy-700 hover:underline">{c.label}</Link> : <span className="max-w-[20rem] truncate" aria-current={i === crumbs.length - 1 ? 'page' : undefined}>{c.label}</span>}
-              </li>
-            ))}
-          </ol>
-        </nav>
-        <h1 className="mt-1 text-[1.375rem] font-semibold leading-tight tracking-tight sm:text-2xl">{title}</h1>
-        {description && <p className="mt-1 text-sm text-muted">{description}</p>}
+        {crumbs.length > 1 && (
+          <nav aria-label="Jejak halaman" className="min-w-0">
+            <ol className="flex min-w-0 flex-wrap items-center gap-1.5 text-[14px] text-faint">
+              <li className="sr-only"><Link to={home}>Beranda</Link></li>
+              {crumbs.slice(0, -1).map((c, i) => (
+                <li key={i} className="flex min-w-0 items-center gap-1.5">
+                  {i > 0 && <ChevronRight size={13} aria-hidden className="text-slate-300" />}
+                  {c.to ? <Link to={c.to} className="truncate hover:text-navy-700">{c.label}</Link> : <span className="truncate">{c.label}</span>}
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
+        <h1 className="mt-1 text-[24px] font-semibold leading-tight tracking-tight sm:text-[26px]">{title}</h1>
+        {description && <div className="mt-1 text-[15px] text-muted">{description}</div>}
       </div>
       {actions && <div className="no-print flex flex-wrap gap-2">{actions}</div>}
     </div>
@@ -613,7 +651,85 @@ export function StatWidget({ label, value, hint, tone = 'primary', icon, to }: {
   const linkCls = cx(cls, 'transition-shadow hover:shadow-md');
   return to.startsWith('#') ? <a href={to} className={linkCls}>{body}</a> : <Link to={to} className={linkCls}>{body}</Link>;
 }
+/* ---------- Primitif v3 ---------- */
+const DOT: Record<'navy' | 'ok' | 'warn' | 'bad' | 'gray', string> = { navy: 'bg-navy-700', ok: 'bg-ok', warn: 'bg-wait', bad: 'bg-bad', gray: 'bg-slate-400' };
+/** Status ringkas: titik warna + teks (bukan badge berwarna). */
+export function StatusDot({ tone = 'gray', children, className }: { tone?: keyof typeof DOT; children: ReactNode; className?: string }) {
+  return <span className={cx('inline-flex items-center gap-[7px] text-[13.5px] font-medium text-muted', className)}><span aria-hidden className={cx('h-2 w-2 shrink-0 rounded-full', DOT[tone])} />{children}</span>;
+}
+
+/** Progres tahap: N garis tipis (selesai hijau, berjalan navy, sisanya abu). */
+export function SegProgress({ total, done, current, label }: { total: number; done: number; current?: boolean; label?: string }) {
+  return (
+    <div role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} aria-label={label ?? `Langkah ${Math.min(done + 1, total)} dari ${total}`} className="grid gap-1" style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }}>
+      {Array.from({ length: total }, (_, i) => <span key={i} className={cx('h-1.5 rounded-full', i < done ? 'bg-ok' : i === done && current !== false ? 'bg-navy-700' : 'bg-slate-200')} />)}
+    </div>
+  );
+}
+
+export interface ChoiceOpt { value: string; label: ReactNode; hint?: ReactNode; disabled?: boolean }
+/** Pilihan besar bergaya kartu (radio). */
+export function Choice({ name, options, value, onChange, legend, className }: { name: string; options: ChoiceOpt[]; value: string; onChange: (v: string) => void; legend?: ReactNode; className?: string }) {
+  const lid = useId();
+  return (
+    <div role="radiogroup" aria-labelledby={legend ? lid : undefined} className={className}>
+      {legend && <div id={lid} className="mb-2 text-[14.5px] font-semibold text-ink">{legend}</div>}
+      <div className="space-y-2">
+        {options.map((o) => {
+          const on = value === o.value;
+          return (
+            <label key={o.value} className={cx('flex cursor-pointer items-start gap-3 rounded-xl border-[1.5px] px-4 py-3.5 transition-colors focus-within:ring-[3px] focus-within:ring-navy-100', on ? 'border-navy-700 bg-navy-50' : 'border-slate-200 bg-white hover:border-navy-200', o.disabled && 'pointer-events-none opacity-50')}>
+              <input type="radio" name={name} value={o.value} checked={on} disabled={o.disabled} onChange={() => onChange(o.value)} className="sr-only" />
+              <span aria-hidden className={cx('mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2', on ? 'border-navy-700' : 'border-slate-400')}>{on && <span className="h-[9px] w-[9px] rounded-full bg-navy-700" />}</span>
+              <span className="min-w-0"><span className="block font-semibold text-ink">{o.label}</span>{o.hint && <span className="block text-[14px] text-muted">{o.hint}</span>}</span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Tombol skor 0..max. `suggested` diberi titik emas (saran AI). */
+export function ScoreButtons({ value, onChange, allowed, suggested, disabled, label }: { value: number | null | undefined; onChange: (v: number) => void; allowed: number[]; suggested?: number | null; disabled?: boolean; label: string }) {
+  return (
+    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
+      {allowed.map((n) => (
+        <button key={n} type="button" role="radio" aria-checked={value === n} disabled={disabled} onClick={() => onChange(n)}
+          title={suggested === n ? 'Saran AI' : undefined}
+          className={cx('relative h-[46px] w-[46px] rounded-[10px] border-[1.5px] text-base font-semibold tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+            value === n ? 'border-navy-700 bg-navy-700 text-white' : 'border-[#D5D9E0] bg-white text-ink hover:border-navy-700')}>
+          {n}
+          {suggested === n && <span aria-hidden className="absolute -bottom-[7px] left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-gold" />}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Angka skor besar "3,12 / 4,00". */
+export function ScoreFigure({ value, max = 4, size = 'md', className }: { value: number | null | undefined; max?: number; size?: 'sm' | 'md' | 'lg'; className?: string }) {
+  const f = (n: number | null | undefined) => (n === null || n === undefined || !Number.isFinite(n) ? '—' : new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n));
+  return (
+    <span className={cx('inline-flex items-baseline gap-1.5 tabular-nums', className)}>
+      <span className={cx('font-semibold leading-none tracking-tight text-ink', size === 'lg' ? 'text-[44px]' : size === 'md' ? 'text-[24px]' : 'text-[15px]')}>{f(value)}</span>
+      <span className={cx('text-faint', size === 'lg' ? 'text-base' : size === 'md' ? 'text-sm' : 'text-[13px]')}>/ {f(max)}</span>
+    </span>
+  );
+}
+
+/** Kotak tugas menonjol: judul, keterangan, satu tombol. */
+export function TaskBanner({ eyebrow = 'Giliran Bapak/Ibu', title, hint, action, icon }: { eyebrow?: ReactNode; title: ReactNode; hint?: ReactNode; action: ReactNode; icon?: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-4 rounded-xl bg-navy-50 p-4">
+      {icon && <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white text-navy-700" aria-hidden>{icon}</span>}
+      <div className="min-w-0 flex-1"><div className="text-[13px] font-semibold text-navy-700">{eyebrow}</div><div className="font-semibold text-ink">{title}</div>{hint && <div className="mt-0.5 text-[14px] text-muted">{hint}</div>}</div>
+      {action}
+    </div>
+  );
+}
+
 export function ProgressBar({ value, max = 100, label }: { value: number; max?: number; label?: string }) {
   const pct = max ? Math.min(100, Math.round((value / max) * 100)) : 0;
-  return <div role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={max} aria-label={label} className="h-2 w-full overflow-hidden rounded-full bg-slate-200"><div className={cx('h-full rounded-full transition-all duration-150', pct === 100 ? 'bg-ok' : 'bg-navy-700')} style={{ width: `${pct}%` }} /></div>;
+  return <div role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={max} aria-label={label} className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100"><div className={cx('h-full rounded-full transition-all duration-150', pct === 100 ? 'bg-ok' : 'bg-navy-700')} style={{ width: `${pct}%` }} /></div>;
 }

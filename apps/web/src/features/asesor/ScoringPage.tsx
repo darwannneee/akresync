@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Check, CircleDot, Save } from 'lucide-react';
-import { ROLE_HOME } from '@akreditasi/shared';
+import { ChevronLeft, ChevronRight, CloudCheck, CloudOff, Loader2 } from 'lucide-react';
 import { api, errorMessage } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { useToast } from '../../components/Toast';
-import { Badge, Button, ButtonLink, Card, ConfirmDialog, FormError, Notice, PageHeader, PageSkeleton, ProgressBar, StepIndicator, cx } from '../../components/ui';
+import { Button, ButtonLink, ConfirmDialog, FormError, Notice, PageSkeleton, ProgressBar, ScoreButtons, ScoreFigure, StatusDot, cx } from '../../components/ui';
 import { useSubmission } from '../common/queries';
-import { useAction } from '../common/useAction';
-import { SingleUpload } from '../common/forms';
-import { ASSESS_STATUS_LABEL, PHASE_LABEL, fmtNumber } from '../../lib/labels';
-import { INSTRUMENT_DOKTOR_2025 as INST, MAX_TOTAL_SCORE, computeTotal, criterionSummary, provisionalRank, type CriterionCode, type InstrumentItem, type InstrumentScores } from '@akreditasi/shared';
-import { rankLabel } from '../../lib/labels';
+import { useAction, useDownload } from '../common/useAction';
+import { PHASE_LABEL, fmtNumber, fmtScore, rankLabel } from '../../lib/labels';
+import {
+  INSTRUMENT_DOKTOR_2025 as INST, MAX_TOTAL_SCORE, computeTotal, criterionSummary, provisionalRank, weightedAverage,
+  type AiCitation, type AiItemSuggestion, type CriterionCode, type InstrumentItem, type InstrumentScores,
+} from '@akreditasi/shared';
 import { needsRescore } from '../../lib/workflow';
-import { SuggestionBlock } from '../ai/parts';
+import { CONFIDENCE_LABEL } from '../ai/parts';
 import { ScoringAiPanel, useAiForScoring } from '../ai/ScoringAiPanel';
 
 const CRITERIA = INST.criteria.filter((c) => c.scored);
@@ -22,7 +22,38 @@ const SCORED = INST.items.filter((i) => CRITERIA.some((c) => c.code === i.criter
 const ITEM_COUNT = SCORED.length;
 const MAX_ITEM = INST.scale.max;
 const itemLabel = (i: InstrumentItem) => (i.sub ? `${i.no}.${i.sub}` : String(i.no));
-const countFilled = (s: InstrumentScores) => SCORED.filter((i) => typeof s[i.criterion]?.[i.id] === 'number').length;
+const isSet = (s: InstrumentScores, i: InstrumentItem) => typeof s[i.criterion]?.[i.id] === 'number';
+const countFilled = (s: InstrumentScores) => SCORED.filter((i) => isSet(s, i)).length;
+const hhmm = (d: Date) => d.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+
+function ItemCard({ it, value, focus, locked, sg, citations, onPick }: {
+  it: InstrumentItem; value: number | undefined; focus: boolean; locked: boolean; sg?: AiItemSuggestion; citations?: AiCitation[]; onPick: (n: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const lbl = itemLabel(it);
+  const show = !!sg && (focus || open);
+  const sources = (sg?.citations ?? []).map((cid) => citations?.find((c) => c.chunkId === cid)).filter((c): c is AiCitation => !!c);
+  return (
+    <li id={`butir-${it.id}`} className={cx('card scroll-mt-28 p-[22px]', focus && !locked && 'ring-2 ring-navy-100')}>
+      <div className="text-[13px] text-faint">Butir {lbl} · bobot {fmtNumber(it.weight)} · {it.element}</div>
+      <p className="mt-1 text-[15.5px] font-medium leading-snug text-ink">{it.indicator}</p>
+      {it.quantitative && <p className="mt-1.5 text-[13px] text-faint">Butir kuantitatif: nilai acuan diambil dari LKPS. {it.formula ? `${it.formula}.` : 'Pedoman tidak mencantumkan rumus perhitungan.'}</p>}
+      {it.descriptors && <ul className="mt-2 space-y-0.5 text-[13.5px] text-muted">{it.descriptors.slice().sort((a, b) => b.level - a.level).map((d) => <li key={d.level}><b className="tabular-nums text-ink">{d.level}</b> {d.label}</li>)}</ul>}
+      <div className="mt-4"><ScoreButtons value={value} onChange={onPick} allowed={INST.scale.allowed} suggested={sg?.suggestedScore} disabled={locked} label={`Tingkat skor butir ${lbl}`} /></div>
+      {sg && !show && <button type="button" onClick={() => setOpen(true)} className="mt-4 text-[13.5px] font-semibold text-navy-700 hover:underline">Lihat saran AI</button>}
+      {show && sg && (
+        <div className="mt-5 rounded-xl bg-surface p-4 text-[14px]">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-semibold text-ink">{sg.suggestedScore === null ? 'Saran AI: bukti tidak ditemukan' : `Saran AI: ${sg.suggestedScore}`}<span className="ml-2 font-normal text-faint">{CONFIDENCE_LABEL[sg.confidence]}</span></span>
+            {sg.suggestedScore !== null && !locked && value !== sg.suggestedScore && <Button variant="ghost" size="sm" className="-mr-2" onClick={() => onPick(sg.suggestedScore!)}>Pakai saran</Button>}
+          </div>
+          {sg.justification && <p className="mt-1 leading-relaxed text-muted">{sg.justification}</p>}
+          {sources.length > 0 && <p className="mt-2 text-[13px] text-faint">Sumber: {sources.map((c, i) => <span key={c.chunkId} title={c.excerpt}>{i > 0 && ' · '}{c.docType} {c.locator}</span>)}</p>}
+        </div>
+      )}
+    </li>
+  );
+}
 
 export function ScoringPage() {
   const { id = '', phase: ph = 'AK' } = useParams();
@@ -31,12 +62,14 @@ export function ScoringPage() {
   const q = useSubmission(id);
   const qc = useQueryClient();
   const toast = useToast();
+  const download = useDownload();
   const [scores, setScores] = useState<InstrumentScores>({});
   const [loaded, setLoaded] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [active, setActive] = useState<CriterionCode>('K1');
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [confirm, setConfirm] = useState(false);
+  const [jump, setJump] = useState<{ id: string } | null>(null);
   const latest = useRef(scores);
   latest.current = scores;
   const ai = useAiForScoring(id);
@@ -59,25 +92,24 @@ export function ScoringPage() {
   });
   const submit = useAction(() => api.post(`/submissions/${id}/assessments/${phase}/submit`), { title: `Penilaian ${PHASE_LABEL[phase]} telah diserahkan`, submissionId: id });
   const minutes = useAction((file: File) => { const f = new FormData(); f.append('file', file); return api.upload(`/submissions/${id}/al-minutes`, f); }, { title: 'Berita Acara telah diunggah', submissionId: id });
-  const renderMinutes = (has: boolean) => (
-    <Card title="Berita Acara Asesmen Lapangan" description="Berita Acara wajib ada sebelum hasil diserahkan. Skor dapat diisi lebih dahulu.">
-      {has && <div className="mb-3"><Notice tone="success">Berita Acara sudah terunggah. Unggah berkas baru bila ingin menggantinya.</Notice></div>}
-      <SingleUpload label="Berita Acara" submitLabel={has ? 'Unggah ulang Berita Acara' : 'Unggah Berita Acara'} pending={minutes.isPending} onSubmit={(file) => minutes.mutate(file)} />
-    </Card>
-  );
 
   // Setelah KEA mengembalikan AK, halaman penilaian dibuka kembali sampai penilaian diserahkan ulang.
   const returnedByKea = phase === 'AK' && q.data?.akStatus === 'consistency_returned';
   const rescoreOpen = !!q.data && !!mine && needsRescore(q.data, mine);
   const keaNotes = [...(q.data?.offers ?? [])].reverse().find((o) => o.consistencyNotes)?.consistencyNotes;
-  const hasMinutes = phase === 'AL' && (!!mine?.minutesDocumentId || (q.data?.documents ?? []).some((d) => d.docType === 'AL_MINUTES'));
+  const minutesDocs = (q.data?.documents ?? []).filter((d) => d.docType === 'AL_MINUTES');
+  const minutesDoc = minutesDocs.find((d) => d.id === mine?.minutesDocumentId) ?? minutesDocs[minutesDocs.length - 1];
+  const hasMinutes = phase === 'AL' && (!!mine?.minutesDocumentId || minutesDocs.length > 0);
   const locked = mine?.status === 'submitted' && !rescoreOpen;
   const total = computeTotal(scores);
+  const avg = weightedAverage(scores);
   const filled = countFilled(scores);
   const count = ITEM_COUNT;
   const complete = filled === count;
   const canSubmit = complete && (phase === 'AK' || hasMinutes);
   const rank = provisionalRank(total);
+  const lastOffer = (q.data?.offers ?? []).slice(-1)[0];
+  const notLead = phase === 'AL' && !mine && !!lastOffer && lastOffer.leadAssessorId !== user?.id;
 
   // Simpan draf otomatis 2,5 detik setelah perubahan terakhir.
   const mutate = saveDraft.mutate;
@@ -87,6 +119,13 @@ export function ScoringPage() {
     return () => clearTimeout(t);
   }, [scores, dirty, locked, loaded, mutate]);
 
+  useEffect(() => {
+    if (!jump) return;
+    const el = document.getElementById(`butir-${jump.id}`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el?.querySelector<HTMLButtonElement>('[role=radio]')?.focus({ preventScroll: true });
+  }, [jump]);
+
   const pick = useCallback((c: string, k: string, n: number) => {
     setScores((s) => ({ ...s, [c]: { ...s[c], [k]: n } })); setDirty(true);
   }, []);
@@ -94,60 +133,78 @@ export function ScoringPage() {
   if (q.isLoading) return <PageSkeleton />;
   if (q.isError || !q.data) return <FormError message="Pengajuan tidak dapat dimuat. Muat ulang halaman atau kembali ke daftar." />;
   if (submit.isSuccess) return <Navigate to={`/pengajuan/${id}`} replace />;
+  const s = q.data;
+  if (notLead) {
+    return (
+      <div className="mx-auto max-w-xl space-y-4">
+        <Notice tone="info" title="Penilaian Asesmen Lapangan diisi oleh ketua asesor">Bapak/Ibu dapat mengikuti perkembangannya pada halaman pengajuan.</Notice>
+        <ButtonLink to={`/pengajuan/${id}`} variant="secondary" icon={<ChevronLeft size={16} />}>Kembali ke pengajuan</ButtonLink>
+      </div>
+    );
+  }
 
-  const crit = CRITERIA.find((c) => c.code === active) ?? CRITERIA[0]!;
+  const idx = CRITERIA.findIndex((c) => c.code === active);
+  const crit = CRITERIA[idx] ?? CRITERIA[0]!;
   const critItems = SCORED.filter((i) => i.criterion === crit.code);
+  const cs = criterionSummary(scores, crit.code);
+  const focusId = critItems.find((i) => !isSet(scores, i))?.id;
+  const goCrit = (code: CriterionCode) => { setActive(code); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const nextEmpty = () => {
+    const order = [...CRITERIA.slice(idx), ...CRITERIA.slice(0, idx)];
+    for (const c of order) {
+      const it = SCORED.find((i) => i.criterion === c.code && !isSet(scores, i));
+      if (it) { setActive(c.code); setJump({ id: it.id }); return; }
+    }
+  };
   const sendNow = async () => {
     try { if (dirty || !mine || (rescoreOpen && !mine.draftScores)) await saveDraft.mutateAsync(); } catch { setConfirm(false); return; }
     submit.mutate(undefined);
   };
-  const status = saveDraft.isPending ? 'Menyimpan draf…' : dirty ? 'Perubahan belum tersimpan (tersimpan otomatis sebentar lagi)' : savedAt ? `Draf tersimpan pukul ${savedAt.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).replace(':', '.')} WIB` : 'Belum ada perubahan';
-  const idx = CRITERIA.findIndex((c) => c.code === active);
-  const cs = criterionSummary(scores, crit.code);
+  const docs = (['LED', 'LKPS'] as const).map((t) => {
+    const all = (s.documents ?? []).filter((d) => d.docType === t);
+    return all.find((d) => d.setVersion === s.documentSetVersion) ?? all.sort((a, b) => b.setVersion - a.setVersion)[0];
+  }).filter((d): d is NonNullable<typeof d> => !!d);
+  const save = saveDraft.isPending
+    ? <><Loader2 size={16} className="animate-spin" aria-hidden />Menyimpan…</>
+    : saveDraft.isError && dirty
+      ? <><CloudOff size={16} className="text-bad" aria-hidden />Belum tersimpan<button type="button" onClick={() => saveDraft.mutate()} className="font-semibold text-navy-700 hover:underline">Coba lagi</button></>
+      : dirty ? <><span aria-hidden className="h-2 w-2 rounded-full bg-slate-300" />Perubahan belum tersimpan</>
+      : savedAt ? <><CloudCheck size={16} className="text-ok" aria-hidden />Tersimpan {hhmm(savedAt)}</>
+      : <>Belum ada perubahan</>;
 
   return (
-    <div>
-      <PageHeader title={`Penilaian ${phase}`} crumbs={[{ label: 'Penugasan', to: ROLE_HOME.asesor }, { label: q.data.programName ?? `Pengajuan ${id.slice(0, 8)}`, to: `/pengajuan/${id}` }, { label: `Penilaian ${PHASE_LABEL[phase]}` }]}
-        actions={<ButtonLink to={`/pengajuan/${id}`} variant="secondary" icon={<ArrowLeft size={15} />}>Kembali ke Pengajuan</ButtonLink>} />
-      <div className="card sticky top-[68px] z-10 mb-4 px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-          <div className="min-w-0">
-            <p className="font-medium">Penilaian {PHASE_LABEL[phase]} ({phase})</p>
-            <p className="truncate text-sm text-muted">{q.data.programName}{q.data.programLevel ? ` (${q.data.programLevel})` : ''} · {q.data.institutionName}</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-5">
-            <div aria-live="polite"><div className="text-xs text-faint">Skor total (0 sampai {fmtNumber(MAX_TOTAL_SCORE)})</div><div className="text-2xl font-medium leading-none text-ink tabular-nums">{fmtNumber(total)}</div><div className="mt-1 text-xs text-muted" title={INST.rankNote}>Peringkat sementara: {rank ? rankLabel(rank) : 'belum tersedia (ditetapkan Majelis)'}</div></div>
-            <div className="min-w-[10rem]"><div className="mb-1 text-sm text-muted">Terisi {filled} dari {count} butir</div><ProgressBar value={filled} max={count} label="Kelengkapan pengisian" /></div>
-            {!locked && <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" icon={<Save size={15} />} disabled={filled === 0} loading={saveDraft.isPending} onClick={() => saveDraft.mutate()}>Simpan Draf</Button>
-              <Button disabled={!canSubmit} onClick={() => setConfirm(true)}>{rescoreOpen ? 'Serahkan Ulang Hasil' : 'Serahkan Hasil'}</Button>
-            </div>}
-            {locked && <Badge tone="success" icon={<Check size={12} />}>{ASSESS_STATUS_LABEL.submitted}</Badge>}
-          </div>
+    <div className={phase === 'AL' ? 'pb-36 sm:pb-20' : 'pb-16'}>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <Link to={`/pengajuan/${id}`} className="text-[14px] text-faint hover:text-navy-700">{s.programName ?? `Pengajuan ${id.slice(0, 8)}`}{s.institutionName ? ` · ${s.institutionName}` : ''}</Link>
+          <h1 className="mt-1 text-[26px] font-semibold tracking-tight">Penilaian {PHASE_LABEL[phase]}</h1>
         </div>
-        {!locked && <p className="mt-2 text-sm text-muted">{status}. {!complete && 'Lengkapi seluruh butir untuk dapat menyerahkan hasil.'}{complete && phase === 'AL' && !hasMinutes && 'Unggah Berita Acara Asesmen Lapangan agar hasil dapat diserahkan.'}</p>}
+        <div className="flex items-center gap-6">
+          <div className="text-right" aria-live="polite"><div className="text-[13px] text-faint">Skor sementara</div><ScoreFigure value={avg} max={MAX_ITEM} /></div>
+          {!locked && <div className="flex items-center gap-2 text-[13.5px] text-faint" aria-live="polite">{save}</div>}
+          {locked && <StatusDot tone="ok">Telah diserahkan</StatusDot>}
+        </div>
       </div>
 
-      <StepIndicator className="mb-5" steps={[{ label: `Isi setiap butir (0 sampai ${MAX_ITEM})`, state: complete ? 'done' : 'current' }, { label: 'Periksa ringkasan skor', state: complete ? 'current' : 'todo' }, { label: 'Serahkan hasil', state: locked ? 'done' : 'todo' }]} />
-      {phase === 'AL' && !locked && <div className="mb-5">{renderMinutes(hasMinutes)}</div>}
-      {locked && !returnedByKea && <div className="mb-5"><Notice tone="success" title="Penilaian telah diserahkan">Hasil tercatat permanen. Penilaian hanya dapat diubah lagi bila KEA mengembalikannya untuk dinilai ulang.</Notice></div>}
-      {locked && returnedByKea && <div className="mb-5"><Notice tone="success" title="Penilaian ulang telah diserahkan">Hasil perbaikan Bapak/Ibu sudah tercatat. Menunggu asesor lain dan pemeriksaan ulang KEA.</Notice></div>}
-      {returnedByKea && !locked && <div className="mb-5"><Notice tone="warn" title="Dikembalikan oleh KEA untuk dinilai ulang">{keaNotes ? <span className="whitespace-pre-wrap">Catatan KEA: {keaNotes}</span> : 'Mohon periksa kembali nilai Bapak/Ibu.'} Perbaiki skor yang perlu, lalu serahkan ulang hasil.</Notice></div>}
+      <div className="mt-6 space-y-3 empty:hidden">
+        {locked && !returnedByKea && <Notice tone="success" title="Penilaian telah diserahkan">Hasil tercatat permanen. Penilaian hanya dapat diubah lagi bila KEA mengembalikannya untuk dinilai ulang.</Notice>}
+        {locked && returnedByKea && <Notice tone="success" title="Penilaian ulang telah diserahkan">Hasil perbaikan Bapak/Ibu sudah tercatat. Menunggu asesor lain dan pemeriksaan ulang KEA.</Notice>}
+        {returnedByKea && !locked && <Notice tone="warn" title="Dikembalikan oleh KEA untuk dinilai ulang">{keaNotes ? <span className="whitespace-pre-wrap">Catatan KEA: {keaNotes}</span> : 'Mohon periksa kembali nilai Bapak/Ibu.'} Perbaiki skor yang perlu, lalu serahkan ulang hasil.</Notice>}
+        {!INST.scale.stated && <Notice tone="info" title="Catatan skala penilaian">{INST.scale.note}</Notice>}
+      </div>
 
-      <div className="mb-6"><ScoringAiPanel submissionId={id} phase={phase} ai={ai} locked={locked} /></div>
-
-      <div className="grid items-start gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-        <nav aria-label="Kriteria penilaian" className="card overflow-hidden">
-          <p className="border-b border-line px-4 py-2.5 text-[15px] font-medium">Kriteria Penilaian</p>
-          <ul className="divide-y divide-line">
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-12">
+        <nav aria-label="Kriteria penilaian" className="lg:sticky lg:top-24 lg:col-span-3">
+          <ul className="card space-y-0.5 p-2 text-[14px]">
             {CRITERIA.map((c) => {
-              const sm = criterionSummary(scores, c.code); const f = sm.filled; const done = f === sm.count;
+              const sm = criterionSummary(scores, c.code); const on = c.code === active; const done = sm.filled === sm.count;
               return (
                 <li key={c.code}>
-                  <button type="button" onClick={() => setActive(c.code)} aria-current={c.code === active ? 'true' : undefined}
-                    className={cx('flex w-full items-start gap-3 px-4 py-3 text-left transition-colors', c.code === active ? 'bg-navy-50 shadow-[inset_3px_0_0_0_#1E4D8C]' : 'hover:bg-slate-50')}>
-                    <span className={cx('mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-medium', done ? 'bg-ok text-white' : f > 0 ? 'bg-navy-700 text-white' : 'bg-slate-200 text-muted')}>{done ? <Check size={14} aria-hidden /> : c.code.slice(1)}</span>
-                    <span className="min-w-0 flex-1"><span className="block text-sm font-medium text-ink">Kriteria {c.code.slice(1)}. {c.title}</span><span className="mt-1.5 block"><ProgressBar value={f} max={sm.count} label={`${c.code} terisi`} /></span><span className="mt-1 block text-xs text-muted">{f} dari {sm.count} butir · skor {fmtNumber(sm.subtotal)} dari {fmtNumber(sm.max)}</span></span>
+                  <button type="button" onClick={() => goCrit(c.code)} aria-current={on ? 'true' : undefined}
+                    className={cx('flex min-h-[40px] w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left', on ? 'bg-navy-50 font-semibold text-navy-700' : 'text-muted hover:bg-slate-50')}>
+                    <span aria-hidden className={cx('h-2 w-2 shrink-0 rounded-full', done ? 'bg-ok' : on ? 'bg-navy-700' : 'bg-slate-300')} />
+                    <span className="min-w-0 flex-1 leading-snug">{c.code.slice(1)}. {c.title}</span>
+                    <span className={cx('text-[13px] tabular-nums', !on && 'text-faint')}>{sm.filled}/{sm.count}</span>
                   </button>
                 </li>
               );
@@ -155,49 +212,70 @@ export function ScoringPage() {
           </ul>
         </nav>
 
-        <Card title={`Kriteria ${crit.code.slice(1)}. ${crit.title}`} description={`Pilih tingkat skor 0 sampai ${MAX_ITEM} untuk setiap butir. Jumlah butir: ${cs.count}, skor kriteria ${fmtNumber(cs.subtotal)} dari ${fmtNumber(cs.max)}.`}
-          actions={<Badge tone={cs.filled === cs.count ? 'success' : 'info'} icon={cs.filled === cs.count ? <Check size={13} /> : <CircleDot size={13} />}>{cs.filled} dari {cs.count} terisi</Badge>}>
-          {!INST.scale.stated && <div className="mb-4"><Notice tone="info" title="Catatan skala penilaian">{INST.scale.note}</Notice></div>}
-          <ul className="divide-y divide-line">
-            {critItems.map((it) => {
-              const v = scores[it.criterion]?.[it.id];
-              const lbl = itemLabel(it);
-              return (
-                <li key={it.id} className="py-5">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="font-medium text-ink">Butir {lbl}. {it.element}</p>
-                    <span className="text-sm text-muted">Bobot {fmtNumber(it.weight)}{typeof v === 'number' ? ` · skor butir ${fmtNumber(v * it.weight)}` : ''}</span>
-                  </div>
-                  <p className="mt-1.5 leading-relaxed text-ink">{it.indicator}</p>
-                  <p className="mt-1.5 text-sm text-muted">Dasar penilaian: {it.dataSource}.</p>
-                  {it.quantitative && <p className="mt-1 text-sm text-muted">Butir kuantitatif: nilai acuan diambil dari LKPS. {it.formula ? `${it.formula}.` : 'Pedoman tidak mencantumkan rumus perhitungan.'}</p>}
-                  <div role="radiogroup" aria-label={`Tingkat skor butir ${lbl}`} className={cx('mt-3', it.descriptors ? 'space-y-2' : 'flex flex-wrap gap-2')}>
-                    {INST.scale.allowed.slice().reverse().map((n) => {
-                      const d = it.descriptors?.find((x) => x.level === n);
-                      const on = v === n;
-                      return (
-                        <button key={n} type="button" role="radio" aria-checked={on} disabled={locked} onClick={() => pick(it.criterion, it.id, n)}
-                          className={cx('rounded-lg border text-left text-sm transition-colors disabled:opacity-60', it.descriptors ? 'flex w-full items-start gap-3 px-3 py-2.5' : 'grid h-9 min-w-[2.75rem] place-items-center px-3 font-medium', on ? 'border-navy-700 bg-navy-700 text-white' : 'border-slate-300 bg-white text-ink hover:border-navy-700 hover:bg-navy-50')}>
-                          <span className="font-medium">{n}</span>{d && <span className="font-normal">{d.label}</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {(() => { const sg = ai.suggestion(it.id); return sg ? <div className="mt-3"><SuggestionBlock item={sg} citations={ai.detail?.citations} compact action={sg.suggestedScore !== null && !locked ? <Button size="sm" variant="secondary" onClick={() => pick(it.criterion, it.id, sg.suggestedScore!)}>Pakai saran</Button> : undefined} /></div> : null; })()}
-                  {!it.descriptors && <p className="mt-2 text-xs text-faint">Pedoman tidak memuat uraian per tingkat skor; Bapak/Ibu menilai berdasarkan uraian indikator dan data LED serta LKPS.</p>}
-                </li>
-              );
-            })}
-          </ul>
-          <div className="mt-4 flex justify-between gap-2 border-t border-line pt-4">
-            <Button variant="secondary" disabled={idx === 0} onClick={() => setActive(CRITERIA[idx - 1]!.code)}>Kriteria Sebelumnya</Button>
-            <Button variant="secondary" disabled={idx === CRITERIA.length - 1} onClick={() => setActive(CRITERIA[idx + 1]!.code)}>Kriteria Berikutnya</Button>
+        <div className="min-w-0 space-y-4 lg:col-span-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-[17px] font-semibold">Kriteria {crit.code.slice(1)} · {crit.title}</h2>
+            <span className="text-[13.5px] text-faint">{cs.filled} dari {cs.count} terisi</span>
           </div>
-        </Card>
+          <ul className="space-y-4">
+            {critItems.map((it) => (
+              <ItemCard key={it.id} it={it} value={scores[it.criterion]?.[it.id]} focus={it.id === focusId} locked={locked} sg={ai.suggestion(it.id)} citations={ai.detail?.citations}
+                onPick={(n) => pick(it.criterion, it.id, n)} />
+            ))}
+          </ul>
+          <p className="flex items-center gap-2 text-[13px] text-faint"><span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />Titik emas = saran AI. Skor resmi tetap ditentukan asesor.</p>
+          {critItems.some((i) => !i.descriptors) && <p className="text-[13px] text-faint">Pedoman tidak memuat uraian per tingkat skor (0 sampai {MAX_ITEM}); Bapak/Ibu menilai berdasarkan uraian indikator dan data LED serta LKPS.</p>}
+          <div className="flex justify-between gap-2 pt-2">
+            <Button variant="secondary" icon={<ChevronLeft size={16} />} disabled={idx <= 0} onClick={() => goCrit(CRITERIA[idx - 1]!.code)}>Kriteria sebelumnya</Button>
+            <Button variant="secondary" disabled={idx >= CRITERIA.length - 1} onClick={() => goCrit(CRITERIA[idx + 1]!.code)}>Kriteria berikutnya<ChevronRight size={16} aria-hidden /></Button>
+          </div>
+        </div>
+
+        <aside className="space-y-4 lg:sticky lg:top-24 lg:col-span-3">
+          <ScoringAiPanel submissionId={id} phase={phase} ai={ai} locked={locked} />
+          <section className="card p-[22px]" aria-label="Dokumen">
+            <div className="text-[12.5px] font-semibold uppercase tracking-[.04em] text-faint">Dokumen</div>
+            {docs.length ? docs.map((d) => (
+              <button key={d.id} type="button" onClick={() => download(`/documents/${d.id}/download`, d.fileName)} className="mt-3 flex w-full items-center justify-between gap-3 text-left text-[14px]">
+                <span className="min-w-0 truncate" title={d.fileName}>{d.fileName}</span><span className="shrink-0 font-semibold text-navy-700">Buka</span>
+              </button>
+            )) : <p className="mt-3 text-[14px] text-faint">LED dan LKPS belum tersedia.</p>}
+          </section>
+        </aside>
+      </div>
+
+      <div className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white lg:left-[248px]">
+        <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3.5 sm:px-8">
+          <div className="w-full sm:w-56">
+            <div className="flex justify-between text-[13px] text-faint"><span>Terisi</span><span className="tabular-nums">{filled} / {count} butir</span></div>
+            <div className="mt-1.5"><ProgressBar value={filled} max={count} label="Kelengkapan pengisian" /></div>
+          </div>
+          {phase === 'AL' && (
+            <div className="flex min-w-0 items-center gap-3 text-[13.5px]">
+              <div className="min-w-0">
+                <div className="font-semibold text-ink">Berita Acara</div>
+                <div className="truncate text-faint" title={minutesDoc?.fileName}>{hasMinutes ? minutesDoc?.fileName ?? 'Sudah diunggah' : 'Belum diunggah · wajib sebelum menyerahkan'}</div>
+              </div>
+              {!locked && (
+                <label className={cx('inline-flex min-h-[36px] shrink-0 cursor-pointer items-center gap-2 rounded-[10px] border border-[#D5D9E0] bg-white px-3.5 text-sm font-semibold text-ink hover:bg-slate-50 focus-within:ring-[3px] focus-within:ring-navy-100', minutes.isPending && 'pointer-events-none opacity-70')}>
+                  {minutes.isPending && <Loader2 size={15} className="animate-spin" aria-hidden />}{hasMinutes ? 'Ganti' : 'Pilih berkas'}
+                  <input type="file" className="sr-only" disabled={minutes.isPending} accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.png,.jpg,.jpeg" aria-label="Unggah Berita Acara Asesmen Lapangan"
+                    onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) minutes.mutate(f); }} />
+                </label>
+              )}
+            </div>
+          )}
+          {!locked && (
+            <div className="ml-auto flex flex-wrap gap-2">
+              {!complete && <Button variant="secondary" onClick={nextEmpty}>Ke butir kosong berikutnya</Button>}
+              <Button disabled={!canSubmit} title={!complete ? 'Lengkapi seluruh butir terlebih dahulu' : !canSubmit ? 'Unggah Berita Acara terlebih dahulu' : undefined} onClick={() => setConfirm(true)}>{rescoreOpen ? 'Serahkan ulang penilaian' : 'Serahkan penilaian'}</Button>
+            </div>
+          )}
+        </div>
       </div>
 
       <ConfirmDialog size="lg" open={confirm} title={`${rescoreOpen ? 'Serahkan ulang' : 'Serahkan'} hasil ${PHASE_LABEL[phase]}?`} confirmLabel={rescoreOpen ? 'Ya, serahkan ulang' : 'Ya, serahkan hasil'} pending={submit.isPending || saveDraft.isPending} onCancel={() => setConfirm(false)} onConfirm={() => void sendNow()}
-        items={[['Program studi', q.data.programName], ['Jenis penilaian', `${PHASE_LABEL[phase]} (${phase})`], ['Skor total', `${fmtNumber(total)} dari ${fmtNumber(MAX_TOTAL_SCORE)}`], ['Peringkat sementara', rank ? rankLabel(rank) : 'belum tersedia (ditetapkan Majelis)'], ['Butir terisi', `${filled} dari ${count}`], ...CRITERIA.map((c) => { const sm = criterionSummary(scores, c.code); return [`Kriteria ${c.code.slice(1)}. ${c.title}`, `${fmtNumber(sm.subtotal)} dari ${fmtNumber(sm.max)}`] as [string, string]; })]} />
+        items={[['Program studi', s.programName], ['Jenis penilaian', `${PHASE_LABEL[phase]} (${phase})`], ['Skor rata-rata berbobot', `${fmtScore(avg)} dari ${fmtScore(MAX_ITEM)}`], ['Skor total', `${fmtNumber(total)} dari ${fmtNumber(MAX_TOTAL_SCORE)}`], ['Peringkat sementara', rank ? rankLabel(rank) : 'belum tersedia (ditetapkan Majelis)'], ['Butir terisi', `${filled} dari ${count}`], ...CRITERIA.map((c) => { const sm = criterionSummary(scores, c.code); return [`Kriteria ${c.code.slice(1)}. ${c.title}`, `${fmtNumber(sm.subtotal)} dari ${fmtNumber(sm.max)}`] as [string, string]; })]} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-@import '@fontsource-variable/inter';
+@import '@fontsource-variable/plus-jakarta-sans';
 @import '@fontsource/jetbrains-mono/400.css';
 
 @tailwind base;
@@ -6,30 +6,39 @@
 @tailwind utilities;
 
 :root {
-  --navy-950: #0a1a33; --navy-900: #0b1f3a; --navy-700: #1e4d8c; --navy-50: #eef3fa;
-  --surface: #f8fafc; --line: #e2e8f0; --ink: #0f172a;
+  --navy-950: #0b1b33; --navy-900: #10264a; --navy-700: #1d4b8f; --navy-50: #f2f6fb;
+  --surface: #f6f7f9; --line: #e8eaee; --ink: #111827;
 }
 
 @layer base {
-  html { @apply bg-surface text-ink antialiased; font-size: 16px; font-feature-settings: 'cv11', 'ss01'; }
+  html { @apply bg-surface text-ink antialiased; font-size: 16px; letter-spacing: -0.006em; }
   body { @apply min-h-screen font-sans text-[15px]; }
   h1, h2, h3, h4 { @apply font-sans text-ink; }
   :focus-visible { outline: 2px solid var(--navy-700); outline-offset: 2px; }
-  ::selection { background: #c5d4ea; }
+  ::selection { background: #c7d5eb; }
+  svg.lucide { stroke-width: 1.7; }
 }
 @layer components {
-  .input { @apply min-h-[42px] w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-[15px] text-ink shadow-sm placeholder:text-slate-400 transition-colors focus:border-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-700/20 disabled:bg-slate-100 disabled:text-slate-500; }
+  .input { @apply min-h-[42px] w-full rounded-[10px] border-[1.5px] border-[#D5D9E0] bg-white px-3 py-2 text-[15px] text-ink placeholder:text-slate-400 transition-colors focus:border-navy-700 focus:outline-none focus:ring-[3px] focus:ring-navy-100 disabled:bg-slate-100 disabled:text-slate-500; }
   .input[aria-invalid='true'] { @apply border-bad ring-1 ring-bad/30; }
-  .label { @apply mb-1.5 block text-sm font-medium text-ink; }
-  .card { @apply rounded-xl border border-slate-200/80 bg-white shadow-card; }
+  .label { @apply mb-1.5 block text-sm font-semibold text-ink; }
+  .card { @apply rounded-[14px] border border-line bg-white; }
+  .select-chevron, select.input { appearance: none; padding-right: 2.5rem; background-repeat: no-repeat; background-position: right 0.85rem center; background-size: 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); }
+  .lbl { @apply text-[12.5px] font-semibold uppercase tracking-[0.04em] text-faint; }
 }
 
 @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 .dot-pulse { animation: pulse-dot 1.4s ease-in-out infinite; }
 @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
 .skeleton { background: linear-gradient(90deg, #eef1f6 25%, #f7f9fc 37%, #eef1f6 63%); background-size: 400px 100%; animation: shimmer 1.4s infinite linear; }
+@keyframes indet-slide { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+.indet { position: relative; overflow: hidden; }
+.indet::after { content: ''; position: absolute; inset: 0; width: 38%; background: var(--navy-700); border-radius: 999px; animation: indet-slide 1.5s ease-in-out infinite; }
+@keyframes drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.drawer-in { animation: drawer-in .18s ease-out; }
 @media (prefers-reduced-motion: reduce) {
-  .dot-pulse, .skeleton { animation: none; }
+  .dot-pulse, .skeleton, .indet::after, .drawer-in { animation: none; }
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
 

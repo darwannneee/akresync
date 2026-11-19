@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { RotateCw } from 'lucide-react';
-import type { AiAnalysisDto, AiItemSuggestion } from '@akreditasi/shared';
-import { Button, Card, Notice } from '../../components/ui';
-import { fmtDateTime } from '../../lib/labels';
+import { ChevronDown, RotateCw } from 'lucide-react';
+import { INSTRUMENT_DOKTOR_2025 as INST, type AiAnalysisDto, type AiItemSuggestion, type AiStatus } from '@akreditasi/shared';
+import { Button, ScoreFigure, StatusDot } from '../../components/ui';
+import { fmtDateTime, fmtScore } from '../../lib/labels';
 import { useAiDetail, useAiList, useRerunAi } from './hooks';
-import { AiBanner, AiFailedNotice, AiStatusBadge, AiTechnical, TotalsView } from './parts';
+import { AI_STATUS_LABEL, AiTechnical } from './parts';
 
 export interface ScoringAi {
   latest: AiAnalysisDto | null;
@@ -25,40 +25,56 @@ export function useAiForScoring(submissionId: string): ScoringAi {
   return { latest, detail: detail.data, loading: list.isLoading, enabled: list.data?.enabled ?? true, suggestion: (id) => map.get(id) };
 }
 
+const STATUS_TONE: Record<AiStatus, 'ok' | 'navy' | 'gray' | 'bad'> = { done: 'ok', running: 'navy', queued: 'gray', failed: 'bad' };
+const critTitle = (code: string) => INST.criteria.find((c) => c.code === code)?.title ?? code;
+
+/** Kartu "Ringkasan AI" pada kolom kanan halaman penilaian; pendukung, bukan nilai resmi. */
 export function ScoringAiPanel({ submissionId, phase, ai, locked }: { submissionId: string; phase: 'AK' | 'AL'; ai: ScoringAi; locked: boolean }) {
   const rerun = useRerunAi(submissionId, phase);
   const l = ai.latest;
-  const active = l && (l.status === 'queued' || l.status === 'running');
+  const active = !!l && (l.status === 'queued' || l.status === 'running');
   const done = ai.detail && ai.detail.status === 'done' ? ai.detail : null;
+  const totals = done?.totals;
+  const message = !ai.enabled ? 'Layanan AI belum diaktifkan pada server ini. Penilaian tetap dapat dilakukan secara manual.'
+    : ai.loading ? 'Memuat saran AI…'
+    : !l ? 'Belum ada analisis. Analisis berjalan otomatis setelah LED dan LKPS terunggah dan terindeks.'
+    : active ? `${l.status === 'queued' ? 'Analisis menunggu giliran' : 'Analisis sedang diproses'}; halaman diperbarui otomatis.${l.status === 'queued' && l.attempts > 0 && l.error ? ` ${l.error} Sistem akan mencoba lagi otomatis.` : ''}`
+    : l.status === 'failed' ? (l.error ?? 'Layanan AI sedang tidak dapat memproses permintaan.') : 'Memuat saran AI…';
   return (
-    <Card title="Saran AI — pendukung keputusan" description="Dibuat otomatis dari LED dan LKPS yang diunggah UPPS. Bapak/Ibu tetap menilai dan menyerahkan skor sendiri."
-      actions={l ? <AiStatusBadge status={l.status} /> : undefined}>
-      <div className="space-y-4">
-        <AiBanner />
-        {!ai.enabled && <Notice tone="info">Layanan AI belum diaktifkan pada server ini. Penilaian tetap dapat dilakukan secara manual.</Notice>}
-        {ai.loading && <p className="text-sm text-muted">Memuat saran AI…</p>}
-        {!ai.loading && ai.enabled && !l && <Notice tone="info" title="Belum ada analisis AI">Analisis berjalan otomatis setelah LED dan LKPS terunggah dan terindeks. Bila belum muncul, gunakan Analisis ulang di bawah.</Notice>}
-        {active && (
-          <Notice tone="info" title={l!.status === 'queued' ? 'Analisis AI menunggu giliran' : 'Analisis AI sedang diproses'}>
-            Halaman diperbarui otomatis; biasanya selesai dalam beberapa menit.{l!.status === 'queued' && l!.attempts > 0 && l!.error ? ` ${l!.error} Sistem akan mencoba lagi otomatis.` : ''}
-          </Notice>
-        )}
-        {l?.status === 'failed' && <AiFailedNotice a={l} canRetry={!locked} retrying={rerun.isPending} onRetry={() => rerun.mutate()} />}
-        {done?.result && (
-          <>
-            <p className="text-xs text-muted">Analisis selesai {fmtDateTime(done.finishedAt)} · himpunan dokumen versi {done.setVersion ?? '—'}{ai.latest && ai.latest.id !== done.id && active ? ' · analisis yang lebih baru sedang diproses' : ''}</p>
-            {done.totals && <TotalsView totals={done.totals} />}
-            <div className="rounded-lg border border-line bg-white p-3"><p className="text-xs font-medium text-faint">Ringkasan AI</p><p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed">{done.result.summary || '—'}</p></div>
-            <p className="text-sm text-muted">Saran per butir tampil di bawah setiap butir pada kriteria di bawah ini. Tombol “Pakai saran” hanya mengisi draf; Bapak/Ibu tetap menyerahkan hasil sendiri.</p>
-            <AiTechnical a={done} />
-          </>
-        )}
-        <div className="flex flex-wrap items-center gap-3 border-t border-line pt-3">
-          {!locked && <Button variant="secondary" size="sm" icon={<RotateCw size={15} />} loading={rerun.isPending} disabled={!ai.enabled || !!active} onClick={() => rerun.mutate()}>Analisis ulang</Button>}
-          <span className="text-xs text-muted">Analisis ulang memakai kuota layanan AI yang terbatas; gunakan seperlunya.</span>
-          <Link to={`/pengajuan/${submissionId}`} className="ml-auto text-sm text-navy-700 hover:underline">Riwayat dan rincian di halaman pengajuan</Link>
-        </div>
+    <section className="card p-[22px]" aria-label="Ringkasan AI">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[12.5px] font-semibold uppercase tracking-[.04em] text-faint">Ringkasan AI</span>
+        {l && <StatusDot tone={STATUS_TONE[l.status]}>{AI_STATUS_LABEL[l.status]}</StatusDot>}
       </div>
-    </Card>
+      {done?.result ? (
+        <>
+          <ScoreFigure className="mt-2" value={totals?.weighted} max={totals?.scaleMax ?? INST.scale.max} />
+          <p className="mt-2 whitespace-pre-wrap text-[14px] leading-relaxed text-muted">{done.result.summary || '—'}</p>
+          <p className="mt-2 text-[13px] text-faint">Bukan nilai resmi · {fmtDateTime(done.finishedAt)}{l && l.id !== done.id && active ? ' · analisis yang lebih baru sedang diproses' : ''}</p>
+        </>
+      ) : <p className="mt-2 text-[14px] leading-relaxed text-muted">{message}</p>}
+      {l?.status === 'failed' && !locked && <Button className="mt-3" variant="secondary" size="sm" icon={<RotateCw size={15} />} loading={rerun.isPending} onClick={() => rerun.mutate()}>Coba lagi</Button>}
+      <details className="group mt-4 border-t border-line pt-3">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[13.5px] font-semibold text-navy-700 [&::-webkit-details-marker]:hidden">
+          <ChevronDown size={15} className="transition-transform group-open:rotate-180" aria-hidden />Rincian dan analisis ulang
+        </summary>
+        <div className="mt-3 space-y-3 text-[13.5px]">
+          {totals && (
+            <ul className="space-y-1">
+              {totals.perCriterion.map((c) => (
+                <li key={c.code} className="flex items-baseline justify-between gap-3">
+                  <span className="min-w-0 truncate text-muted" title={critTitle(c.code)}>{c.code.slice(1)}. {critTitle(c.code)}</span>
+                  <span className="shrink-0 font-semibold tabular-nums text-ink">{fmtScore(c.average)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {!locked && <Button variant="secondary" size="sm" icon={<RotateCw size={15} />} loading={rerun.isPending} disabled={!ai.enabled || active} onClick={() => rerun.mutate()}>Analisis ulang</Button>}
+          <p className="text-[13px] text-faint">Analisis ulang memakai kuota layanan AI yang terbatas; gunakan seperlunya.</p>
+          {done && <AiTechnical a={done} />}
+          <Link to={`/pengajuan/${submissionId}`} className="block font-semibold text-navy-700 hover:underline">Riwayat di halaman pengajuan</Link>
+        </div>
+      </details>
+    </section>
   );
 }

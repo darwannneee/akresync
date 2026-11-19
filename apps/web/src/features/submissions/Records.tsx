@@ -5,7 +5,8 @@ import { ACCREDITATION_RANKS, INDIVIDUAL_RECORD_TYPES, NON_CORRECTABLE_RECORD_TY
 import { z } from 'zod';
 import { api, errorMessage } from '../../api/client';
 import type { FormalRecordView, RecordHistoryItem, User } from '../../api/types';
-import { Badge, Button, CopyableMono, DataTable, EmptyState, Field, FormError, Input, Modal, Notice, ProofBadge, Select, Spinner, TechnicalDetails, Textarea } from '../../components/ui';
+import { Badge, Button, CopyableMono, DataTable, EmptyState, Field, FormError, Input, Modal, Notice, Select, Spinner, TechnicalDetails, Textarea } from '../../components/ui';
+import { ProofStatus } from './AuditTable';
 import { PAYLOAD_FIELD_LABEL, RANK_LABEL, RECORD_LABEL, RESULT_LABEL, fmtDate, fmtDateTime, roleName } from '../../lib/labels';
 import { recordTime } from '../../lib/workflow';
 import { useConfirmed } from '../common/forms';
@@ -38,14 +39,14 @@ export function RecordsTable({ submissionId, records, user }: { submissionId: st
     <>
       <DataTable rows={records} rowKey={(r) => r.id} caption="Catatan resmi"
         columns={[
-          { key: 'j', header: 'Catatan', primary: true, cell: (r) => <div><div className="font-medium text-ink">{RECORD_LABEL[r.recordType] ?? r.recordType}</div><div className="mt-1 flex flex-wrap gap-1"><Badge tone={r.version > 1 ? 'gold' : 'neutral'}>{r.version > 1 ? `Hasil koreksi (versi ${r.version})` : 'Versi asli'}</Badge></div></div> },
-          { key: 'p', header: 'Dicatat oleh', cell: (r) => <div><div>{roleName(r.actorRole as string)}</div><div className="text-sm text-muted">{fmtDateTime(recordTime(r))}</div></div> },
-          { key: 's', header: 'Bukti', cell: (r) => r.status === 'pending_chain' ? <ProofBadge status="pending" /> : r.status === 'failed' ? <ProofBadge status="failed" /> : <ProofBadge status="committed" /> },
+          { key: 'j', header: 'Catatan', primary: true, cell: (r) => <div><div className="font-medium text-ink">{RECORD_LABEL[r.recordType] ?? r.recordType}</div><div className="text-[13px] text-faint">{r.version > 1 ? `Hasil koreksi, versi ${r.version}` : 'Versi asli'}</div></div> },
+          { key: 'p', header: 'Dicatat oleh', cell: (r) => <div><div>{roleName(r.actorRole as string)}</div><div className="text-[13px] text-faint">{fmtDateTime(recordTime(r))}</div></div> },
+          { key: 's', header: 'Bukti', cell: (r) => <ProofStatus status={r.status === 'pending_chain' ? 'pending' : r.status === 'failed' ? 'failed' : 'committed'} /> },
           { key: 't', header: 'Rincian teknis', cell: (r) => <TechnicalDetails items={[['Nomor transaksi', <CopyableMono key="t" value={r.txId} full />], ['Blok', r.blockNumber], ['Kunci catatan', <CopyableMono key="k" value={r.recordKey} full />]]} /> },
           { key: 'a', header: '', cell: (r) => (
-            <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" size="sm" icon={<History size={15} />} onClick={() => setHist(r)}>Riwayat versi</Button>
-              {canCorrect(r, user, records) && <Button variant="secondary" size="sm" icon={<PencilLine size={15} />} onClick={() => setCorr(r)}>Koreksi</Button>}
+            <div className="flex flex-wrap gap-1">
+              <Button variant="ghost" size="sm" icon={<History size={15} />} onClick={() => setHist(r)}>Riwayat versi</Button>
+              {canCorrect(r, user, records) && <Button variant="ghost" size="sm" icon={<PencilLine size={15} />} onClick={() => setCorr(r)}>Koreksi</Button>}
             </div>
           ) },
         ]} />

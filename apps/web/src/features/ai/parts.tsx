@@ -3,7 +3,7 @@ import { Bot, CheckCircle2, Clock, FileSearch, Loader2, XCircle } from 'lucide-r
 import type { AiAnalysisDto, AiCitation, AiComparison, AiItemSuggestion, AiProgress, AiStatus, AiTotals } from '@akreditasi/shared';
 import { INSTRUMENT_DOKTOR_2025 as INST } from '@akreditasi/shared';
 import { Badge, CopyableMono, DataTable, Notice, TechnicalDetails } from '../../components/ui';
-import { fmtDateTime, fmtNumber } from '../../lib/labels';
+import { fmtDateTime, fmtNumber, fmtScore } from '../../lib/labels';
 
 export const AI_TITLE = 'Hasil analisis AI (pendukung, bukan nilai resmi)';
 export const AI_DISCLAIMER = 'Saran AI bersifat pendukung; skor resmi ditetapkan asesor.';
@@ -63,22 +63,43 @@ export function AiTechnical({ a }: { a: AiAnalysisDto }) {
   );
 }
 
-export function TotalsView({ totals }: { totals: AiTotals }) {
+const scaleMaxOf = (t: AiTotals) => t.scaleMax ?? INST.scale.max;
+const scoreTone = (v: number | null, max: number) => (v === null ? 'bg-slate-300' : v / max >= 0.75 ? 'bg-ok' : v / max >= 0.5 ? 'bg-navy-700' : 'bg-wait');
+
+/** Skor AI ringkas "3,12 / 4,00" untuk tabel dan kartu. */
+export function AiScoreInline({ totals, note = true }: { totals: AiTotals; note?: boolean }) {
+  return (
+    <div title="Rata-rata berbobot saran AI (pendukung, bukan nilai resmi)">
+      <b className="tabular-nums">{fmtScore(totals.weighted)}</b><span className="text-muted tabular-nums"> / {fmtScore(scaleMaxOf(totals))}</span>
+      {note && <div className="text-xs text-muted">bukan nilai resmi</div>}
+    </div>
+  );
+}
+
+export function TotalsView({ totals, compact }: { totals: AiTotals; compact?: boolean }) {
+  const max = scaleMaxOf(totals);
   return (
     <div>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
-        <div><div className="text-xs font-medium text-faint">Skor AI sementara</div><div className="text-3xl font-medium leading-none tabular-nums text-navy-900">{fmtNumber(totals.total)}</div><div className="mt-1 text-xs text-muted">dari {fmtNumber(totals.max)} · {totals.answered} dari {totals.itemCount} butir mendapat saran</div></div>
+        <div>
+          <div className="text-xs font-medium text-faint">Skor AI sementara</div>
+          <div className="leading-none tabular-nums text-navy-900"><span className="text-4xl font-semibold">{fmtScore(totals.weighted)}</span><span className="text-xl text-muted"> / {fmtScore(max)}</span></div>
+          <div className="mt-1.5 text-xs text-muted">Rata-rata berbobot dari {totals.answered} dari {totals.itemCount} butir yang buktinya ditemukan</div>
+        </div>
       </div>
-      <div className="mt-3 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead><tr className="text-left text-xs text-faint"><th className="py-1 pr-3 font-medium">Kriteria</th><th className="py-1 pr-3 text-right font-medium">Skor AI</th><th className="py-1 pr-3 text-right font-medium">Maksimum</th><th className="py-1 text-right font-medium">Butir bersaran</th></tr></thead>
-          <tbody className="divide-y divide-line">
-            {totals.perCriterion.map((c) => (
-              <tr key={c.code}><td className="py-1.5 pr-3">Kriteria {c.code.slice(1)}. {INST.criteria.find((x) => x.code === c.code)?.title}</td><td className="py-1.5 pr-3 text-right tabular-nums font-medium">{fmtNumber(c.subtotal)}</td><td className="py-1.5 pr-3 text-right tabular-nums text-muted">{fmtNumber(c.max)}</td><td className="py-1.5 text-right tabular-nums text-muted">{c.filled} / {c.count}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ul className={compact ? 'mt-3 space-y-1.5' : 'mt-4 space-y-2'}>
+        {totals.perCriterion.map((c) => {
+          const v = c.average ?? null;
+          return (
+            <li key={c.code} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 text-sm sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)_auto]">
+              <span className="truncate" title={INST.criteria.find((x) => x.code === c.code)?.title}>Kriteria {c.code.slice(1)}. {INST.criteria.find((x) => x.code === c.code)?.title}</span>
+              <span className="order-3 col-span-2 h-2 overflow-hidden rounded-full bg-slate-100 sm:order-none sm:col-span-1" aria-hidden><span className={`block h-full rounded-full ${scoreTone(v, max)}`} style={{ width: `${v === null ? 0 : (v / max) * 100}%` }} /></span>
+              <span className="text-right tabular-nums"><b>{fmtScore(v)}</b><span className="text-xs text-muted"> · {c.filled}/{c.count} butir</span></span>
+            </li>
+          );
+        })}
+      </ul>
+      {!compact && <p className="mt-3 text-xs text-faint">Skor total berbobot (rincian teknis): {fmtNumber(totals.total)} dari {fmtNumber(totals.max)}. Butir tanpa bukti tidak dihitung.</p>}
     </div>
   );
 }
@@ -164,7 +185,7 @@ export function HistoryTable({ rows }: { rows: AiAnalysisDto[] }) {
       { key: 'w', header: 'Waktu', primary: true, cell: (a) => fmtDateTime(a.finishedAt ?? a.createdAt) },
       { key: 'j', header: 'Jenis', cell: (a) => <span className="text-sm">{a.trigger === 'auto' ? 'Otomatis' : 'Analisis ulang'} · {a.phase}<br /><span className="text-muted">Himpunan dokumen versi {a.setVersion ?? '—'}</span></span> },
       { key: 's', header: 'Status', cell: (a) => <div className="space-y-1"><AiStatusBadge status={a.status} />{a.status !== 'done' && a.error && <p className="max-w-xs text-xs text-muted">{a.error}</p>}{a.status === 'queued' && a.attempts > 0 && <p className="text-xs text-muted">Percobaan ke-{a.attempts}, akan dicoba lagi otomatis.</p>}</div> },
-      { key: 'k', header: 'Skor AI', align: 'right', cell: (a) => (a.totals ? <b className="tabular-nums">{fmtNumber(a.totals.total)}</b> : '—') },
+      { key: 'k', header: 'Skor AI', align: 'right', cell: (a) => (a.totals ? <AiScoreInline totals={a.totals} note={false} /> : '—') },
       { key: 't', header: 'Rincian teknis', cell: (a) => <AiTechnical a={a} /> },
     ]} />
   );

@@ -25,26 +25,28 @@ const LegalFooter = () => <p className="rounded-b-2xl border-t border-slate-100 
 function LoginAside() {
   const stats = useQuery({ queryKey: ['public-stats'], staleTime: 60_000, retry: false, queryFn: async () => (await api.get<PublicStats>('/public/stats')).data });
   const points = [
-    { Icon: GitBranch, title: 'Alur 9 tahap yang jelas', text: 'Setiap pihak melihat tugas dan posisi pengajuan tanpa perlu bertanya.' },
-    { Icon: FileCheck2, title: 'Dokumen terenkripsi dan terverifikasi', text: 'Keaslian berkas dapat diperiksa kapan saja melalui sidik jari digital.' },
-    { Icon: Link2, title: 'Keputusan tercatat permanen', text: 'Catatan resmi disimpan di blockchain dan tidak dapat diubah diam-diam.' },
+    { Icon: Link2, title: 'Keputusan resmi tercatat di blockchain', text: 'Pengajuan, verifikasi, penugasan asesor, hasil asesmen, dan penetapan peringkat dicatat pada jaringan blockchain bersama para pihak, sehingga tidak dapat diubah diam-diam.' },
+    { Icon: GitBranch, title: 'Setiap perubahan data meninggalkan jejak audit', text: 'Tagihan, jadwal, dan tanggapan tersimpan di sistem; sidik jarinya dikirim otomatis ke blockchain melalui antrean audit. Kekeliruan diperbaiki lewat catatan koreksi, bukan ditimpa.' },
+    { Icon: FileCheck2, title: 'Dokumen terenkripsi dan dapat diperiksa keasliannya', text: 'LED, LKPS, dan Berita Acara dienkripsi sebelum disimpan. Sidik jari digital membuktikan berkas tidak berubah sejak diunggah.' },
   ];
   return (
     <aside className="relative hidden flex-col justify-between overflow-hidden bg-navy-950 p-12 text-white lg:flex">
       <BrandMark light />
       <div className="max-w-xl">
-        <h2 className="text-[2rem] font-semibold leading-tight tracking-tight text-white">Akreditasi program studi yang transparan dan dapat diverifikasi</h2>
+        <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-gold">Akreditasi program studi LAM Teknik</p>
+        <h2 className="mt-3 text-[2rem] font-semibold leading-tight tracking-tight text-white">Proses akreditasi yang transparan, tercatat, dan dapat diaudit</h2>
+        <p className="mt-3 text-[15.5px] leading-relaxed text-slate-300">Satu sistem untuk UPPS, Sekretariat, KEA, asesor, dan Majelis Akreditasi, dari pengajuan hingga penerbitan sertifikat.</p>
         <ul className="mt-9 space-y-6">
           {points.map(({ Icon, title, text }) => (
-            <li key={title} className="flex gap-4">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/10 text-sky-300" aria-hidden><Icon size={21} /></span>
-              <div><p className="font-semibold text-white">{title}</p><p className="mt-0.5 text-[15px] leading-relaxed text-slate-300">{text}</p></div>
+            <li key={title} className="flex items-start gap-4">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white/10 text-sky-300" aria-hidden><Icon size={19} /></span>
+              <div className="min-w-0"><p className="font-semibold leading-snug text-white">{title}</p><p className="mt-1 text-[14.5px] leading-relaxed text-slate-300">{text}</p></div>
             </li>
           ))}
         </ul>
       </div>
       <dl className="grid max-w-xl grid-cols-3 gap-4 border-t border-white/10 pt-6">
-        {[['Pengajuan tercatat', stats.data ? fmtNumber(stats.data.submissions, 0) : '—'], ['Catatan permanen', stats.data ? fmtNumber(stats.data.onChainTx, 0) : '—'], ['Tahap alur', '9']].map(([k, v]) => (
+        {[['Pengajuan', stats.data ? fmtNumber(stats.data.submissions, 0) : '—'], ['Catatan di blockchain', stats.data ? fmtNumber(stats.data.onChainTx, 0) : '—'], ['Tahap alur', '9']].map(([k, v]) => (
           <div key={k}><dd className="text-3xl font-semibold tabular-nums text-white">{v}</dd><dt className="mt-0.5 text-sm text-slate-300">{k}</dt></div>
         ))}
       </dl>

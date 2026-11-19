@@ -28,7 +28,7 @@ export function AiProgressCard({ p }: { p?: AiProgress }) {
               <p className="text-sm font-medium text-ink">{DOC_TYPE_LABEL[t] ?? t}{d ? <span className="font-normal text-muted"> · {d.fileName}</span> : <span className="font-normal text-muted"> · belum diunggah</span>}</p>
               {d && (
                 <ul className="mt-1.5 space-y-1">
-                  <Step done={d.check?.status === 'verified'} active={false}>Diperiksa jenis dokumennya: {d.check?.status === 'verified' ? 'sesuai' : d.check?.status === 'mismatch' ? 'perlu diperiksa kembali' : 'verifikasi jenis tertunda (akan dicoba ulang otomatis)'}</Step>
+                  <Step done={d.check?.status === 'verified'} active={false}>Diperiksa jenis dokumennya: {d.check?.status === 'verified' ? 'sesuai' : d.check?.status === 'mismatch' ? 'perlu diperiksa kembali' : 'belum diperiksa'}</Step>
                   <Step done={d.indexStatus === 'indexed'} active={d.indexStatus === 'indexing'}>Diindeks: {d.indexStatus === 'indexing' || (d.indexStatus === 'pending' && d.total) ? `Diindeks ${d.embedded ?? 0}/${d.total ?? '…'} bagian` : INDEX_LABEL[d.indexStatus]}</Step>
                 </ul>
               )}
@@ -41,7 +41,7 @@ export function AiProgressCard({ p }: { p?: AiProgress }) {
         {p.phase === 'failed' ? <TriangleAlert size={16} className="text-bad" aria-hidden /> : analysisDone ? <CheckCircle2 size={16} className="text-ok" aria-hidden /> : <Loader2 size={16} className={p.phase === 'waiting_documents' ? 'hidden' : 'animate-spin text-navy-700'} aria-hidden />}
         <span><b>Analisis AI:</b> {p.analysis ? ({ queued: 'antre', running: 'diproses', done: 'selesai', failed: 'gagal' } as const)[p.analysis.status] : allIndexed ? 'antre' : '—'} <span className="text-muted">({PHASE_PROGRESS_LABEL[p.phase]})</span></span>
       </div>
-      <p className="mt-2 text-xs text-faint">Setiap himpunan dokumen memakai hingga 3 panggilan layanan AI (2 pemeriksaan jenis dan 1 analisis). Verifikasi jenis yang tertunda tidak menghalangi unggahan.</p>
+      <p className="mt-2 text-xs text-faint">Pemeriksaan format dan jenis dokumen dilakukan sistem tanpa AI. Setiap himpunan dokumen memakai satu analisis AI; bila LED dan LKPS yang diunggah ulang isinya sama persis, hasil sebelumnya dipakai kembali.</p>
     </Card>
   );
 }

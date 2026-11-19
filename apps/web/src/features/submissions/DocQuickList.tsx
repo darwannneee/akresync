@@ -1,22 +1,29 @@
-import { Download, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import type { DocumentView } from '../../api/types';
-import { Button } from '../../components/ui';
 import { DOC_TYPE_LABEL, fmtBytes } from '../../lib/labels';
 import { useDownload } from '../common/useAction';
+import { VersionHistory, type DocSplit } from './DocumentsPanel';
 
-/** Daftar ringkas berkas dengan tombol unduh, dipakai pemeriksa saat memverifikasi. */
-export function DocQuickList({ docs, empty = 'Belum ada berkas.' }: { docs: DocumentView[]; empty?: string }) {
+/** Daftar ringkas berkas dengan tautan unduh, dipakai pemeriksa saat memverifikasi. `history` menampilkan versi lama terlipat per versi. */
+export function DocQuickList({ docs, history, empty = 'Belum ada berkas.' }: { docs: DocumentView[]; history?: DocSplit; empty?: string }) {
   const download = useDownload();
-  if (!docs.length) return <p className="text-sm text-muted">{empty}</p>;
-  return (
-    <ul className="divide-y divide-line rounded-lg border border-line bg-white">
-      {docs.map((d) => (
-        <li key={d.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-          <FileText size={20} className="shrink-0 text-navy-700" aria-hidden />
-          <div className="min-w-0 flex-1"><div className="truncate font-medium text-ink" title={d.fileName}>{d.fileName}</div><div className="text-sm text-muted">{DOC_TYPE_LABEL[d.docType] ?? d.docType} · {fmtBytes(d.sizeBytes)}</div></div>
-          <Button variant="secondary" size="sm" icon={<Download size={15} />} onClick={() => download(`/documents/${d.id}/download`, d.fileName)}>Unduh</Button>
+  const list = (items: DocumentView[], bordered: boolean) => (
+    <ul className={bordered ? 'divide-y divide-line rounded-xl border border-line bg-white' : 'divide-y divide-line'}>
+      {items.map((d) => (
+        <li key={d.id}>
+          <button type="button" onClick={() => download(`/documents/${d.id}/download`, d.fileName)} className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50">
+            <FileText size={18} className="shrink-0 text-faint" aria-hidden />
+            <span className="min-w-0 flex-1 text-[14.5px]"><span className="block truncate text-ink" title={d.fileName}>{d.fileName}</span><span className="block text-[13px] text-faint">{[DOC_TYPE_LABEL[d.docType] ?? d.docType, fmtBytes(d.sizeBytes), history?.notes.get(d.id)].filter(Boolean).join(' · ')}</span></span>
+            <span className="text-[14px] font-semibold text-navy-700">Unduh</span>
+          </button>
         </li>
       ))}
     </ul>
+  );
+  return (
+    <div className="space-y-3">
+      {docs.length ? list(docs, true) : <p className="text-[14px] text-faint">{empty}</p>}
+      {history && <VersionHistory split={history} render={(items) => list(items, false)} />}
+    </div>
   );
 }

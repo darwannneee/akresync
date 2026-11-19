@@ -5,8 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ACCREDITATION_RANKS } from '@akreditasi/shared';
 import { api } from '../../api/client';
-import { Button, DL, Field, Input, ModalActions, Notice, StepSection } from '../../components/ui';
-import { RadioCards, useConfirmed } from '../common/forms';
+import { Button, Field, Input, ModalActions } from '../../components/ui';
+import { FormSection, KeyList, RadioCards, useConfirmed } from '../common/forms';
 import { useAction } from '../common/useAction';
 import { RANK_LABEL, fmtDate, fmtNumber } from '../../lib/labels';
 import type { ActionProps } from '../submissions/types';
@@ -40,23 +40,27 @@ export function DecisionForm({ s }: ActionProps) {
   });
   return (
     <form id={fid} className="space-y-6" noValidate onSubmit={f.handleSubmit((v) => confirm.ask(v))}>
-      {s.finalVerification?.notes && <Notice tone="info" title="Catatan verifikasi akhir KEA"><span className="whitespace-pre-wrap">{s.finalVerification.notes}</span></Notice>}
-      {results.length > 0 && (
-        <StepSection n={1} title="Tinjau hasil penilaian" hint={`Skor total pada skala 0 sampai ${fmtNumber(MAX_TOTAL_SCORE)}.`}>
-          <DL cols={3} items={results.map((a) => [`${a.phase === 'AK' ? 'Kecukupan' : 'Lapangan'} · ${a.assessorName ?? 'Asesor'}`, fmtNumber(a.totalScore)] as [string, string])} />
-        </StepSection>
+      {s.finalVerification?.notes && (
+        <FormSection title="Catatan verifikasi akhir KEA">
+          <p className="whitespace-pre-wrap rounded-xl bg-slate-50 px-4 py-3 text-[14.5px] text-ink">{s.finalVerification.notes}</p>
+        </FormSection>
       )}
-      <StepSection n={results.length ? 2 : 1} title="Tetapkan peringkat">
-        <RadioCards name="rank" legend="Peringkat akreditasi" value={rank} onChange={(v) => f.setValue('rank', v as V['rank'], { shouldValidate: true })} options={ACCREDITATION_RANKS.map((r) => ({ value: r, label: RANK_LABEL[r] }))} />
-      </StepSection>
-      <StepSection n={results.length ? 3 : 2} title="Isi Surat Keputusan dan masa berlaku">
+      {results.length > 0 && (
+        <FormSection title="Hasil penilaian" hint={`Skor total pada skala 0 sampai ${fmtNumber(MAX_TOTAL_SCORE)}.`}>
+          <KeyList items={results.map((a) => [`${a.phase === 'AK' ? 'Asesmen Kecukupan' : 'Asesmen Lapangan'} · ${a.assessorName ?? 'Asesor'}`, <b key={a.id} className="font-semibold tabular-nums">{fmtNumber(a.totalScore)}</b>] as [string, React.ReactNode])} />
+        </FormSection>
+      )}
+      <RadioCards name="rank" legend="Peringkat akreditasi" value={rank} onChange={(v) => f.setValue('rank', v as V['rank'], { shouldValidate: true })} options={ACCREDITATION_RANKS.map((r) => ({ value: r, label: RANK_LABEL[r] }))} />
+      <FormSection title="Surat Keputusan dan masa berlaku" hint={rank === 'TIDAK_TERAKREDITASI' ? 'Masa berlaku tidak diisi untuk peringkat Tidak Terakreditasi.' : undefined}>
         <div className="space-y-4">
-          <Field label="Nomor Surat Keputusan" required error={e.decreeNumber?.message}>{(p) => <Input {...p} {...f.register('decreeNumber')} />}</Field>
-          <Field label="Berlaku sejak" required={rank !== 'TIDAK_TERAKREDITASI'} error={e.validFrom?.message}>{(p) => <Input {...p} type="date" disabled={rank === 'TIDAK_TERAKREDITASI'} {...f.register('validFrom')} />}</Field>
-          <Field label="Berlaku sampai" required={rank !== 'TIDAK_TERAKREDITASI'} error={e.validUntil?.message}>{(p) => <Input {...p} type="date" disabled={rank === 'TIDAK_TERAKREDITASI'} {...f.register('validUntil')} />}</Field>
+          <Field label="Nomor Surat Keputusan" required error={e.decreeNumber?.message}>{(p) => <Input {...p} placeholder="Contoh: 123/SK/LAM/2026" {...f.register('decreeNumber')} />}</Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Berlaku sejak" required={rank !== 'TIDAK_TERAKREDITASI'} error={e.validFrom?.message}>{(p) => <Input {...p} type="date" disabled={rank === 'TIDAK_TERAKREDITASI'} {...f.register('validFrom')} />}</Field>
+            <Field label="Berlaku sampai" required={rank !== 'TIDAK_TERAKREDITASI'} error={e.validUntil?.message}>{(p) => <Input {...p} type="date" disabled={rank === 'TIDAK_TERAKREDITASI'} {...f.register('validUntil')} />}</Field>
+          </div>
         </div>
-      </StepSection>
-      <ModalActions><Button type="submit" form={fid} loading={m.isPending}>Tetapkan Peringkat</Button></ModalActions>
+      </FormSection>
+      <ModalActions><Button type="submit" form={fid} loading={m.isPending}>Simpan keputusan</Button></ModalActions>
       {confirm.dialog}
     </form>
   );

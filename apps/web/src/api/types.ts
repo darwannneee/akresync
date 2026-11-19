@@ -13,7 +13,7 @@ export interface User {
 }
 
 export interface Institution { id: string; name: string; pddiktiCode?: string | null }
-export interface Program { id: string; name: string; level: string }
+export interface Program { id: string; name: string; level: string; activeSubmissionId?: string | null; activeStage?: string | null }
 export interface Assessor { id: string; fullName: string; email?: string }
 
 export interface SubmissionSummary {

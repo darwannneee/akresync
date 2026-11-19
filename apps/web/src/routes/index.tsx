@@ -7,6 +7,8 @@ import { NewDraftPage } from '../pages/NewDraftPage';
 import { SubmissionDetailPage } from '../pages/SubmissionDetailPage';
 import { UppsVerificationDetail, UppsVerificationList } from '../features/sekretariat/UppsVerification';
 import { ScoringPage } from '../features/asesor/ScoringPage';
+import { ComposePage } from '../pages/ComposePage';
+import { ConsistencyPage } from '../features/kea/ConsistencyPage';
 
 export function AppRoutes() {
   return (
@@ -20,6 +22,7 @@ export function AppRoutes() {
           <Route element={<RequireAuth roles={['upps']} />}>
             <Route path="/upps" element={<DashboardPage />} />
             <Route path="/upps/baru" element={<NewDraftPage />} />
+            <Route path="/upps/pengajuan/:id/susun" element={<ComposePage />} />
           </Route>
           <Route element={<RequireAuth roles={['sek_adm']} />}>
             <Route path="/sekretariat/administrasi" element={<DashboardPage />} />
@@ -27,7 +30,10 @@ export function AppRoutes() {
             <Route path="/sekretariat/administrasi/akun-upps/:id" element={<UppsVerificationDetail />} />
           </Route>
           <Route element={<RequireAuth roles={['sek_keu']} />}><Route path="/sekretariat/keuangan" element={<DashboardPage />} /></Route>
-          <Route element={<RequireAuth roles={['kea']} />}><Route path="/kea" element={<DashboardPage />} /></Route>
+          <Route element={<RequireAuth roles={['kea']} />}>
+            <Route path="/kea" element={<DashboardPage />} />
+            <Route path="/kea/pengajuan/:id/konsistensi" element={<ConsistencyPage />} />
+          </Route>
           <Route element={<RequireAuth roles={['asesor']} />}>
             <Route path="/asesor" element={<DashboardPage />} />
             <Route path="/asesor/pengajuan/:id/penilaian/:phase" element={<ScoringPage />} />

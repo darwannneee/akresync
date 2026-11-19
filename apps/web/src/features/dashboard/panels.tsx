@@ -1,27 +1,52 @@
 import { Link } from 'react-router-dom';
-import { Activity, ArrowRight, Award, Bot, CheckCircle2, Clock3, Hourglass, Inbox, Link2, ShieldAlert, ShieldCheck, Timer } from 'lucide-react';
+import { Activity, Award, Bot, CheckCircle2, Clock3, Inbox, Link2, ShieldAlert, ShieldCheck } from 'lucide-react';
 import type { DashboardStats } from '@akreditasi/shared';
-import { Badge, ButtonLink, Card, EmptyState, Notice, ProgressBar, Skeleton, StatWidget, StepIndicator, cx } from '../../components/ui';
+import { Badge, ButtonLink, Card, EmptyState, Notice, ProgressBar, SegProgress, Skeleton, cx } from '../../components/ui';
 import { ChartCard, Donut, HBars, RANK_COLORS, SERIES, TrendArea, trendLabel } from '../../components/charts';
 import { AUDIT_KIND_LABEL, RANK_LABEL, RECORD_LABEL, fmtDays, fmtDuration, fmtNumber, fmtRelative, shortId } from '../../lib/labels';
-import { currentIndex } from '../../lib/workflow';
+import { currentIndex, holderLabel } from '../../lib/workflow';
 import type { SubmissionSummary } from '../../api/types';
-import type { TaskItem } from '../common/useTasks';
 
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
 
-/** Empat kartu KPI. "Perlu tindakan" berasal dari antrean tugas (nextActions), lainnya dari /dashboard/stats. */
-export function KpiRow({ stats, actionCount, loading }: { stats?: DashboardStats; actionCount: number; loading: boolean }) {
-  if (loading || !stats) return <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[132px] !rounded-xl" />)}</div>;
-  const k = stats.kpis;
+export const STAGE_STEPS = ['Pengajuan', 'Verifikasi kelengkapan', 'Tagihan dan pembayaran', 'Penugasan, AK, dan jadwal AL', 'Asesmen Lapangan', 'Tanggapan', 'Verifikasi akhir', 'Penetapan', 'Penerbitan'];
+
+/** Ringkasan angka utama. "Perlu tindakan" berasal dari antrean tugas (nextActions), lainnya dari /dashboard/stats. */
+export function SummaryCard({ stats, actionCount }: { stats?: DashboardStats; actionCount: number }) {
+  const k = stats?.kpis;
+  const items: [string, string, string][] = k ? [
+    ['Perlu tindakan', fmtNumber(actionCount, 0), actionCount ? 'Menunggu Bapak/Ibu' : 'Tidak ada tugas'],
+    ['Sedang berjalan', fmtNumber(k.inProgress, 0), `dari ${fmtNumber(k.total, 0)} pengajuan`],
+    ['Selesai dan terbit', fmtNumber(k.completed, 0), k.total ? `${pct(k.completed, k.total)}% dari seluruh pengajuan` : 'Belum ada pengajuan'],
+    ['Rerata durasi', k.avgDecisionDays === null ? '—' : fmtDays(k.avgDecisionDays), k.avgDecisionDays === null ? 'Setelah keputusan pertama' : 'Pengajuan hingga keputusan'],
+  ] : [];
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-      <StatWidget tone="primary" label="Perlu tindakan Bapak/Ibu" value={fmtNumber(actionCount, 0)} icon={<Inbox size={20} />} to="#tugas-saya"
-        hint={actionCount ? 'Lihat daftar tugas di bawah' : 'Tidak ada tugas saat ini'} />
-      <StatWidget tone="warn" label="Sedang berjalan" value={fmtNumber(k.inProgress, 0)} icon={<Hourglass size={20} />} hint={`dari ${fmtNumber(k.total, 0)} pengajuan tercatat`} />
-      <StatWidget tone="success" label="Selesai dan terbit" value={fmtNumber(k.completed, 0)} icon={<CheckCircle2 size={20} />} hint={k.total ? `${pct(k.completed, k.total)}% dari seluruh pengajuan` : 'Belum ada pengajuan'} />
-      <StatWidget tone="neutral" label="Rerata durasi proses" value={k.avgDecisionDays === null ? '—' : fmtDays(k.avgDecisionDays)} icon={<Timer size={20} />} hint={k.avgDecisionDays === null ? 'Tampil setelah ada keputusan pertama' : 'Pengajuan hingga keputusan'} />
-    </div>
+    <section className="card p-[22px]" aria-label="Ringkasan statistik">
+      <div className="lbl">Ringkasan</div>
+      {!k ? <div className="mt-4 grid grid-cols-2 gap-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}</div> : (
+        <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5">
+          {items.map(([l, v, h]) => <div key={l} className="min-w-0"><dt className="text-[13px] text-faint">{l}</dt><dd className="mt-1 text-[22px] font-semibold leading-none tracking-tight tabular-nums text-ink">{v}</dd><dd className="mt-1 text-[12.5px] text-faint">{h}</dd></div>)}
+        </dl>
+      )}
+    </section>
+  );
+}
+
+/** Jumlah catatan permanen dan keutuhan jejak audit. */
+export function ProofCard({ stats, loading }: { stats?: DashboardStats; loading?: boolean }) {
+  const c = stats?.chain;
+  return (
+    <section className="card p-[22px]" aria-label="Bukti pencatatan">
+      <div className="lbl">Bukti pencatatan</div>
+      {!c ? (loading ? <Skeleton className="mt-3 h-10" /> : <p className="mt-3 text-[14px] text-faint">Belum dapat dimuat.</p>) : (
+        <>
+          <div className="mt-3 flex items-baseline gap-2"><span className="text-[28px] font-semibold leading-none tabular-nums text-ink">{fmtNumber(c.onChainTx, 0)}</span><span className="text-muted">catatan permanen</span></div>
+          {c.audit.failed > 0 ? <p className="mt-2 flex items-start gap-2 text-[14px] text-wait"><ShieldAlert size={16} className="mt-0.5 shrink-0" aria-hidden />{fmtNumber(c.audit.failed, 0)} jejak audit gagal dicatat permanen. Hubungi administrator.</p>
+            : c.audit.pending > 0 ? <p className="mt-2 flex items-start gap-2 text-[14px] text-muted"><Clock3 size={16} className="mt-0.5 shrink-0" aria-hidden />{fmtNumber(c.audit.pending, 0)} jejak audit sedang dicatat otomatis.</p>
+              : <p className="mt-2 flex items-center gap-2 text-[14px] text-ok"><CheckCircle2 size={16} className="shrink-0" aria-hidden />Semua terverifikasi utuh</p>}
+        </>
+      )}
+    </section>
   );
 }
 
@@ -176,29 +201,21 @@ export function ActivityCard({ stats, wide }: { stats: DashboardStats; wide?: bo
   );
 }
 
-const STAGE_STEPS = ['Pengajuan', 'Verifikasi', 'Pembayaran', 'Penugasan dan AK', 'Asesmen Lapangan', 'Tanggapan', 'Verifikasi akhir', 'Penetapan', 'Penerbitan'];
+const time = (s: SubmissionSummary) => Date.parse(s.updatedAt ?? s.createdAt ?? '') || 0;
 
-/** UPPS: kartu progres tahap untuk pengajuan aktif terbaru + tugas berikutnya. */
-export function UppsProgressCard({ rows, tasks }: { rows: SubmissionSummary[]; tasks: TaskItem[] }) {
-  const active = (tasks[0] && rows.find((s) => s.id === tasks[0]!.submission.id)) || rows.find((s) => s.stage !== 'released' && s.stage !== 'admin_rejected') || rows[0];
-  if (!active) {
-    return <Notice tone="info" title="Belum ada pengajuan">Mulai dengan memilih tombol Ajukan Akreditasi Baru. Progres tahap akan tampil di sini.</Notice>;
-  }
-  const idx = currentIndex(active);
-  const task = tasks.find((t) => t.submission.id === active.id);
-  const name = `${active.programName ?? 'Pengajuan'}${active.programLevel ? ` (${active.programLevel})` : ''}`;
+/** UPPS: progres tahap pengajuan aktif (bukan draf) yang terakhir diperbarui. */
+export function RunningCard({ rows }: { rows: SubmissionSummary[] }) {
+  const active = rows.filter((s) => !['draft', 'released', 'admin_rejected'].includes(s.stage)).sort((a, b) => time(b) - time(a))[0];
+  if (!active) return null;
+  const idx = Math.min(currentIndex(active), 9);
   return (
-    <Card title={name} description={`${active.institutionName ?? ''} · ${idx >= 9 ? 'Seluruh tahap selesai' : `Tahap ${idx + 1} dari 9`}`}
-      actions={<ButtonLink to={`/pengajuan/${active.id}`} variant="secondary" size="sm" icon={<ArrowRight size={14} />}>Buka detail</ButtonLink>}>
-      <div className="overflow-x-auto pb-1">
-        <div className="min-w-[720px]">
-          <StepIndicator steps={STAGE_STEPS.map((label, i) => ({ label, state: idx >= 9 || i < idx ? 'done' : i === idx ? 'current' : 'todo' }))} />
-        </div>
-      </div>
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-navy-50 px-4 py-3">
-        <div className="min-w-0 text-sm"><p className="font-semibold text-navy-900">{task ? 'Tugas berikutnya' : 'Menunggu pihak lain'}</p><p className="text-slate-700">{task ? task.action.title : 'Belum ada tindakan untuk Bapak/Ibu pada pengajuan ini.'}</p></div>
-        {task && <ButtonLink to={task.action.to?.(active.id) ?? `/pengajuan/${active.id}`} icon={<ArrowRight size={15} />}>{task.action.button}</ButtonLink>}
-      </div>
-    </Card>
+    <section className="card p-[22px]" aria-label="Pengajuan yang sedang berjalan">
+      <div className="lbl">Sedang berjalan</div>
+      <div className="mt-2 text-[17px] font-semibold leading-snug text-ink">{active.programName ?? shortId(active.id)}{active.programLevel ? ` (${active.programLevel})` : ''}</div>
+      <div className="mt-4"><SegProgress total={9} done={idx} /></div>
+      <div className="mt-3 text-[14px] text-muted">{idx >= 9 ? 'Seluruh tahap selesai' : `Langkah ${idx + 1} dari 9 · ${STAGE_STEPS[idx]}`}</div>
+      <div className="mt-1 text-[14px] text-faint">Ditangani oleh {holderLabel(active)}</div>
+      <ButtonLink to={`/pengajuan/${active.id}`} variant="secondary" className="mt-5 w-full">Lihat detail</ButtonLink>
+    </section>
   );
 }

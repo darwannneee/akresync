@@ -1,50 +1,84 @@
 import { useState } from 'react';
-import { CheckCircle2, Hourglass, Link2, Save } from 'lucide-react';
-import type { SubmissionDetail, User } from '../../api/types';
-import { Badge, Button, ButtonLink, Modal } from '../../components/ui';
-import { nextActions, type ActionKey } from '../../lib/workflow';
+import { ChevronDown } from 'lucide-react';
+import type { AuditEventView, SubmissionDetail, User } from '../../api/types';
+import { Button, ButtonLink, Drawer, SegProgress, TaskBanner, cx } from '../../components/ui';
+import { buildWorkflow, currentIndex, holderLabel, nextActions, type ActionKey, type MainStage, type NextAction } from '../../lib/workflow';
+import { fmtDate } from '../../lib/labels';
 import { ActionForm } from './ActionForm';
+import { StageTracker } from './StageTracker';
 import type { DetailTab } from './types';
 
-/** Kartu ringkas "Tindakan yang perlu dilakukan". Formulir tindakan dibuka dalam modal. */
-export function NextStepCard({ s, user, goTab }: { s: SubmissionDetail; user: User; goTab: (t: DetailTab) => void }) {
+const WIDE: ActionKey[] = ['offer', 'reoffer', 'final_verify', 'decision'];
+const NOTE: Record<string, string> = { C: 'Tersimpan permanen. Kekeliruan diperbaiki lewat catatan koreksi.', A: 'Tersimpan dengan jejak audit.' };
+
+/** Judul posisi: sub-langkah aktif tunggal bila ada, selain itu nama tahap. */
+function stageTitle(st: MainStage): string {
+  if (st.status === 'ditolak') return 'Pengajuan ditolak pada verifikasi kelengkapan';
+  if (st.parallel) return st.short;
+  const active = st.steps.filter((x) => x.status === 'aktif');
+  return active.length === 1 ? active[0]!.label : st.label;
+}
+
+/**
+ * Kartu "posisi saat ini": langkah berjalan, penanggung jawab, progres sembilan langkah, dan tugas pengguna.
+ * Tugas bertautan membuka halaman kerjanya; tugas lain dibuka dalam panel samping (Drawer).
+ */
+export function NextStepCard({ s, user, audit, goTab }: { s: SubmissionDetail; user: User; audit: AuditEventView[]; goTab: (t: DetailTab) => void }) {
   const { actions, waiting, finished } = nextActions(s, user);
   const [openKey, setOpenKey] = useState<ActionKey | null>(null);
+  const [all, setAll] = useState(false);
   const active = actions.find((a) => a.key === openKey) ?? null;
-  if (!actions.length) {
-    const done = finished && s.stage === 'released';
-    return (
-      <section id="tindakan" aria-label="Tindakan yang perlu dilakukan" className="no-print card flex items-start gap-4 p-5">
-        <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${done ? 'bg-ok-bg text-ok' : 'bg-slate-100 text-slate-500'}`} aria-hidden>{done ? <CheckCircle2 size={22} /> : <Hourglass size={22} />}</span>
-        <div className="min-w-0 text-sm">
-          <p className="text-base font-semibold text-ink">{done ? 'Proses selesai' : 'Belum ada tindakan untuk Bapak/Ibu'}</p>
-          <p className="text-muted">{waiting}</p>
-        </div>
-      </section>
-    );
-  }
+  const cur = currentIndex(s);
+  const stages = buildWorkflow(s);
+  const st = stages[Math.min(cur, 8)]!;
+  const done = cur >= 9;
+  const name = s.programName ? `${s.programName}${s.programLevel ? ` (${s.programLevel})` : ''}` : 'Pengajuan';
+  const holder = holderLabel(s);
+  const since = fmtDate(s.updatedAt ?? s.createdAt);
+  const start = (a: NextAction) => a.to
+    ? <ButtonLink to={a.to(s.id)} className="shrink-0">Mulai</ButtonLink>
+    : <Button className="shrink-0" onClick={() => setOpenKey(a.key)}>Mulai</Button>;
   return (
-    <section id="tindakan" aria-label="Tindakan yang perlu dilakukan" className="no-print scroll-mt-24 overflow-hidden rounded-xl border border-navy-200 bg-navy-50/60 shadow-card">
-      <p className="flex items-center gap-2 border-b border-navy-100 bg-navy-50 px-5 py-3 text-base font-semibold text-navy-900"><span aria-hidden className="h-2 w-2 rounded-full bg-navy-700" />Tindakan yang perlu dilakukan</p>
-      <ul className="divide-y divide-navy-100 bg-white">
-        {actions.map((a) => (
-          <li key={a.key} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 px-5 py-4">
-            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="text-[15px] font-semibold text-ink">{a.title}</span>
-              <Badge tone={a.storage === 'C' ? 'chain' : 'neutral'} icon={a.storage === 'C' ? <Link2 size={12} aria-hidden /> : <Save size={12} aria-hidden />}>{a.storage === 'C' ? 'Dicatat permanen' : 'Tersimpan dengan jejak audit'}</Badge>
+    <section aria-label="Posisi pengajuan" className="card">
+      <div className="grid gap-6 p-[22px] lg:grid-cols-12 lg:items-center">
+        <div className="min-w-0 lg:col-span-7">
+          <div className="text-[12.5px] font-semibold uppercase tracking-[.04em] text-faint">{done ? 'Proses selesai · 9 dari 9 langkah' : `Posisi saat ini · langkah ${cur + 1} dari 9`}</div>
+          <div className="mt-1.5 text-[19px] font-semibold leading-snug text-ink">{done ? 'Hasil akreditasi telah diterbitkan' : stageTitle(st)}</div>
+          <div className="mt-0.5 text-[14px] text-muted">{finished ? `${holder} · diperbarui ${since}` : `Ditangani ${holder} sejak ${since}`}</div>
+          <div className="mt-4"><SegProgress total={9} done={Math.min(cur, 9)} current={!finished} /></div>
+          <Button variant="ghost" size="sm" className="no-print -ml-3 mt-3" aria-expanded={all} onClick={() => setAll((v) => !v)}
+            icon={<ChevronDown size={15} className={cx('transition-transform', all && 'rotate-180')} aria-hidden />}>{all ? 'Sembunyikan langkah' : 'Lihat semua langkah'}</Button>
+        </div>
+        <div className="no-print min-w-0 lg:col-span-5">
+          {actions.length === 1 ? (
+            <TaskBanner title={actions[0]!.title} action={start(actions[0]!)} />
+          ) : actions.length > 1 ? (
+            <div className="rounded-xl bg-navy-50 p-4">
+              <div className="text-[13px] font-semibold text-navy-700">Giliran Bapak/Ibu · {actions.length} tugas</div>
+              <ul className="mt-2 divide-y divide-navy-100">
+                {actions.map((a) => <li key={a.key} className="flex items-center gap-4 py-2.5 last:pb-0"><span className="min-w-0 flex-1 font-semibold text-ink">{a.title}</span>{start(a)}</li>)}
+              </ul>
             </div>
-            {a.to ? <ButtonLink to={a.to(s.id)}>{a.button}</ButtonLink> : <Button onClick={() => setOpenKey(a.key)}>Kerjakan</Button>}
-          </li>
-        ))}
-      </ul>
-      <Modal open={!!active} onClose={() => setOpenKey(null)} wide title={active?.title ?? ''}>
+          ) : (
+            <div className="rounded-xl bg-slate-50 p-4">
+              <div className="text-[13px] font-semibold text-muted">{finished && s.stage === 'released' ? 'Proses selesai' : 'Belum ada tugas untuk Bapak/Ibu'}</div>
+              <p className="mt-0.5 text-[14.5px] text-ink">{waiting}</p>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className={cx('border-t border-line p-[22px]', !all && 'hidden print-block')}>
+        <StageTracker d={s} audit={audit} />
+      </div>
+      <Drawer open={!!active} onClose={() => setOpenKey(null)} title={active?.title ?? ''} subtitle={name}
+        note={active ? NOTE[active.storage] : undefined} width={active && WIDE.includes(active.key) ? 'lg' : 'md'}>
         {active && (
-          <div className="space-y-4">
-            <p className="text-sm text-muted">{active.why}</p>
+          <div className="space-y-6">
+            <p className="text-[14px] text-faint">{active.why}</p>
             <ActionForm k={active.key} s={s} user={user} goTab={(t) => { setOpenKey(null); goTab(t); }} />
           </div>
         )}
-      </Modal>
+      </Drawer>
     </section>
   );
 }

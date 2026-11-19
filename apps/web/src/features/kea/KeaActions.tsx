@@ -4,8 +4,8 @@ import { MAX_TOTAL_SCORE } from '@akreditasi/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../api/client';
-import { Badge, Button, DataTable, DL, Field, Input, ModalActions, Notice, Select, StepSection } from '../../components/ui';
-import { NotesForm, RadioCards, ResultNotesForm, useConfirmed } from '../common/forms';
+import { Badge, Button, Choice, DataTable, Field, Input, ModalActions, Notice, Select, StepSection } from '../../components/ui';
+import { FormSection, KeyList, NotesForm, ResultNotesForm, useConfirmed } from '../common/forms';
 import { useAction } from '../common/useAction';
 import { useAssessors } from '../common/queries';
 import { MODE_LABEL, fmtDate, fmtNumber } from '../../lib/labels';
@@ -33,19 +33,17 @@ export function OfferForm({ s, reoffer }: ActionProps & { reoffer?: boolean }) {
   const fid = useId();
   return (
     <form id={fid} className="space-y-6" noValidate onSubmit={f.handleSubmit((v) => confirm.ask(v))}>
-      <StepSection n={1} title="Pilih asesor pertama" done={!!a1}>
-        <Field label="Asesor pertama" required error={e.assessor1Id?.message}>{(p) => <Select {...p} {...f.register('assessor1Id')}><option value="">{assessors.isLoading ? 'Memuat daftar asesor…' : 'Pilih asesor'}</option>{opts}</Select>}</Field>
-      </StepSection>
-      <StepSection n={2} title="Pilih asesor kedua" done={!!a2 && a2 !== a1}>
-        <Field label="Asesor kedua" required error={e.assessor2Id?.message}>{(p) => <Select {...p} {...f.register('assessor2Id')}><option value="">Pilih asesor</option>{opts}</Select>}</Field>
-      </StepSection>
-      <StepSection n={3} title="Tetapkan ketua asesor" done={!!lead} hint="Ketua asesor memimpin Asesmen Lapangan dan menanggapi keberatan UPPS.">
-        {pair.length === 2 ? <RadioCards name="lead" legend="Ketua asesor" value={lead} onChange={(v) => f.setValue('leadAssessorId', v, { shouldValidate: true })} options={pair.map((id) => ({ value: id, label: name(id) }))} /> : <p className="text-sm text-muted">Pilih kedua asesor terlebih dahulu.</p>}
+      <FormSection title="Pasangan asesor" hint="Penugasan berlaku setelah kedua asesor dan UPPS menerima.">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Asesor pertama" required error={e.assessor1Id?.message}>{(p) => <Select {...p} {...f.register('assessor1Id')}><option value="">{assessors.isLoading ? 'Memuat daftar asesor…' : 'Pilih asesor'}</option>{opts}</Select>}</Field>
+          <Field label="Asesor kedua" required error={e.assessor2Id?.message}>{(p) => <Select {...p} {...f.register('assessor2Id')}><option value="">Pilih asesor</option>{opts}</Select>}</Field>
+        </div>
+      </FormSection>
+      <FormSection title="Ketua asesor" hint="Ketua asesor memimpin Asesmen Lapangan dan menanggapi keberatan UPPS.">
+        {pair.length === 2 ? <Choice name="lead" value={lead} onChange={(v) => f.setValue('leadAssessorId', v, { shouldValidate: true })} options={pair.map((id) => ({ value: id, label: name(id) }))} /> : <p className="text-[14px] text-faint">Pilih kedua asesor terlebih dahulu.</p>}
         {e.leadAssessorId?.message && <p role="alert" className="mt-1 text-sm text-bad">{e.leadAssessorId.message}</p>}
-      </StepSection>
-      <StepSection n={4} title="Tinjau dan kirim penawaran" hint="Penugasan berlaku setelah kedua asesor dan UPPS menerima.">
-        <ModalActions><Button type="submit" form={fid} loading={m.isPending}>{reoffer ? 'Kirim Penawaran Ulang' : 'Kirim Penawaran'}</Button></ModalActions>
-      </StepSection>
+      </FormSection>
+      <ModalActions><Button type="submit" form={fid} loading={m.isPending}>{reoffer ? 'Kirim penawaran ulang' : 'Kirim penawaran'}</Button></ModalActions>
       {confirm.dialog}
     </form>
   );
@@ -56,9 +54,11 @@ export function ReviewRejection({ s }: ActionProps) {
   const review = useAction((notes: string) => api.post(`/offers/${last!.id}/rejection-review`, { notes }), { title: 'Tinjauan penolakan telah dicatat', submissionId: s.id });
   if (!last) return null;
   return (
-    <div className="space-y-4">
-      <Notice tone="warn" title={`Penawaran ke-${last.offerNo} ditolak`}>{last.rejectionReason ? `Alasan: ${last.rejectionReason}` : 'Tidak ada alasan yang dicantumkan.'}</Notice>
-      <NotesForm label="Catatan tinjauan KEA" required submitLabel="Catat tinjauan" pending={review.isPending} onSubmit={(n) => review.mutate(n)} />
+    <div className="space-y-6">
+      <FormSection title={`Penawaran ke-${last.offerNo} ditolak`} hint={last.rejectionBy ? `Ditolak oleh ${last.rejectionBy === 'upps' ? 'UPPS' : 'asesor'}.` : undefined}>
+        <p className="whitespace-pre-wrap rounded-xl bg-slate-50 px-4 py-3 text-[14.5px] text-ink">{last.rejectionReason ? last.rejectionReason : 'Tidak ada alasan yang dicantumkan.'}</p>
+      </FormSection>
+      <NotesForm label="Catatan tinjauan KEA" required submitLabel="Simpan tinjauan" pending={review.isPending} onSubmit={(n) => review.mutate(n)} />
     </div>
   );
 }
@@ -101,15 +101,21 @@ export function ScheduleForm({ s }: ActionProps) {
   const rejected = (s.alSchedules ?? []).filter((x) => x.status === 'rejected').slice(-1)[0];
   const fid = useId();
   return (
-    <form id={fid} className="space-y-4" noValidate onSubmit={f.handleSubmit((v) => m.mutate(v))}>
+    <form id={fid} className="space-y-6" noValidate onSubmit={f.handleSubmit((v) => m.mutate(v))}>
       {rejected && <Notice tone="warn" title="Usulan sebelumnya ditolak">{rejected.notes ?? 'Perbaiki usulan sesuai catatan Sekretariat.'} (Pelaksanaan semula {fmtDate(rejected.startDate)}, {rejected.location}.)</Notice>}
-      <div className="space-y-4">
-        <Field label="Tanggal mulai" required error={e.startDate?.message}>{(p) => <Input {...p} type="date" {...f.register('startDate')} />}</Field>
-        <Field label="Tanggal selesai" required error={e.endDate?.message}>{(p) => <Input {...p} type="date" {...f.register('endDate')} />}</Field>
-        <Field label="Lokasi" required error={e.location?.message}>{(p) => <Input {...p} {...f.register('location')} />}</Field>
-        <Field label="Moda pelaksanaan">{(p) => <Select {...p} {...f.register('mode')}>{(['luring', 'daring', 'hibrida'] as const).map((k) => <option key={k} value={k}>{MODE_LABEL[k]}</option>)}</Select>}</Field>
-      </div>
-      <ModalActions><Button type="submit" form={fid} loading={m.isPending}>Kirim Usulan Jadwal</Button></ModalActions>
+      <FormSection title="Waktu pelaksanaan">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Tanggal mulai" required error={e.startDate?.message}>{(p) => <Input {...p} type="date" {...f.register('startDate')} />}</Field>
+          <Field label="Tanggal selesai" required error={e.endDate?.message}>{(p) => <Input {...p} type="date" {...f.register('endDate')} />}</Field>
+        </div>
+      </FormSection>
+      <FormSection title="Tempat dan moda">
+        <div className="space-y-4">
+          <Field label="Lokasi" required error={e.location?.message}>{(p) => <Input {...p} placeholder="Contoh: Kampus Utama, Gedung Rektorat" {...f.register('location')} />}</Field>
+          <Field label="Moda pelaksanaan">{(p) => <Select {...p} {...f.register('mode')}>{(['luring', 'daring', 'hibrida'] as const).map((k) => <option key={k} value={k}>{MODE_LABEL[k]}</option>)}</Select>}</Field>
+        </div>
+      </FormSection>
+      <ModalActions><Button type="submit" form={fid} loading={m.isPending}>Kirim usulan jadwal</Button></ModalActions>
     </form>
   );
 }
@@ -123,10 +129,13 @@ export function FinalVerify({ s }: ActionProps) {
   });
   return (
     <div className="space-y-6">
-      {results.length > 0 && <StepSection n={1} title="Periksa hasil penilaian"><DL cols={3} items={results.map((a) => [`${a.phase === 'AK' ? 'Kecukupan' : 'Lapangan'} · ${a.assessorName ?? 'Asesor'}`, fmtNumber(a.totalScore)] as [string, string])} /></StepSection>}
-      <StepSection n={results.length ? 2 : 1} title="Catat verifikasi akhir" hint="Setelah dicatat, pengajuan diteruskan ke Majelis Akreditasi.">
-        <NotesForm label="Catatan verifikasi akhir" submitLabel="Catat verifikasi akhir" pending={final.isPending} onSubmit={(n) => confirm.ask(n)} />
-      </StepSection>
+      {results.length > 0 && (
+        <FormSection title="Hasil penilaian yang diperiksa" hint={`Skor total pada skala 0 sampai ${fmtNumber(MAX_TOTAL_SCORE)}.`}>
+          <KeyList items={results.map((a) => [`${a.phase === 'AK' ? 'Asesmen Kecukupan' : 'Asesmen Lapangan'} · ${a.assessorName ?? 'Asesor'}`, <b key={a.id} className="font-semibold tabular-nums">{fmtNumber(a.totalScore)}</b>] as [string, React.ReactNode])} />
+        </FormSection>
+      )}
+      <p className="text-[14px] text-muted">Setelah dicatat, pengajuan diteruskan ke Majelis Akreditasi.</p>
+      <NotesForm label="Catatan verifikasi akhir" submitLabel="Simpan verifikasi akhir" pending={final.isPending} onSubmit={(n) => confirm.ask(n)} />
       {confirm.dialog}
     </div>
   );
