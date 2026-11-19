@@ -56,7 +56,8 @@ const schema = z.object({
   GEMINI_EMBED_MODEL: z.string().min(1).default('gemini-embedding-001'),
   AI_EMBED_DIM: z.coerce.number().int().min(64).max(2000).default(768),
   GEMINI_THINKING_LEVEL: z.enum(['LOW', 'MEDIUM', 'HIGH']).default('MEDIUM'),
-  EMBEDDING_PROVIDER: z.enum(['local', 'gemini']).default('local'),
+  EMBEDDING_PROVIDER: z.enum(['openai', 'local', 'gemini']).default('openai'),
+  OPENAI_EMBED_MODEL: z.string().min(1).default('text-embedding-3-small'),
   EMBEDDING_MODEL: z.string().min(1).default('Xenova/multilingual-e5-base'),
   EMBEDDING_CACHE_DIR: z.string().default('../../.runtime/models'),
   AI_EMBED_BATCH: z.coerce.number().int().min(1).max(64).default(16),
@@ -69,7 +70,7 @@ const schema = z.object({
     .transform((v) => v.split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n) && n >= 0)),
   AI_JOB_MAX_ATTEMPTS: z.coerce.number().int().positive().default(4),
   AI_AUTO_ANALYSIS: z.string().optional().transform((v) => v !== 'false' && v !== '0'),
-  AI_AUTO_MAX_PER_DAY: z.coerce.number().int().positive().default(12),
+  AI_AUTO_MAX_PER_DAY: z.coerce.number().int().positive().default(60),
   AI_JOBS_ENABLED: z.string().optional().transform((v) => v !== 'false' && v !== '0'),
 });
 

@@ -54,8 +54,13 @@ export function aiRoutes(ctx: AppContext, router: Router, auth: RequestHandler) 
     const id = uuidParam(req.params.id);
     const b = parse(z.object({ phase: z.enum(['AK', 'AL']).default('AK') }), req.body ?? {});
     if (!ctx.ai.enabled) throw new AppError(503, 'AI_DISABLED', 'Layanan AI belum dikonfigurasi pada server ini');
-    await loadSubmissionForUser(ctx.pool, user, id);
+    const sub = await loadSubmissionForUser(ctx.pool, user, id);
     if (user.role === 'asesor') await assertAssessorActive(ctx.pool, id, user, { effective: true, leadOnly: b.phase === 'AL' });
+    if (user.role === 'upps') {
+      if (!['draft', 'admin_revision'].includes(sub.stage) || b.phase !== 'AK') throw forbidden('UPPS hanya dapat mengulang analisis saat menyusun atau memperbaiki dokumen');
+      const last = await q1(ctx.pool, `SELECT status FROM ai_analyses WHERE submission_id=$1 AND set_version=$2 ORDER BY created_at DESC LIMIT 1`, [id, sub.document_set_version]);
+      if (last && last.status !== 'failed') throw conflict('Analisis untuk dokumen ini sudah ada atau sedang berjalan');
+    }
     try {
       const { row, created } = await ctx.ai.requestManual(id, b.phase, user.id);
       res.status(202).json(envelope({ id: row.id, status: row.status, created }));

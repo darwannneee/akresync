@@ -1,7 +1,7 @@
 import type { Config } from '../config/index.js';
 import { resolvePath } from '../config/index.js';
 import { logger } from '../logger.js';
-import { GeminiEmbedder, LocalEmbedder, type Embedder } from './embedder.js';
+import { GeminiEmbedder, LocalEmbedder, OpenAiEmbedder, type Embedder } from './embedder.js';
 import { GeminiProvider } from './gemini.js';
 import { OpenAiProvider } from './openai.js';
 import type { AiProvider } from './provider.js';
@@ -38,8 +38,12 @@ function createGemini(cfg: Config): GeminiProvider | null {
   });
 }
 
-/** Embedding: lokal (bawaan, bebas kuota) atau Gemini. */
+/** Embedding: OpenAI (bawaan; jatuh ke lokal bila kunci kosong), lokal (CPU, bebas kuota), atau Gemini. */
 export function createEmbedder(cfg: Config, generation: AiProvider | null): Embedder | null {
+  if (cfg.EMBEDDING_PROVIDER === 'openai') {
+    if (cfg.OPENAI_API_KEY) return new OpenAiEmbedder({ apiKey: cfg.OPENAI_API_KEY, model: cfg.OPENAI_EMBED_MODEL, dim: cfg.AI_EMBED_DIM, rpm: cfg.AI_EMBED_RPM });
+    logger.warn('EMBEDDING_PROVIDER=openai tetapi OPENAI_API_KEY kosong; memakai embedding lokal');
+  }
   if (cfg.EMBEDDING_PROVIDER === 'gemini') {
     const gemini = generation instanceof GeminiProvider ? generation : createGemini(cfg);
     if (!gemini) {

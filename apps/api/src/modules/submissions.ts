@@ -206,7 +206,11 @@ export function submissionRoutes(ctx: AppContext, router: Router, auth: RequestH
     const prog = await q1(ctx.pool, 'SELECT institution_id FROM study_programs WHERE id=$1', [b.programId]);
     if (!prog) throw badRequest('Program studi tidak ditemukan');
     if (prog.institution_id !== user.institutionId) throw forbidden('Program studi bukan milik institusi Anda');
-    const row = await q1(ctx.pool, `INSERT INTO submissions (upps_user_id, institution_id, program_id) VALUES ($1,$2,$3) RETURNING id`, [user.id, prog.institution_id, b.programId]);
+    const activeConflict = (activeId?: string) => conflict('Program studi ini masih memiliki pengajuan yang sedang berjalan. Pengajuan baru dapat dibuat setelah pengajuan tersebut selesai.', { code: 'ACTIVE_SUBMISSION_EXISTS', activeSubmissionId: activeId ?? null });
+    const active = await q1(ctx.pool, `SELECT id FROM submissions WHERE program_id=$1 AND stage NOT IN ('released','admin_rejected') LIMIT 1`, [b.programId]);
+    if (active) throw activeConflict(active.id);
+    const row = await q1(ctx.pool, `INSERT INTO submissions (upps_user_id, institution_id, program_id) VALUES ($1,$2,$3) RETURNING id`, [user.id, prog.institution_id, b.programId])
+      .catch((err) => { throw (err as { code?: string }).code === '23505' ? activeConflict() : err; });
     res.status(201).json(envelope({ ...submissionDto((await q1(ctx.pool, `${SUB_SELECT} WHERE s.id=$1`, [row!.id]))!), id: row!.id }));
   });
 

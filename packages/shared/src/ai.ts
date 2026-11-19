@@ -75,6 +75,8 @@ export interface AiAnalysisDto {
   latencyMs: number | null;
   resultSha256: string | null;
   embeddingModel: string | null;
+  /** Analisis sumber bila hasil dipakai ulang karena LED dan LKPS identik (tanpa panggilan AI). */
+  reusedFrom?: string | null;
   retrievedCount: number;
   droppedCitations: number;
   result: AiResult | null;
@@ -150,12 +152,17 @@ export interface AiCriterionTotal {
   max: number;
   filled: number;
   count: number;
+  /** Rata-rata berbobot kriteria pada skala butir (0..scaleMax); null bila tidak ada butir bersaran. */
+  average: number | null;
 }
 export interface AiTotals {
   total: number;
   max: number;
   answered: number;
   itemCount: number;
+  /** Skor utama yang ditampilkan: rata-rata berbobot butir bersaran pada skala 0..scaleMax (mis. 3,12 / 4,00). */
+  weighted: number | null;
+  scaleMax: number;
   perCriterion: AiCriterionTotal[];
 }
 /** Ringkasan skor AI sementara untuk daftar/dasbor. Bukan nilai resmi. */
@@ -164,6 +171,7 @@ export interface AiScoreSummary {
   setVersion: number | null;
   finishedAt: string | null;
   totals: AiTotals;
+  summary?: string | null;
 }
 
 /** Progres AI yang aman ditampilkan kepada UPPS (tanpa skor/justifikasi). */

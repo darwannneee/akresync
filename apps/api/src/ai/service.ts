@@ -16,14 +16,14 @@ import { logger } from '../logger.js';
 import type { IpfsClient } from '../ipfs/client.js';
 import { fetchAndDecrypt } from '../modules/common.js';
 import { estimateTokens } from './chunk.js';
-import { extractAndChunk, extractSample } from './extract.js';
+import { extractAndChunk } from './extract.js';
 import { aiTotals } from './score.js';
 import { buildPrompt, assignShortIds, PROMPT_TEMPLATE_SHA256, PROMPT_VERSION, RESPONSE_SCHEMA } from './prompt.js';
 import type { Embedder } from './embedder.js';
 import { friendlyAiError, jobRetryDelay, AiProviderError, type AiProvider } from './provider.js';
 import { assembleContext, buildQueries, keywordRank, type Candidate } from './retrieval.js';
 import { validateOutput } from './validate.js';
-import { pendingCheck, verifyDocType } from './verify.js';
+import { verifyByRules } from './verify.js';
 
 export const AUTO_DEBOUNCE_SECONDS = 6;
 const POLL_MS = 4000;
@@ -123,23 +123,13 @@ export class AiService {
   }
 
   // ---------- verifikasi jenis dokumen saat unggah ----------
-  /** Dipanggil di dalam permintaan unggah (LED/LKPS). `reject` terisi bila model menyatakan jenis tidak sesuai. */
+  /**
+   * Dipanggil di dalam permintaan unggah (LED/LKPS). Berbasis aturan (format + kata kunci), tanpa layanan AI,
+   * sehingga tidak memakai kuota. `reject` terisi bila berkas jelas bukan jenis tersebut.
+   */
   async verifyUpload(docType: 'LED' | 'LKPS', file: { buffer: Buffer; mimetype: string; originalname: string }): Promise<{ reject?: { message: string; reason: string | null; detectedType: string | null }; check: DocCheck | null }> {
-    const p = this.d.provider;
-    if (!p) return { check: null };
-    const sample = await extractSample(file.mimetype, file.originalname, file.buffer);
-    if (!sample) return { check: pendingCheck('Isi berkas tidak dapat diekstrak untuk diverifikasi', p.model) };
-    const out = await verifyDocType(p, docType, sample);
-    if (out.kind === 'invalid') {
-      return {
-        check: out.check,
-        reject: {
-          message: `Berkas yang diunggah tidak terdeteksi sebagai ${docType}. Mohon periksa kembali berkasnya.`,
-          reason: out.check.reason,
-          detectedType: out.check.detectedType,
-        },
-      };
-    }
+    const out = await verifyByRules(docType, file.buffer);
+    if (out.kind === 'invalid') return { check: out.check, reject: { message: out.message, reason: out.check.reason, detectedType: out.check.detectedType } };
     return { check: out.check };
   }
 
@@ -194,7 +184,7 @@ export class AiService {
       if (!emb) embedded = 0;
       await progress(embedded);
       if (emb) {
-        const BATCH = Math.max(1, this.d.config.AI_EMBED_BATCH);
+        const BATCH = Math.max(1, emb.batchSize ?? this.d.config.AI_EMBED_BATCH);
         for (;;) {
           const todo = await q(pool, `SELECT chunk_index, text FROM document_chunks WHERE document_id=$1 AND embedding IS NULL ORDER BY chunk_index LIMIT $2`, [doc.id, BATCH]);
           if (!todo.length) break;
@@ -230,23 +220,13 @@ export class AiService {
     await this.verifyAfterIndex(doc);
   }
 
-  /** Verifikasi jenis tertunda dicoba ulang sesudah indeks (1 percobaan); kegagalan tidak memengaruhi indeks. */
+  /** Dokumen lama yang belum/tertunda diverifikasi diperiksa ulang dengan aturan sesudah indeks; kegagalan tidak memengaruhi indeks. */
   private async verifyAfterIndex(doc: any): Promise<void> {
-    const provider = this.d.provider;
-    if (!provider) return;
     try {
       const cur = (await q1(this.d.pool, `SELECT doc_check FROM document_versions WHERE id=$1`, [doc.id]))?.doc_check as DocCheck | null | undefined;
       if (cur && cur.status !== 'pending') return;
-      const same = await q1(this.d.pool, `SELECT doc_check FROM document_versions WHERE sha256_plain=$1 AND doc_type=$2 AND id<>$3 AND doc_check->>'status' IN ('verified','mismatch') LIMIT 1`, [doc.sha256_plain, doc.doc_type, doc.id]);
-      let check: DocCheck | undefined = same?.doc_check;
-      if (!check) {
-        const sample = (await q(this.d.pool, `SELECT text FROM document_chunks WHERE document_id=$1 ORDER BY chunk_index LIMIT 3`, [doc.id])).map((r) => r.text).join('\n');
-        const out = await verifyDocType(provider, doc.doc_type, sample, { attempts: 1 });
-        if (out.kind === 'pending') {
-          if (!cur) check = out.check;
-        } else check = out.kind === 'invalid' ? { ...out.check, status: 'mismatch' } : out.check;
-      }
-      if (check) await this.d.pool.query(`UPDATE document_versions SET doc_check=$2::jsonb, checked_at=now() WHERE id=$1`, [doc.id, JSON.stringify(check)]);
+      const out = await verifyByRules(doc.doc_type, Buffer.from(await fetchAndDecrypt(this.d, doc)));
+      await this.d.pool.query(`UPDATE document_versions SET doc_check=$2::jsonb, checked_at=now() WHERE id=$1`, [doc.id, JSON.stringify(out.check)]);
     } catch (err) {
       logger.warn({ err, documentId: doc.id }, 'verifikasi jenis pasca-indeks gagal (diabaikan)');
     }
@@ -355,6 +335,7 @@ export class AiService {
       }
       const bad = docs.find((d) => d.index_status !== 'indexed');
       if (bad) throw new AiProviderError(`Pengindeksan ${bad.doc_type} belum berhasil: ${bad.index_error ?? bad.index_status}`, null, 'NOT_INDEXED', false, false);
+      if (claimed.trigger === 'auto' && (await this.reuseIdentical(claimed, provider.model))) return;
 
       const { chosen, mode } = await this.retrieve(claimed.submission_id, docs.map((d) => d.id));
       const shortIds = assignShortIds(chosen.map((c) => c.id));
@@ -374,15 +355,37 @@ export class AiService {
     }
   }
 
-  private async persistDone(row: any, o: { gen: Awaited<ReturnType<AiProvider['generateJson']>>; result: AiResult; dropped: unknown[]; resultSha: string; retrieved: AiRetrievedRef[]; embeddingModel?: string }): Promise<void> {
+  /**
+   * Analisis otomatis: bila analisis selesai sebelumnya pada pengajuan yang sama memakai LED dan LKPS dengan SHA-256 identik,
+   * versi prompt dan model yang sama, hasilnya disalin tanpa memanggil layanan AI (token 0). Tetap dicatat sebagai AIAnalysisSaved.
+   */
+  private async reuseIdentical(row: any, model: string): Promise<boolean> {
+    const src = await q1(
+      this.d.pool,
+      `WITH cur AS (SELECT string_agg(doc_type || ':' || sha256_plain, ',' ORDER BY doc_type) AS k FROM document_versions WHERE submission_id=$1 AND set_version=$2 AND doc_type IN ('LED','LKPS'))
+       SELECT a.* FROM ai_analyses a, cur
+       WHERE a.submission_id=$1 AND a.id<>$3 AND a.status='done' AND a.result IS NOT NULL AND a.phase=$4 AND a.prompt_version=$5 AND a.requested_model IS NOT DISTINCT FROM $6
+         AND (SELECT string_agg(d.doc_type || ':' || d.sha256_plain, ',' ORDER BY d.doc_type) FROM document_versions d WHERE d.submission_id=a.submission_id AND d.set_version=a.set_version AND d.doc_type IN ('LED','LKPS')) = cur.k
+       ORDER BY a.finished_at DESC LIMIT 1`,
+      [row.submission_id, row.set_version, row.id, row.phase, PROMPT_VERSION, model],
+    );
+    if (!src) return false;
+    const gen = { json: src.result, text: '', requestedModel: src.requested_model, usedModel: src.used_model ?? src.model, modelVersion: src.model_version, thinkingLevel: src.thinking_level, inputTokens: 0, outputTokens: 0, latencyMs: 0, fallbacks: [] };
+    await this.persistDone(row, { gen, result: src.result, dropped: src.dropped ?? [], resultSha: String(src.result_sha256).trim(), retrieved: src.retrieved ?? [], embeddingModel: src.embedding_model ?? undefined, reusedFrom: src.id });
+    logger.info({ analysisId: row.id, reusedFrom: src.id }, 'analisis AI dipakai ulang (dokumen identik, tanpa panggilan AI)');
+    return true;
+  }
+
+  private async persistDone(row: any, o: { gen: Awaited<ReturnType<AiProvider['generateJson']>>; result: AiResult; dropped: unknown[]; resultSha: string; retrieved: AiRetrievedRef[]; embeddingModel?: string; reusedFrom?: string }): Promise<void> {
     const actor = await this.actorFor(row);
     await withTransaction(async (c) => {
       const done = await q1(
         c,
         `UPDATE ai_analyses SET status='done', model=$2, requested_model=$3, used_model=$4, model_version=$5, fallbacks=$6::jsonb, thinking_level=$7,
            result=$8::jsonb, result_sha256=$9, dropped=$10::jsonb, input_tokens=$11, output_tokens=$12, latency_ms=$13, prompt_version=$14, prompt_template_sha256=$15,
+           reused_from=$16, retrieved=CASE WHEN $16::uuid IS NULL THEN retrieved ELSE $17::jsonb END, embedding_model=COALESCE($18, embedding_model),
            error=NULL, finished_at=now(), updated_at=now() WHERE id=$1 AND status='running' RETURNING *`,
-        [row.id, o.gen.usedModel, o.gen.requestedModel, o.gen.usedModel, o.gen.modelVersion, JSON.stringify(o.gen.fallbacks), o.gen.thinkingLevel, JSON.stringify(o.result), o.resultSha, JSON.stringify(o.dropped), o.gen.inputTokens, o.gen.outputTokens, o.gen.latencyMs, PROMPT_VERSION, PROMPT_TEMPLATE_SHA256],
+        [row.id, o.gen.usedModel, o.gen.requestedModel, o.gen.usedModel, o.gen.modelVersion, JSON.stringify(o.gen.fallbacks), o.gen.thinkingLevel, JSON.stringify(o.result), o.resultSha, JSON.stringify(o.dropped), o.gen.inputTokens, o.gen.outputTokens, o.gen.latencyMs, PROMPT_VERSION, PROMPT_TEMPLATE_SHA256, o.reusedFrom ?? null, JSON.stringify(o.retrieved), o.embeddingModel ?? null],
       );
       if (!done) throw new Error('analisis bukan berstatus running');
       await recordAuditEvent(c, {
@@ -409,6 +412,7 @@ export class AiService {
           inputTokens: o.gen.inputTokens,
           outputTokens: o.gen.outputTokens,
           latencyMs: o.gen.latencyMs,
+          reusedFrom: o.reusedFrom ?? null,
         },
         actor,
       });
@@ -458,11 +462,11 @@ export class AiService {
   }
 
   /** Skor AI terbaru (selesai) per pengajuan, untuk daftar/dasbor. */
-  async scoreSummaries(db: Queryable, submissionIds: string[]): Promise<Map<string, { analysisId: string; setVersion: number | null; finishedAt: string | null; totals: ReturnType<typeof aiTotals> }>> {
+  async scoreSummaries(db: Queryable, submissionIds: string[]): Promise<Map<string, { analysisId: string; setVersion: number | null; finishedAt: string | null; totals: ReturnType<typeof aiTotals>; summary: string | null }>> {
     const out = new Map<string, any>();
     if (!submissionIds.length) return out;
     const rows = await q(db, `SELECT DISTINCT ON (submission_id) id, submission_id, set_version, finished_at, result FROM ai_analyses WHERE submission_id = ANY($1::uuid[]) AND status='done' AND result IS NOT NULL ORDER BY submission_id, finished_at DESC`, [submissionIds]);
-    for (const r of rows) out.set(r.submission_id, { analysisId: r.id, setVersion: r.set_version, finishedAt: r.finished_at, totals: aiTotals(r.result as AiResult) });
+    for (const r of rows) out.set(r.submission_id, { analysisId: r.id, setVersion: r.set_version, finishedAt: r.finished_at, totals: aiTotals(r.result as AiResult), summary: (r.result as AiResult).summary ?? null });
     return out;
   }
 }
@@ -504,6 +508,7 @@ export function analysisDto(r: any, opts: { detail?: boolean } = {}): AiAnalysis
     latencyMs: r.latency_ms ?? null,
     resultSha256: r.result_sha256 ? String(r.result_sha256).trim() : null,
     embeddingModel: r.embedding_model ?? null,
+    reusedFrom: r.reused_from ?? null,
     retrievedCount: retrieved.length,
     droppedCitations: Array.isArray(r.dropped) ? r.dropped.filter((d: any) => d.reason === 'invalid_citation' || d.reason === 'no_valid_citation').length : 0,
     result,

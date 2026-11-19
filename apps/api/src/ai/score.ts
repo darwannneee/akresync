@@ -1,4 +1,4 @@
-import { INSTRUMENT_DOKTOR_2025, computeTotal, criterionSummary, maxTotal, scoredItemCount, type AiResult, type AiTotals, type InstrumentScores } from '@akreditasi/shared';
+import { INSTRUMENT_DOKTOR_2025, computeTotal, criterionSummary, maxTotal, scoredItemCount, weightedAverage, type AiResult, type AiTotals, type InstrumentScores } from '@akreditasi/shared';
 
 /** Total & subtotal per kriteria dari saran AI (butir tanpa saran tidak dihitung). Bukan nilai resmi. */
 export function aiTotals(result: AiResult): AiTotals {
@@ -10,11 +10,14 @@ export function aiTotals(result: AiResult): AiTotals {
     answered++;
   }
   const inst = INSTRUMENT_DOKTOR_2025;
+  const s = scores as InstrumentScores;
   return {
-    total: computeTotal(scores as InstrumentScores),
+    total: computeTotal(s),
     max: maxTotal(inst),
     answered,
     itemCount: scoredItemCount(inst),
-    perCriterion: inst.criteria.filter((c) => c.scored).map((c) => ({ code: c.code, ...criterionSummary(scores as InstrumentScores, c.code) })),
+    weighted: weightedAverage(s),
+    scaleMax: inst.scale.max,
+    perCriterion: inst.criteria.filter((c) => c.scored).map((c) => ({ code: c.code, ...criterionSummary(s, c.code), average: weightedAverage(s, { criterion: c.code }) })),
   };
 }

@@ -19,6 +19,7 @@ const ipfs = createIpfsClient();
 const generation = createProvider(config);
 const embedder = createEmbedder(config, generation);
 const ai = new AiService({ pool, config, ipfs, provider: generation, embedder });
+if (embedder && !(embedder instanceof LocalEmbedder)) logger.info({ model: embedder.id }, 'embedding memakai layanan');
 if (embedder instanceof LocalEmbedder) void embedder.warmup().then(() => logger.info({ model: embedder.id }, 'model embedding lokal siap')).catch((err) => logger.error({ err }, 'model embedding lokal gagal dimuat'));
 const hub = createSseHub(pool, config.DATABASE_URL);
 const ctx: AppContext = {

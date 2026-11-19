@@ -106,7 +106,7 @@ export const API_ROUTES = {
   publicStats: { method: 'GET', path: '/public/stats', roles: 'public', storage: 'O', description: 'Angka agregat publik untuk halaman masuk (jumlah pengajuan dan catatan on-chain), tanpa data pribadi' },
   eventStream: { method: 'GET', path: '/events/stream', roles: ALL, storage: 'O', description: 'SSE audit_status & record_committed' },
   // Modul AI pendukung keputusan (O/A)
-  requestAiAnalysis: { method: 'POST', path: '/submissions/:id/ai-analyses', roles: ['asesor', 'kea'], storage: 'A', description: 'Analisis ulang AI manual {phase}; 202 + id (analisis awal berjalan otomatis saat LED+LKPS lengkap)' },
+  requestAiAnalysis: { method: 'POST', path: '/submissions/:id/ai-analyses', roles: ['upps', 'asesor', 'kea'], storage: 'A', description: 'Analisis ulang AI manual {phase}; 202 + id (analisis awal berjalan otomatis saat LED+LKPS lengkap). UPPS hanya saat menyusun/memperbaiki dokumen dan analisis terakhir gagal.' },
   listAiAnalyses: { method: 'GET', path: '/submissions/:id/ai-analyses', roles: ['upps', 'asesor', 'kea', 'majelis', 'sek_adm'], storage: 'O', description: 'Riwayat analisis AI + perbandingan dengan skor akhir' },
   getAiAnalysis: { method: 'GET', path: '/ai-analyses/:analysisId', roles: ['upps', 'asesor', 'kea', 'majelis', 'sek_adm'], storage: 'O', description: 'Detail analisis AI termasuk kutipan sumber' },
   reindexDocuments: { method: 'POST', path: '/submissions/:id/reindex', roles: ['kea', 'sek_adm'], storage: 'O', description: 'Indeks ulang dokumen LED/LKPS set terbaru' },

@@ -74,6 +74,22 @@ export function criterionSummary(scores: InstrumentScores, code: CriterionCode, 
   return { subtotal: round2(sum), max: round2(its.reduce((a, i) => a + i.weight * instrument.scale.max, 0)), filled, count: its.length };
 }
 
+/**
+ * Rata-rata berbobot pada skala butir (0..scale.max): Σ(skor × bobot) / Σ bobot butir yang terisi.
+ * Butir kosong dikecualikan; null bila belum ada butir terisi. Opsional dibatasi pada satu kriteria.
+ */
+export function weightedAverage(scores: InstrumentScores, opts: { criterion?: CriterionCode; instrument?: Instrument } = {}): number | null {
+  const inst = opts.instrument ?? INSTRUMENT_DOKTOR_2025;
+  let sum = 0;
+  let w = 0;
+  for (const i of itemsOf(inst)) {
+    if (opts.criterion && i.criterion !== opts.criterion) continue;
+    const v = scores?.[i.criterion]?.[i.id];
+    if (typeof v === 'number' && Number.isFinite(v)) { sum += v * i.weight; w += i.weight; }
+  }
+  return w > 0 ? round2(sum / w) : null;
+}
+
 /** Peringkat sementara dari ambang pedoman; null karena pedoman tidak memuat ambang. */
 export function provisionalRank(total: number, instrument: Instrument = INSTRUMENT_DOKTOR_2025): string | null {
   const t = instrument.rankThresholds;

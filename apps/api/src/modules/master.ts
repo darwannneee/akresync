@@ -11,7 +11,11 @@ export function masterRoutes(ctx: AppContext, router: Router, auth: RequestHandl
   });
   mount(router, auth, API_ROUTES.programs, async (req, res) => {
     const id = uuidParam(req.params.institutionId);
-    res.json(envelope((await q(ctx.pool, 'SELECT id, institution_id, name, level FROM study_programs WHERE institution_id=$1 ORDER BY name, level', [id])).map(camel)));
+    res.json(envelope((await q(ctx.pool,
+      `SELECT p.id, p.institution_id, p.name, p.level, a.id AS active_submission_id, a.stage AS active_stage
+       FROM study_programs p
+       LEFT JOIN LATERAL (SELECT s.id, s.stage FROM submissions s WHERE s.program_id=p.id AND s.stage NOT IN ('released','admin_rejected') ORDER BY s.created_at DESC LIMIT 1) a ON true
+       WHERE p.institution_id=$1 ORDER BY p.name, p.level`, [id])).map(camel)));
   });
   mount(router, auth, API_ROUTES.refLevels, async (_req, res) => {
     res.json(envelope((await q(ctx.pool, 'SELECT id, code, label FROM levels ORDER BY id')).map(camel)));
